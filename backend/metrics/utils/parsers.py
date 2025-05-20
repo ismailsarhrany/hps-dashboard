@@ -115,61 +115,64 @@ def parse_iostat(output):
 
 def parse_netstat_i(output):
     """
-    Parse AIX netstat -i -n output in a more robust way.
-    Example AIX netstat -i -n output:
+    Parse AIX `netstat -i -n` output, extracting metrics including the `Time` field (interface uptime in seconds).
     
-    Name  Mtu   Network     Address          Ipkts Ierrs    Opkts Oerrs  Coll
-    en0   1500  link#2      aa.bb.cc.dd.ee.ff 12345     0   67890     0     0
-    en0   1500  192.168.1   192.168.1.100    12345     0   67890     0     0
-    lo0   16896 127         127.0.0.1        67890     0   67890     0     0
+    Example Input:
+    Name   Mtu   Network     Address                 Ipkts     Ierrs        Opkts     Oerrs  Time
+    en0    1500  link#2      ae.22.e5.69.2d.3        481605681     0        724843214     0     12345
     """
     metrics = []
-    header_found = False
-    header_map = {}
-    
     lines = output.split('\n')
-    
+    header_found = False
+    processed_interfaces = set()  # Track interfaces to avoid duplicates
+
     for line in lines:
-        parts = line.strip().split()
+        line = line.strip()
+        if not line:
+            continue
+
+        parts = line.split()
         if not parts:
             continue
-            
-        # Find the header line
-        if parts[0] == "Name" or "Name" in line:
-            # Create mapping of column names to their position
-            header_map = {name.lower(): idx for idx, name in enumerate(parts)}
+
+        # Detect header line
+        if parts[0] == "Name":
             header_found = True
             continue
-            
+
         if not header_found:
             continue
-            
-        # Process only interface lines that have an interface name
-        # AIX interfaces typically start with en, et, lo
-        interface_name = parts[0]
-        if re.match(r'^(en|et|lo|tr|ib|ml)\d+', interface_name):
-            # Skip duplicate interface entries (those with the same name but different network)
-            # AIX netstat -i lists each interface multiple times for each network bound
-            interface_exists = any(metric['interface'] == interface_name for metric in metrics)
-            if interface_exists:
-                continue
-                
-            try:
-                # Extract data based on header positions
-                # If header not found, fall back to assumed positions
-                metric = {
-                    'interface': interface_name,
-                    'ipkts': int(parts[header_map.get('ipkts', 4)]),
-                    'ierrs': int(parts[header_map.get('ierrs', 5)]),
-                    'opkts': int(parts[header_map.get('opkts', 6)]),
-                    'oerrs': int(parts[header_map.get('oerrs', 7)]),
-                    'coll': int(parts[header_map.get('coll', 8)])
-                }
-                metrics.append(metric)
-            except (ValueError, IndexError) as e:
-                print(f"Error parsing netstat line: {line}, {str(e)}")
-                continue
-                
+
+        # Skip lines without valid interface names (e.g., en0, lo0)
+        interface = parts[0]
+        if not re.match(r'^(en|et|lo|tr|ib|ml)\d+', interface):
+            continue
+
+        # Skip duplicate interface entries (process only the first occurrence)
+        if interface in processed_interfaces:
+            continue
+        processed_interfaces.add(interface)
+
+        # Extract the last 5 fields: Ipkts, Ierrs, Opkts, Oerrs, Time
+        try:
+            ipkts = int(parts[-5])
+            ierrs = int(parts[-4])
+            opkts = int(parts[-3])
+            oerrs = int(parts[-2])
+            time = int(parts[-1])  # Interface uptime in seconds
+        except (IndexError, ValueError) as e:
+            print(f"Skipping line due to parsing error: {line} | Error: {e}")
+            continue
+
+        metrics.append({
+            'interface': interface,
+            'ipkts': ipkts,
+            'ierrs': ierrs,
+            'opkts': opkts,
+            'oerrs': oerrs,
+            'time': time  # Mapped to the renamed model field
+        })
+
     return metrics
 
 def parse_process(output, sort_by="cpu"):

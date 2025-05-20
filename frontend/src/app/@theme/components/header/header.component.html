@@ -3,12 +3,18 @@
     <a (click)="toggleSidebar()" href="#" class="sidebar-toggle">
       <nb-icon icon="menu-2-outline"></nb-icon>
     </a>
-    <a class="logo" href="#" (click)="navigateHome()">ngx-<span>admin</span></a>
+
+    <!-- Logo added here -->
+    <a class="logo" href="#" (click)="navigateHome()">
+      <img src="assets/images/Logo_hps.png" alt="App Logo" height="40" />
+    </a>
   </div>
+
   <nb-select [selected]="currentTheme" (selectedChange)="changeTheme($event)" status="primary">
-    <nb-option *ngFor="let theme of themes" [value]="theme.value"> {{ theme.name }}</nb-option>
+    <nb-option *ngFor="let theme of themes" [value]="theme.value">{{ theme.name }}</nb-option>
   </nb-select>
 </div>
+
 
 <div class="header-container">
   <nb-actions size="small">

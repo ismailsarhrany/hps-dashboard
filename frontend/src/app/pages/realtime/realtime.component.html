@@ -1,0 +1,53 @@
+<div class="container">
+  <h1>Real-time Monitoring</h1>
+  
+  <div class="row">
+    <div class="col-md-12">
+      <div class="card">
+        <div class="card-header">
+          CPU Usage (%)
+        </div>
+        <div class="card-body">
+          <div *ngIf="cpuData.length > 0" style="height: 300px;">
+            <ngx-charts-line-chart
+              [results]="cpuChartData"
+              [gradient]="true"
+              [xAxis]="true"
+              [yAxis]="true"
+              [legend]="true"
+              [showXAxisLabel]="true"
+              [showYAxisLabel]="true"
+              xAxisLabel="Time"
+              yAxisLabel="Usage (%)">
+            </ngx-charts-line-chart>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="row mt-4">
+    <div class="col-md-12">
+      <div class="card">
+        <div class="card-header">
+          Memory Usage (GB)
+        </div>
+        <div class="card-body">
+          <div *ngIf="memoryData.length > 0" style="height: 300px;">
+            <ngx-charts-line-chart
+              [results]="memoryChartData"
+              [gradient]="true"
+              [xAxis]="true"
+              [yAxis]="true"
+              [legend]="true"
+              [showXAxisLabel]="true"
+              [showYAxisLabel]="true"
+              xAxisLabel="Time"
+              yAxisLabel="Usage (GB)">
+            </ngx-charts-line-chart>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

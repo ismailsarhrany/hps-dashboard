@@ -23,10 +23,12 @@ import { Component } from '@angular/core';
       <nb-layout-column class="small">
       </nb-layout-column>
 
-      <nb-layout-footer fixed>
-        <ngx-footer></ngx-footer>
-      </nb-layout-footer>
+
     </nb-layout>
   `,
 })
 export class ThreeColumnsLayoutComponent {}
+
+      // <nb-layout-footer fixed>
+      //   <ngx-footer></ngx-footer>
+      // </nb-layout-footer>

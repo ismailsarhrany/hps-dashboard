@@ -1,0 +1,66 @@
+<div class="container">
+  <h1>Historical Monitoring Data</h1>
+  
+  <div class="row">
+    <div class="col-md-12">
+      <div class="card">
+        <div class="card-header">
+          Historical Metrics
+        </div>
+        <div class="card-body">
+          <div style="height: 300px;">
+            <ngx-charts-line-chart
+              [results]="chartData"
+              [gradient]="true"
+              [xAxis]="true"
+              [yAxis]="true"
+              [legend]="true"
+              [showXAxisLabel]="true"
+              [showYAxisLabel]="true"
+              xAxisLabel="Time"
+              yAxisLabel="Value">
+            </ngx-charts-line-chart>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="row mt-4">
+    <div class="col-md-12">
+      <div class="card">
+        <div class="card-header">
+          Process Information
+        </div>
+        <div class="card-body">
+          <table class="table table-striped">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Status</th>
+                <th>CPU (%)</th>
+                <th>Memory (GB)</th>
+                <th>Start Time</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let process of processes">
+                <td>{{ process.id }}</td>
+                <td>{{ process.name }}</td>
+                <td>
+                  <span [ngClass]="{'badge bg-success': process.status === 'running', 'badge bg-danger': process.status === 'stopped'}">
+                    {{ process.status }}
+                  </span>
+                </td>
+                <td>{{ process.usage.cpu }}%</td>
+                <td>{{ process.usage.memory }} GB</td>
+                <td>{{ process.startTime | date:'medium' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

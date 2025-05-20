@@ -36,7 +36,7 @@ class NetstatMetric(models.Model):
     ierrs = models.IntegerField()
     opkts = models.IntegerField()
     oerrs = models.IntegerField()
-    coll = models.IntegerField()
+    time  = models.IntegerField()
     # Add other fields as necessary
     # Example: ipkts = models.IntegerField()
 

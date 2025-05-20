@@ -20,11 +20,13 @@ import { Component } from '@angular/core';
         <ng-content select="router-outlet"></ng-content>
       </nb-layout-column>
 
-      <nb-layout-footer fixed>
-        <ngx-footer></ngx-footer>
-      </nb-layout-footer>
+
 
     </nb-layout>
   `,
 })
 export class TwoColumnsLayoutComponent {}
+
+      // <nb-layout-footer fixed>
+      //   <ngx-footer></ngx-footer>
+      // </nb-layout-footer>

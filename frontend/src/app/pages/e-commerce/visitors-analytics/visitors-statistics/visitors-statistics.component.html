@@ -8,11 +8,14 @@
          (chartInit)="onChartInit($event)">
     </div>
   </div>
-  <div class="statistics-footer">
+
+    <ngx-legend-chart class="visitors-statistics-legend" [legendItems]="chartLegend"></ngx-legend-chart>
+
+</div>
+  <!-- <div class="statistics-footer">
     <div class="chart-values h5">
       <span class="chart-value">25%</span>
       <span class="chart-value">75%</span>
-    </div>
-    <ngx-legend-chart class="visitors-statistics-legend" [legendItems]="chartLegend"></ngx-legend-chart>
-  </div>
-</div>
+    </div> 
+      </div>
+-->
