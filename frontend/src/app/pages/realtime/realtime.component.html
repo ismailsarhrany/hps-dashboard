@@ -1,52 +1,58 @@
-<div class="container">
-  <h1>Real-time Monitoring</h1>
-  
-  <div class="row">
-    <div class="col-md-12">
-      <div class="card">
-        <div class="card-header">
-          CPU Usage (%)
-        </div>
-        <div class="card-body">
-          <div *ngIf="cpuData.length > 0" style="height: 300px;">
-            <ngx-charts-line-chart
-              [results]="cpuChartData"
-              [gradient]="true"
-              [xAxis]="true"
-              [yAxis]="true"
-              [legend]="true"
-              [showXAxisLabel]="true"
-              [showYAxisLabel]="true"
-              xAxisLabel="Time"
-              yAxisLabel="Usage (%)">
-            </ngx-charts-line-chart>
-          </div>
-        </div>
+<div class="row">
+  <div class="col-12">
+    <h2>Real-time System Monitoring</h2>
+  </div>
+
+  <!-- CPU Usage -->
+  <div class="col-md-6 mb-4">
+    <div class="card">
+      <div class="card-header bg-primary text-white">
+        <i class="fas fa-microchip"></i> CPU Usage
+      </div>
+      <div class="card-body">
+        <canvas *ngIf="chartData.cpu" 
+                baseChart 
+                [data]="chartData.cpu" 
+                [options]="lineChartOptions"
+                type="line"
+                height="150">
+        </canvas>
       </div>
     </div>
   </div>
-  
-  <div class="row mt-4">
-    <div class="col-md-12">
-      <div class="card">
-        <div class="card-header">
-          Memory Usage (GB)
-        </div>
-        <div class="card-body">
-          <div *ngIf="memoryData.length > 0" style="height: 300px;">
-            <ngx-charts-line-chart
-              [results]="memoryChartData"
-              [gradient]="true"
-              [xAxis]="true"
-              [yAxis]="true"
-              [legend]="true"
-              [showXAxisLabel]="true"
-              [showYAxisLabel]="true"
-              xAxisLabel="Time"
-              yAxisLabel="Usage (GB)">
-            </ngx-charts-line-chart>
-          </div>
-        </div>
+
+  <!-- Memory Usage -->
+  <div class="col-md-6 mb-4">
+    <div class="card">
+      <div class="card-header bg-success text-white">
+        <i class="fas fa-memory"></i> Memory Usage
+      </div>
+      <div class="card-body">
+        <canvas *ngIf="chartData.memory" 
+                baseChart 
+                [data]="chartData.memory" 
+                [options]="lineChartOptions"
+                type="line"
+                height="150">
+        </canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Network Traffic -->
+  <div class="col-12 mb-4">
+    <div class="card">
+      <div class="card-header bg-info text-white">
+        <i class="fas fa-network-wired"></i> Network Traffic
+      </div>
+      <div class="card-body">
+        <canvas *ngIf="chartData.network" 
+                baseChart 
+                [data]="chartData.network" 
+                [options]="lineChartOptions"
+                type="line"
+                height="150">
+        </canvas>
       </div>
     </div>
   </div>

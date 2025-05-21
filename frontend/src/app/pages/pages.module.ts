@@ -2,6 +2,7 @@ import { NgModule } from '@angular/core';
 import { NbMenuModule } from '@nebular/theme';
 import { CommonModule } from '@angular/common';
 import { HttpClientModule } from '@angular/common/http';
+import { NgChartsModule } from 'ng2-charts';
 
 import { ThemeModule } from '../@theme/theme.module';
 import { PagesComponent } from './pages.component';
@@ -14,8 +15,8 @@ import { HistoricModule } from './historic/historic.module';
 import { ProcessModule } from './process/process.module';
 import { PredictionModule } from './prediction/prediction.module';
 
-import { MonitoringService } from '../services/monitoring.service';
 
+import { MockMonitoringService } from '../services/mock-monitoring.service';
 @NgModule({
   imports: [
     PagesRoutingModule,
@@ -27,17 +28,17 @@ import { MonitoringService } from '../services/monitoring.service';
     CommonModule,
     HttpClientModule,
     PagesRoutingModule,
-    RealtimeModule,
+    RealtimeModule, // Changed from RealtimeComponent
     HistoricModule,
     ProcessModule,
-    PredictionModule
+    PredictionModule,
+    NgChartsModule // Changed from BaseChartDirective
   ],
   declarations: [
     PagesComponent,
   ],
   providers: [
-    MonitoringService
+    MockMonitoringService
   ]
 })
-export class PagesModule {
-}
+export class PagesModule { }

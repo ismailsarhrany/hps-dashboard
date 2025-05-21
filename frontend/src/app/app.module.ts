@@ -19,7 +19,11 @@ import {
   NbSidebarModule,
   NbToastrModule,
   NbWindowModule,
-} from '@nebular/theme';
+} from '@nebular/theme'
+// Add this import
+import { NgChartsModule } from 'ng2-charts';
+
+
 
 @NgModule({
   declarations: [AppComponent],
@@ -28,6 +32,7 @@ import {
     BrowserAnimationsModule,
     HttpClientModule,
     AppRoutingModule,
+    NgChartsModule
     NbSidebarModule.forRoot(),
     NbMenuModule.forRoot(),
     NbDatepickerModule.forRoot(),
