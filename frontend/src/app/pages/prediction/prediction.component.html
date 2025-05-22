@@ -1,1 +1,81 @@
-<p>prediction works!</p>
+<!-- src/app/pages/prediction/prediction.component.html -->
+<div class="row">
+  <div class="col-12">
+    <nb-card>
+      <nb-card-header>
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <h1>System Predictions & Anomalies</h1>
+            <p class="text-hint mb-0">AI-powered resource forecasting and anomaly detection</p>
+          </div>
+          <form [formGroup]="predictionForm" (ngSubmit)="loadPredictionData()" class="prediction-filters">
+            <div class="d-flex align-items-center gap-2">
+              <nb-select placeholder="Prediction Period" formControlName="predictionPeriod">
+                <nb-option value="7">Next 7 Days</nb-option>
+                <nb-option value="14">Next 14 Days</nb-option>
+                <nb-option value="30">Next 30 Days</nb-option>
+              </nb-select>
+              
+              <nb-select placeholder="Confidence Level" formControlName="confidenceThreshold">
+                <nb-option value="75">75% Confidence</nb-option>
+                <nb-option value="85">85% Confidence</nb-option>
+                <nb-option value="95">95% Confidence</nb-option>
+              </nb-select>
+
+              <button nbButton status="primary" size="small" [disabled]="loading">
+                <nb-icon *ngIf="loading" icon="loader-outline" class="spin"></nb-icon>
+                {{ loading ? 'Generating...' : 'Update Predictions' }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </nb-card-header>
+    </nb-card>
+  </div>
+</div>
+
+<!-- Prediction Chart -->
+<div class="row">
+  <div class="col-12">
+    <nb-card>
+      <nb-card-header>
+        <span class="chart-title">Resource Forecast</span>
+        <nb-badge status="info" size="small">
+          Confidence: {{ confidenceLevel }}%
+        </nb-badge>
+      </nb-card-header>
+      <nb-card-body>
+        <div echarts [options]="predictionChartOption" class="chart"></div>
+      </nb-card-body>
+    </nb-card>
+  </div>
+</div>
+
+<!-- Anomaly Detection -->
+<div class="row">
+  <div class="col-12">
+    <nb-card>
+      <nb-card-header>
+        <span class="chart-title">Anomaly Detection History</span>
+        <nb-badge status="danger" size="small">
+          {{ anomalies.length }} Anomalies Detected
+        </nb-badge>
+      </nb-card-header>
+      <nb-card-body>
+        <div echarts [options]="anomalyChartOption" class="chart"></div>
+        
+        <div class="anomaly-list mt-4">
+          <div *ngFor="let anomaly of anomalies" class="anomaly-item">
+            <nb-icon [icon]="getAnomalyIcon(anomaly.type)" [status]="getAnomalyStatus(anomaly.type)"></nb-icon>
+            <div class="anomaly-details">
+              <div class="anomaly-type">{{ anomaly.type }}</div>
+              <div class="anomaly-time">{{ anomaly.timestamp | date:'medium' }}</div>
+            </div>
+            <div class="anomaly-value">{{ anomaly.value | number:'1.0-0' }}%</div>
+          </div>
+        </div>
+      </nb-card-body>
+    </nb-card>
+  </div>
+</div>
+

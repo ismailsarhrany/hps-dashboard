@@ -346,4 +346,54 @@ export class MockMonitoringService {
       })
     );
   }
+
+// Add inside the MockMonitoringService class (before the last closing brace)
+
+  /**
+   * Generate mock prediction data
+   */
+  generatePredictions(days: number): { predictions: any[], confidenceBand: any[] } {
+    const predictions = [];
+    const confidenceBand = [];
+    const baseDate = new Date();
+    
+    for (let i = 0; i < days; i++) {
+      const date = new Date(baseDate);
+      date.setDate(date.getDate() + i);
+      const value = 50 + Math.random() * 30 + Math.sin(i) * 10;
+      
+      predictions.push([date.toISOString(), value]);
+      confidenceBand.push([
+        date.toISOString(),
+        value - 5 - Math.random() * 5,
+        value + 5 + Math.random() * 5
+      ]);
+    }
+
+    return { predictions, confidenceBand };
+  }
+
+  /**
+   * Generate mock anomaly data
+   */
+  getAnomalies(): any[] {
+    const anomalies = [];
+    const baseDate = new Date();
+    
+    for (let i = 0; i < 30; i++) {
+      if (Math.random() > 0.8) {
+        const date = new Date(baseDate);
+        date.setDate(date.getDate() - i);
+        anomalies.push({
+          timestamp: date.toISOString(),
+          value: 80 + Math.random() * 20,
+          metricValue: 50 + Math.random() * 20,
+          type: ['CPU Spike', 'Memory Leak', 'Disk Overload'][Math.floor(Math.random() * 3)]
+        });
+      }
+    }
+    
+    return anomalies;
+  }
+
 }

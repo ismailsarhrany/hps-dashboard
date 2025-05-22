@@ -1,0 +1,62 @@
+// src/app/pages/prediction/prediction.component.scss
+@import '@nebular/theme/styles/theming';
+
+:host {
+  display: block;
+  
+  .prediction-filters {
+    nb-select, button {
+      margin-left: 1rem;
+    }
+  }
+
+  .chart {
+    height: 400px;
+    width: 100%;
+  }
+
+  .anomaly-list {
+    .anomaly-item {
+      display: flex;
+      align-items: center;
+      padding: 1rem;
+      border-bottom: 1px solid var(--border-color);
+      
+      nb-icon {
+        font-size: 1.5rem;
+        margin-right: 1rem;
+      }
+
+      .anomaly-details {
+        flex: 1;
+        
+        .anomaly-type {
+          font-weight: 600;
+        }
+        
+        .anomaly-time {
+          font-size: 0.8rem;
+          color: var(--text-hint-color);
+        }
+      }
+
+      .anomaly-value {
+        font-weight: 700;
+        color: var(--color-danger-500);
+      }
+    }
+  }
+
+  nb-card {
+    margin-bottom: 1.5rem;
+    
+    nb-card-header {
+      border-bottom: 1px solid var(--separator);
+      
+      .chart-title {
+        font-weight: 600;
+        font-size: 1.1rem;
+      }
+    }
+  }
+}
