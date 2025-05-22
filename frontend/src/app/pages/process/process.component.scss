@@ -1,0 +1,54 @@
+// src/app/pages/process/process.component.scss
+@import '@nebular/theme/styles/theming';
+
+:host {
+  display: block;
+  
+  .process-filter-form {
+    nb-select, .form-control {
+      background: var(--form-control-background-color);
+      border: 1px solid var(--border-color);
+      border-radius: var(--border-radius);
+      color: var(--text-color);
+    }
+
+    nb-select {
+      min-width: 250px;
+    }
+
+    .form-control {
+      padding: 0.375rem 0.75rem;
+    }
+
+    nb-button {
+      margin-left: 1rem;
+    }
+
+    .spin {
+      animation: spin 1s linear infinite;
+    }
+  }
+
+  .chart {
+    height: 400px;
+    width: 100%;
+  }
+
+  nb-card {
+    margin-bottom: 1.5rem;
+    
+    nb-card-header {
+      border-bottom: 1px solid var(--separator);
+      
+      .chart-title {
+        font-weight: 600;
+        font-size: 1.1rem;
+      }
+    }
+  }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}

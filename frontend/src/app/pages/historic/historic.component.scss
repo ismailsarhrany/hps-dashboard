@@ -2,19 +2,23 @@
 @import '@nebular/theme/styles/theming';
 
 :host {
-  .date-range-picker {
-    display: flex;
-    gap: 1rem;
-    align-items: center;
-    
-    form {
-      display: flex;
-      gap: 1rem;
-      align-items: center;
-      
-      input {
-        width: 150px;
-      }
+  display: block;
+  
+  .date-range-form {
+    .form-control {
+      background: var(--form-control-background-color);
+      border: 1px solid var(--border-color);
+      border-radius: var(--border-radius);
+      padding: 0.375rem 0.75rem;
+      color: var(--text-color);
+    }
+
+    nb-button {
+      margin-left: 1rem;
+    }
+
+    .spin {
+      animation: spin 1s linear infinite;
     }
   }
 
@@ -25,31 +29,20 @@
 
   nb-card {
     margin-bottom: 1.5rem;
+    
+    nb-card-header {
+      border-bottom: 1px solid var(--separator);
+      
+      .chart-title {
+        font-weight: 600;
+        font-size: 1.1rem;
+      }
+    }
   }
 }
 
-@media (max-width: 768px) {
-  :host {
-    .date-range-picker {
-      flex-direction: column;
-      width: 100%;
-      
-      form {
-        flex-direction: column;
-        width: 100%;
-        
-        input {
-          width: 100%;
-        }
-        
-        button {
-          width: 100%;
-        }
-      }
-    }
-    
-    .chart {
-      height: 300px;
-    }
-  }
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
+

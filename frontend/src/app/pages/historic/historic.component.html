@@ -8,45 +8,30 @@
             <h1>Historical System Metrics</h1>
             <p class="text-hint mb-0">Analyze system performance over time</p>
           </div>
-          <!-- src/app/pages/historic/historic.component.html -->
-          <div class="date-range-picker">
-            <form [formGroup]="dateRange">
-              <nb-form-field>
-                <input
-                  nbInput
-                  placeholder="Start Date"
-                  formControlName="start"
-                  [nbDatepicker]="picker"
-                />
-              </nb-form-field>
-
-              <nb-form-field>
-                <input
-                  nbInput
-                  placeholder="End Date"
-                  formControlName="end"
-                  [nbDatepicker]="picker"
-                />
-              </nb-form-field>
-
-              <nb-datepicker #picker></nb-datepicker>
-
-              <button nbButton status="primary" (click)="loadHistoricalData()">
-                <nb-icon icon="refresh-outline"></nb-icon> Load Data
+          <form [formGroup]="dateRangeForm" (ngSubmit)="loadHistoricalData()" class="date-range-form">
+            <div class="d-flex align-items-center gap-2">
+              <input type="date" formControlName="startDate" class="form-control">
+              <span class="text-hint">to</span>
+              <input type="date" formControlName="endDate" class="form-control">
+              <button nbButton status="primary" size="small" [disabled]="loading">
+                <nb-icon *ngIf="loading" icon="loader-outline" class="spin"></nb-icon>
+                {{ loading ? 'Loading...' : 'Load Data' }}
               </button>
-            </form>
-          </div>
+            </div>
+          </form>
         </div>
       </nb-card-header>
     </nb-card>
   </div>
 </div>
 
-<!-- Charts -->
+<!-- Charts Row 1: CPU and Memory -->
 <div class="row">
   <div class="col-lg-6 col-md-12">
     <nb-card>
-      <nb-card-header>CPU Usage History</nb-card-header>
+      <nb-card-header>
+        <span class="chart-title">CPU Usage History</span>
+      </nb-card-header>
       <nb-card-body>
         <div echarts [options]="cpuChartOption" class="chart"></div>
       </nb-card-body>
@@ -55,7 +40,9 @@
 
   <div class="col-lg-6 col-md-12">
     <nb-card>
-      <nb-card-header>Memory Usage History</nb-card-header>
+      <nb-card-header>
+        <span class="chart-title">Memory Usage History</span>
+      </nb-card-header>
       <nb-card-body>
         <div echarts [options]="memoryChartOption" class="chart"></div>
       </nb-card-body>
@@ -63,10 +50,13 @@
   </div>
 </div>
 
+<!-- Charts Row 2: Disk Activity -->
 <div class="row">
   <div class="col-lg-6 col-md-12">
     <nb-card>
-      <nb-card-header>Disk Read History</nb-card-header>
+      <nb-card-header>
+        <span class="chart-title">Disk Read History</span>
+      </nb-card-header>
       <nb-card-body>
         <div echarts [options]="diskReadChartOption" class="chart"></div>
       </nb-card-body>
@@ -75,7 +65,9 @@
 
   <div class="col-lg-6 col-md-12">
     <nb-card>
-      <nb-card-header>Disk Write History</nb-card-header>
+      <nb-card-header>
+        <span class="chart-title">Disk Write History</span>
+      </nb-card-header>
       <nb-card-body>
         <div echarts [options]="diskWriteChartOption" class="chart"></div>
       </nb-card-body>
@@ -83,10 +75,13 @@
   </div>
 </div>
 
+<!-- Charts Row 3: Network Activity -->
 <div class="row">
   <div class="col-lg-6 col-md-12">
     <nb-card>
-      <nb-card-header>Network Packets History</nb-card-header>
+      <nb-card-header>
+        <span class="chart-title">Network Packets History</span>
+      </nb-card-header>
       <nb-card-body>
         <div echarts [options]="networkPacketsChartOption" class="chart"></div>
       </nb-card-body>
@@ -95,10 +90,13 @@
 
   <div class="col-lg-6 col-md-12">
     <nb-card>
-      <nb-card-header>Network Errors History</nb-card-header>
+      <nb-card-header>
+        <span class="chart-title">Network Errors History</span>
+      </nb-card-header>
       <nb-card-body>
         <div echarts [options]="networkErrorsChartOption" class="chart"></div>
       </nb-card-body>
     </nb-card>
   </div>
 </div>
+

@@ -1,1 +1,74 @@
-<p>process works!</p>
+<!-- src/app/pages/process/process.component.html -->
+<div class="row">
+  <div class="col-12">
+    <nb-card>
+      <nb-card-header>
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <h1>Process Monitoring</h1>
+            <p class="text-hint mb-0">Track individual process resource consumption</p>
+          </div>
+          <form [formGroup]="filterForm" (ngSubmit)="loadHistoricalProcessData()" class="process-filter-form">
+            <div class="d-flex align-items-center gap-2">
+              <nb-select placeholder="Select Process" formControlName="selectedProcess">
+                <nb-option *ngFor="let p of processes" [value]="p.pid">
+                  {{ p.pid }} - {{ p.command }}
+                </nb-option>
+              </nb-select>
+              <input type="date" formControlName="startDate" class="form-control">
+              <span class="text-hint">to</span>
+              <input type="date" formControlName="endDate" class="form-control">
+              <button nbButton status="primary" size="small" [disabled]="loading">
+                <nb-icon *ngIf="loading" icon="loader-outline" class="spin"></nb-icon>
+                {{ loading ? 'Loading...' : 'Analyze' }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </nb-card-header>
+    </nb-card>
+  </div>
+</div>
+
+<!-- Realtime Chart -->
+<div class="row">
+  <div class="col-12">
+    <nb-card>
+      <nb-card-header>
+        <span class="chart-title">Live Process Resource Usage</span>
+        <nb-badge status="info" size="small" class="realtime-badge">
+          <nb-icon icon="radio-outline" class="pulse-icon"></nb-icon>
+          Real-time
+        </nb-badge>
+      </nb-card-header>
+      <nb-card-body>
+        <div echarts [options]="realtimeChartOption" class="chart"></div>
+      </nb-card-body>
+    </nb-card>
+  </div>
+</div>
+
+<!-- Weekly and Historical Charts -->
+<div class="row">
+  <div class="col-lg-6 col-md-12">
+    <nb-card>
+      <nb-card-header>
+        <span class="chart-title">Weekly Process Activity</span>
+      </nb-card-header>
+      <nb-card-body>
+        <div echarts [options]="weeklyChartOption" class="chart"></div>
+      </nb-card-body>
+    </nb-card>
+  </div>
+
+  <div class="col-lg-6 col-md-12">
+    <nb-card>
+      <nb-card-header>
+        <span class="chart-title">Historical Process Analysis</span>
+      </nb-card-header>
+      <nb-card-body>
+        <div echarts [options]="historicalChartOption" class="chart"></div>
+      </nb-card-body>
+    </nb-card>
+  </div>
+</div>
