@@ -19,6 +19,7 @@ import {
   NbSidebarModule,
   NbToastrModule,
   NbWindowModule,
+  NbThemeModule,
 } from '@nebular/theme';
 
 @NgModule({
@@ -28,6 +29,7 @@ import {
     BrowserAnimationsModule,
     HttpClientModule,
     AppRoutingModule,
+    NbThemeModule.forRoot({ name: 'default' }),
     NbSidebarModule.forRoot(),
     NbMenuModule.forRoot(),
     NbDatepickerModule.forRoot(),

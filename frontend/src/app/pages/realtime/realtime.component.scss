@@ -1,16 +1,293 @@
-@import '../../@theme/styles/themes';
+// src/app/pages/realtime/realtime.component.scss
+@import '@nebular/theme/styles/theming';
 
-@include nb-install-component() {
-  ngx-charts-line-chart,
-  ngx-charts-bar-vertical {
-    display: block;
-    width: 100%;
-    height: 20rem;
-  }
-
-  .button-container {
+:host {
+  display: block;
+  
+  // Header section styling
+  .monitoring-status {
     display: flex;
-    justify-content: flex-end;
-    margin-bottom: 1rem;
+    align-items: center;
+    flex-direction: column;
+    text-align: right;
+    
+    @media (max-width: 768px) {
+      flex-direction: row;
+      text-align: left;
+      margin-top: 1rem;
+    }
+    
+    nb-badge {
+      margin-bottom: 0.25rem;
+      
+      @media (max-width: 768px) {
+        margin-bottom: 0;
+        margin-right: 0.5rem;
+      }
+    }
+  }
+  
+  // Summary cards styling
+  .summary-card {
+    height: 180px;
+    margin-bottom: 1.5rem;
+    transition: transform 0.2s ease-in-out;
+    
+    &:hover {
+      transform: translateY(-2px);
+    }
+    
+    nb-card-header {
+      padding: 1rem 1.25rem 0.5rem;
+      border-bottom: none;
+      
+      .d-flex {
+        align-items: center;
+        
+        .widget-icon {
+          font-size: 1.5rem;
+          margin-right: 0.75rem;
+          opacity: 0.8;
+        }
+        
+        span {
+          font-weight: 600;
+          font-size: 0.9rem;
+        }
+      }
+    }
+    
+    nb-card-body {
+      padding: 0.5rem 1.25rem 1rem;
+      
+      .summary-value {
+        position: relative;
+        
+        .value {
+          font-size: 2.2rem;
+          font-weight: 700;
+          display: block;
+          margin-bottom: 0.75rem;
+          line-height: 1;
+        }
+        
+        nb-progress-bar {
+          margin-bottom: 0.5rem;
+        }
+        
+        .metric-details {
+          margin-top: 0.5rem;
+        }
+        
+        .disk-stats,
+        .network-stats {
+          margin-bottom: 0.75rem;
+          
+          .stat {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.25rem;
+            
+            .label {
+              font-size: 0.8rem;
+              color: var(--text-hint-color);
+              font-weight: 500;
+            }
+            
+            .value {
+              font-weight: 600;
+              font-size: 0.85rem;
+            }
+          }
+        }
+        
+        .status-badge {
+          position: absolute;
+          bottom: 0;
+          right: 0;
+        }
+      }
+    }
+  }
+  
+  // System overview styling
+  .system-overview {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    padding: 1rem 0;
+    
+    @media (max-width: 768px) {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+    }
+    
+    .overview-item {
+      display: flex;
+      align-items: center;
+      padding: 1rem;
+      background: var(--background-basic-color-2);
+      border-radius: var(--card-border-radius);
+      transition: background-color 0.2s ease-in-out;
+      
+      &:hover {
+        background: var(--background-basic-color-3);
+      }
+      
+      .overview-icon {
+        font-size: 2rem;
+        margin-right: 1rem;
+        color: var(--text-hint-color);
+        opacity: 0.8;
+      }
+      
+      .overview-content {
+        flex: 1;
+        
+        .overview-label {
+          font-size: 0.8rem;
+          color: var(--text-hint-color);
+          margin-bottom: 0.25rem;
+          font-weight: 500;
+        }
+        
+        .overview-value {
+          font-size: 1.1rem;
+          font-weight: 600;
+        }
+      }
+    }
+  }
+  
+  // Chart styling
+  .chart {
+    height: 320px;
+    width: 100%;
+  }
+  
+  nb-card {
+    margin-bottom: 1.5rem;
+    box-shadow: var(--card-shadow);
+    border: var(--card-border-width) var(--card-border-style) var(--card-border-color);
+    
+    nb-card-header {
+      border-bottom: 1px solid var(--separator);
+      
+      .chart-title {
+        font-weight: 600;
+        font-size: 1.1rem;
+        color: var(--text-basic-color);
+      }
+      
+      .realtime-badge {
+        display: flex;
+        align-items: center;
+        
+        .pulse-icon {
+          margin-right: 0.25rem;
+          animation: pulse 2s infinite;
+        }
+      }
+    }
+    
+    nb-card-body {
+      padding: 1.5rem;
+    }
+  }
+}
+
+// Animations
+@keyframes pulse {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+// Status colors
+.text-success {
+  color: var(--color-success-500) !important;
+}
+
+.text-warning {
+  color: var(--color-warning-500) !important;
+}
+
+.text-danger {
+  color: var(--color-danger-500) !important;
+}
+
+.text-info {
+  color: var(--color-info-500) !important;
+}
+
+.text-primary {
+  color: var(--color-primary-500) !important;
+}
+
+// Responsive design
+@media (max-width: 1200px) {
+  :host {
+    .summary-card {
+      height: auto;
+      min-height: 160px;
+    }
+    
+    .chart {
+      height: 280px;
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  :host {
+    .summary-card {
+      height: auto;
+      min-height: 140px;
+      margin-bottom: 1rem;
+      
+      nb-card-body {
+        .summary-value {
+          .value {
+            font-size: 1.8rem;
+          }
+        }
+      }
+    }
+    
+    .chart {
+      height: 250px;
+    }
+    
+    .system-overview {
+      .overview-item {
+        padding: 0.75rem;
+        
+        .overview-icon {
+          font-size: 1.5rem;
+          margin-right: 0.75rem;
+        }
+        
+        .overview-content {
+          .overview-value {
+            font-size: 1rem;
+          }
+        }
+      }
+    }
+  }
+}
+
+@media (max-width: 576px) {
+  :host {
+    .system-overview {
+      grid-template-columns: 1fr;
+    }
   }
 }

@@ -1,53 +1,303 @@
-<div class="container">
-  <h1>Real-time Monitoring</h1>
-  
-  <div class="row">
-    <div class="col-md-12">
-      <div class="card">
-        <div class="card-header">
-          CPU Usage (%)
-        </div>
-        <div class="card-body">
-          <div *ngIf="cpuData.length > 0" style="height: 300px;">
-            <ngx-charts-line-chart
-              [results]="cpuChartData"
-              [gradient]="true"
-              [xAxis]="true"
-              [yAxis]="true"
-              [legend]="true"
-              [showXAxisLabel]="true"
-              [showYAxisLabel]="true"
-              xAxisLabel="Time"
-              yAxisLabel="Usage (%)">
-            </ngx-charts-line-chart>
+<!-- src/app/pages/realtime/realtime.component.html -->
+<div class="row">
+  <div class="col-12">
+    <nb-card>
+      <nb-card-header>
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <h1>Real-time System Monitoring</h1>
+            <p class="text-hint mb-0">Live system performance metrics and resource utilization</p>
+          </div>
+          <div class="monitoring-status">
+            <nb-badge status="success" size="medium">
+              <nb-icon icon="activity-outline"></nb-icon>
+              Live
+            </nb-badge>
+            <small class="text-hint ml-2">Updated: {{ lastUpdateTime | date:'HH:mm:ss' }}</small>
           </div>
         </div>
-      </div>
-    </div>
+      </nb-card-header>
+    </nb-card>
   </div>
-  
-  <div class="row mt-4">
-    <div class="col-md-12">
-      <div class="card">
-        <div class="card-header">
-          Memory Usage (GB)
+</div>
+
+<!-- Summary Widgets Row -->
+<div class="row">
+  <div class="col-xl-3 col-lg-6 col-md-6 col-sm-12">
+    <nb-card accent="info" class="summary-card">
+      <nb-card-header>
+        <div class="d-flex align-items-center">
+          <nb-icon icon="cpu-outline" class="widget-icon"></nb-icon>
+          <span>CPU Usage</span>
         </div>
-        <div class="card-body">
-          <div *ngIf="memoryData.length > 0" style="height: 300px;">
-            <ngx-charts-line-chart
-              [results]="memoryChartData"
-              [gradient]="true"
-              [xAxis]="true"
-              [yAxis]="true"
-              [legend]="true"
-              [showXAxisLabel]="true"
-              [showYAxisLabel]="true"
-              xAxisLabel="Time"
-              yAxisLabel="Usage (GB)">
-            </ngx-charts-line-chart>
+      </nb-card-header>
+      <nb-card-body>
+        <div class="summary-value">
+          <span class="value" [ngClass]="'text-' + getCpuStatusColor()">{{ currentCpuUsage }}%</span>
+          <nb-progress-bar 
+            [value]="currentCpuUsage" 
+            [status]="getCpuStatusColor()" 
+            size="small">
+          </nb-progress-bar>
+          <div class="metric-details">
+            <small class="text-hint">System Load: {{ systemLoad | number:'1.0-1' }}%</small>
           </div>
         </div>
-      </div>
-    </div>
+      </nb-card-body>
+    </nb-card>
+  </div>
+
+  <div class="col-xl-3 col-lg-6 col-md-6 col-sm-12">
+    <nb-card accent="success" class="summary-card">
+      <nb-card-header>
+        <div class="d-flex align-items-center">
+          <nb-icon icon="hard-drive-outline" class="widget-icon"></nb-icon>
+          <span>Memory Usage</span>
+        </div>
+      </nb-card-header>
+      <nb-card-body>
+        <div class="summary-value">
+          <span class="value" [ngClass]="'text-' + getMemoryStatusColor()">{{ currentMemoryUsage }}%</span>
+          <nb-progress-bar 
+            [value]="currentMemoryUsage" 
+            [status]="getMemoryStatusColor()" 
+            size="small">
+          </nb-progress-bar>
+          <div class="metric-details">
+            <small class="text-hint">Available RAM</small>
+          </div>
+        </div>
+      </nb-card-body>
+    </nb-card>
+  </div>
+
+  <div class="col-xl-3 col-lg-6 col-md-6 col-sm-12">
+    <nb-card accent="warning" class="summary-card">
+      <nb-card-header>
+        <div class="d-flex align-items-center">
+          <nb-icon icon="save-outline" class="widget-icon"></nb-icon>
+          <span>Disk Activity</span>
+        </div>
+      </nb-card-header>
+      <nb-card-body>
+        <div class="summary-value">
+          <div class="disk-stats">
+            <div class="stat">
+              <span class="label">Read:</span>
+              <span class="value text-info">{{ totalDiskRead | number:'1.0-0' }} KB/s</span>
+            </div>
+            <div class="stat">
+              <span class="label">Write:</span>
+              <span class="value text-warning">{{ totalDiskWrite | number:'1.0-0' }} KB/s</span>
+            </div>
+          </div>
+          <nb-badge [status]="getStatusColor(diskStatus)" size="small" class="status-badge">
+            {{ diskStatus }}
+          </nb-badge>
+        </div>
+      </nb-card-body>
+    </nb-card>
+  </div>
+
+  <div class="col-xl-3 col-lg-6 col-md-6 col-sm-12">
+    <nb-card accent="primary" class="summary-card">
+      <nb-card-header>
+        <div class="d-flex align-items-center">
+          <nb-icon icon="wifi-outline" class="widget-icon"></nb-icon>
+          <span>Network Status</span>
+        </div>
+      </nb-card-header>
+      <nb-card-body>
+        <div class="summary-value">
+          <div class="network-stats">
+            <div class="stat">
+              <span class="label">Packets:</span>
+              <span class="value text-primary">{{ totalNetworkPackets | number:'1.0-0' }}</span>
+            </div>
+            <div class="stat">
+              <span class="label">Errors:</span>
+              <span class="value text-danger">{{ totalNetworkErrors }}</span>
+            </div>
+          </div>
+          <nb-badge [status]="getStatusColor(networkStatus)" size="small" class="status-badge">
+            {{ networkStatus }}
+          </nb-badge>
+        </div>
+      </nb-card-body>
+    </nb-card>
+  </div>
+</div>
+
+<!-- System Overview Row -->
+<div class="row">
+  <div class="col-12">
+    <nb-card>
+      <nb-card-header>
+        <span>System Overview</span>
+      </nb-card-header>
+      <nb-card-body>
+        <div class="system-overview">
+          <div class="overview-item">
+            <nb-icon icon="monitor-outline" class="overview-icon"></nb-icon>
+            <div class="overview-content">
+              <div class="overview-label">System Load</div>
+              <div class="overview-value" [ngClass]="'text-' + getSystemLoadColor()">
+                {{ systemLoad | number:'1.1-1' }}%
+              </div>
+            </div>
+          </div>
+          <div class="overview-item">
+            <nb-icon icon="layers-outline" class="overview-icon"></nb-icon>
+            <div class="overview-content">
+              <div class="overview-label">Active Processes</div>
+              <div class="overview-value text-info">{{ processCount }}</div>
+            </div>
+          </div>
+          <div class="overview-item">
+            <nb-icon icon="clock-outline" class="overview-icon"></nb-icon>
+            <div class="overview-content">
+              <div class="overview-label">Update Interval</div>
+              <div class="overview-value text-basic">5 seconds</div>
+            </div>
+          </div>
+          <div class="overview-item">
+            <nb-icon icon="trending-up-outline" class="overview-icon"></nb-icon>
+            <div class="overview-content">
+              <div class="overview-label">Data Points</div>
+              <div class="overview-value text-basic">{{ cpuData.length }}/50</div>
+            </div>
+          </div>
+        </div>
+      </nb-card-body>
+    </nb-card>
+  </div>
+</div>
+
+<!-- Charts Row 1: CPU and Memory -->
+<div class="row">
+  <div class="col-lg-6 col-md-12">
+    <nb-card>
+      <nb-card-header>
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <span class="chart-title">CPU Usage</span>
+            <small class="text-hint d-block">User and System CPU utilization</small>
+          </div>
+          <nb-badge status="info" size="small" class="realtime-badge">
+            <nb-icon icon="radio-outline" class="pulse-icon"></nb-icon>
+            Real-time
+          </nb-badge>
+        </div>
+      </nb-card-header>
+      <nb-card-body>
+        <div echarts [options]="cpuChartOption" class="chart"></div>
+      </nb-card-body>
+    </nb-card>
+  </div>
+
+  <div class="col-lg-6 col-md-12">
+    <nb-card>
+      <nb-card-header>
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <span class="chart-title">Memory Usage</span>
+            <small class="text-hint d-block">Used and available memory</small>
+          </div>
+          <nb-badge status="success" size="small" class="realtime-badge">
+            <nb-icon icon="radio-outline" class="pulse-icon"></nb-icon>
+            Real-time
+          </nb-badge>
+        </div>
+      </nb-card-header>
+      <nb-card-body>
+        <div echarts [options]="memoryChartOption" class="chart"></div>
+      </nb-card-body>
+    </nb-card>
+  </div>
+</div>
+
+<!-- Charts Row 2: Disk Activity -->
+<div class="row">
+  <div class="col-lg-6 col-md-12">
+    <nb-card>
+      <nb-card-header>
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <span class="chart-title">Disk Read Activity</span>
+            <small class="text-hint d-block">Read operations across all disks</small>
+          </div>
+          <nb-badge status="warning" size="small" class="realtime-badge">
+            <nb-icon icon="radio-outline" class="pulse-icon"></nb-icon>
+            Real-time
+          </nb-badge>
+        </div>
+      </nb-card-header>
+      <nb-card-body>
+        <div echarts [options]="diskReadChartOption" class="chart"></div>
+      </nb-card-body>
+    </nb-card>
+  </div>
+
+  <div class="col-lg-6 col-md-12">
+    <nb-card>
+      <nb-card-header>
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <span class="chart-title">Disk Write Activity</span>
+            <small class="text-hint d-block">Write operations across all disks</small>
+          </div>
+          <nb-badge status="danger" size="small" class="realtime-badge">
+            <nb-icon icon="radio-outline" class="pulse-icon"></nb-icon>
+            Real-time
+          </nb-badge>
+        </div>
+      </nb-card-header>
+      <nb-card-body>
+        <div echarts [options]="diskWriteChartOption" class="chart"></div>
+      </nb-card-body>
+    </nb-card>
+  </div>
+</div>
+
+<!-- Charts Row 3: Network Activity -->
+<div class="row">
+  <div class="col-lg-6 col-md-12">
+    <nb-card>
+      <nb-card-header>
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <span class="chart-title">Network Packets</span>
+            <small class="text-hint d-block">Input and output packet rates</small>
+          </div>
+          <nb-badge status="primary" size="small" class="realtime-badge">
+            <nb-icon icon="radio-outline" class="pulse-icon"></nb-icon>
+            Real-time
+          </nb-badge>
+        </div>
+      </nb-card-header>
+      <nb-card-body>
+        <div echarts [options]="networkPacketsChartOption" class="chart"></div>
+      </nb-card-body>
+    </nb-card>
+  </div>
+
+  <div class="col-lg-6 col-md-12">
+    <nb-card>
+      <nb-card-header>
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <span class="chart-title">Network Errors</span>
+            <small class="text-hint d-block">Input and output error rates</small>
+          </div>
+          <nb-badge status="danger" size="small" class="realtime-badge">
+            <nb-icon icon="radio-outline" class="pulse-icon"></nb-icon>
+            Real-time
+          </nb-badge>
+        </div>
+      </nb-card-header>
+      <nb-card-body>
+        <div echarts [options]="networkErrorsChartOption" class="chart"></div>
+      </nb-card-body>
+    </nb-card>
   </div>
 </div>

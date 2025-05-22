@@ -1,66 +1,104 @@
-<div class="container">
-  <h1>Historical Monitoring Data</h1>
-  
-  <div class="row">
-    <div class="col-md-12">
-      <div class="card">
-        <div class="card-header">
-          Historical Metrics
-        </div>
-        <div class="card-body">
-          <div style="height: 300px;">
-            <ngx-charts-line-chart
-              [results]="chartData"
-              [gradient]="true"
-              [xAxis]="true"
-              [yAxis]="true"
-              [legend]="true"
-              [showXAxisLabel]="true"
-              [showYAxisLabel]="true"
-              xAxisLabel="Time"
-              yAxisLabel="Value">
-            </ngx-charts-line-chart>
+<!-- src/app/pages/historic/historic.component.html -->
+<div class="row">
+  <div class="col-12">
+    <nb-card>
+      <nb-card-header>
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <h1>Historical System Metrics</h1>
+            <p class="text-hint mb-0">Analyze system performance over time</p>
+          </div>
+          <!-- src/app/pages/historic/historic.component.html -->
+          <div class="date-range-picker">
+            <form [formGroup]="dateRange">
+              <nb-form-field>
+                <input
+                  nbInput
+                  placeholder="Start Date"
+                  formControlName="start"
+                  [nbDatepicker]="picker"
+                />
+              </nb-form-field>
+
+              <nb-form-field>
+                <input
+                  nbInput
+                  placeholder="End Date"
+                  formControlName="end"
+                  [nbDatepicker]="picker"
+                />
+              </nb-form-field>
+
+              <nb-datepicker #picker></nb-datepicker>
+
+              <button nbButton status="primary" (click)="loadHistoricalData()">
+                <nb-icon icon="refresh-outline"></nb-icon> Load Data
+              </button>
+            </form>
           </div>
         </div>
-      </div>
-    </div>
+      </nb-card-header>
+    </nb-card>
   </div>
-  
-  <div class="row mt-4">
-    <div class="col-md-12">
-      <div class="card">
-        <div class="card-header">
-          Process Information
-        </div>
-        <div class="card-body">
-          <table class="table table-striped">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Name</th>
-                <th>Status</th>
-                <th>CPU (%)</th>
-                <th>Memory (GB)</th>
-                <th>Start Time</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let process of processes">
-                <td>{{ process.id }}</td>
-                <td>{{ process.name }}</td>
-                <td>
-                  <span [ngClass]="{'badge bg-success': process.status === 'running', 'badge bg-danger': process.status === 'stopped'}">
-                    {{ process.status }}
-                  </span>
-                </td>
-                <td>{{ process.usage.cpu }}%</td>
-                <td>{{ process.usage.memory }} GB</td>
-                <td>{{ process.startTime | date:'medium' }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
+</div>
+
+<!-- Charts -->
+<div class="row">
+  <div class="col-lg-6 col-md-12">
+    <nb-card>
+      <nb-card-header>CPU Usage History</nb-card-header>
+      <nb-card-body>
+        <div echarts [options]="cpuChartOption" class="chart"></div>
+      </nb-card-body>
+    </nb-card>
+  </div>
+
+  <div class="col-lg-6 col-md-12">
+    <nb-card>
+      <nb-card-header>Memory Usage History</nb-card-header>
+      <nb-card-body>
+        <div echarts [options]="memoryChartOption" class="chart"></div>
+      </nb-card-body>
+    </nb-card>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-lg-6 col-md-12">
+    <nb-card>
+      <nb-card-header>Disk Read History</nb-card-header>
+      <nb-card-body>
+        <div echarts [options]="diskReadChartOption" class="chart"></div>
+      </nb-card-body>
+    </nb-card>
+  </div>
+
+  <div class="col-lg-6 col-md-12">
+    <nb-card>
+      <nb-card-header>Disk Write History</nb-card-header>
+      <nb-card-body>
+        <div echarts [options]="diskWriteChartOption" class="chart"></div>
+      </nb-card-body>
+    </nb-card>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-lg-6 col-md-12">
+    <nb-card>
+      <nb-card-header>Network Packets History</nb-card-header>
+      <nb-card-body>
+        <div echarts [options]="networkPacketsChartOption" class="chart"></div>
+      </nb-card-body>
+    </nb-card>
+  </div>
+
+  <div class="col-lg-6 col-md-12">
+    <nb-card>
+      <nb-card-header>Network Errors History</nb-card-header>
+      <nb-card-body>
+        <div echarts [options]="networkErrorsChartOption" class="chart"></div>
+      </nb-card-body>
+    </nb-card>
   </div>
 </div>
