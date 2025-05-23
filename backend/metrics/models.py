@@ -9,7 +9,7 @@ class VmstatMetric(models.Model):
     pi = models.IntegerField()
     po = models.IntegerField()
     fr = models.IntegerField()
-    interface_in = models.IntegerField(db_column='in')  # 'in' is a reserved word
+    interface_in = models.IntegerField(db_column='in')
     cs = models.IntegerField()
     us = models.FloatField()
     sy = models.FloatField()
@@ -17,6 +17,9 @@ class VmstatMetric(models.Model):
 
     class Meta:
         db_table = 'vmstat_metrics'
+        indexes = [
+            models.Index(fields=['timestamp'], name='vmstat_timestamp_idx'),
+        ]
 
 class IostatMetric(models.Model):
     timestamp = models.DateTimeField()
@@ -28,6 +31,9 @@ class IostatMetric(models.Model):
 
     class Meta:
         db_table = 'iostat_metrics'
+        indexes = [
+            models.Index(fields=['timestamp'], name='iostat_timestamp_idx'),
+        ]
 
 class NetstatMetric(models.Model):
     timestamp = models.DateTimeField()
@@ -36,13 +42,14 @@ class NetstatMetric(models.Model):
     ierrs = models.IntegerField()
     opkts = models.IntegerField()
     oerrs = models.IntegerField()
-    time  = models.IntegerField()
-    # Add other fields as necessary
-    # Example: ipkts = models.IntegerField()
+    time = models.IntegerField()
 
     class Meta:
         db_table = 'netstat_metrics'
-
+        indexes = [
+            models.Index(fields=['timestamp'], name='netstat_timestamp_idx'),
+            models.Index(fields=['interface'], name='netstat_interface_idx'),
+        ]
 
 class ProcessMetric(models.Model):
     timestamp = models.DateTimeField()
@@ -54,3 +61,6 @@ class ProcessMetric(models.Model):
 
     class Meta:
         db_table = 'process_metrics'
+        indexes = [
+            models.Index(fields=['timestamp'], name='process_timestamp_idx'),
+        ]
