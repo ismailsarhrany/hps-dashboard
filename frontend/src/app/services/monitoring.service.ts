@@ -1,215 +1,292 @@
+// src/app/services/monitoring.service.ts
 import { Injectable } from '@angular/core';
-import { Observable, of, BehaviorSubject } from 'rxjs';
-import { HttpClient } from '@angular/common/http';
-import { catchError, map } from 'rxjs/operators';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { Observable, interval, BehaviorSubject } from 'rxjs';
+import { map, catchError } from 'rxjs/operators';
+import { of } from 'rxjs';
 
-export interface MetricData {
-  timestamp: Date;
-  value: number;
-  name: string;
-}
-
-export interface ProcessData {
-  id: number;
-  name: string;
-  status: string;
-  usage: {
-    cpu: number;
-    memory: number;
-  };
-  startTime: Date;
-}
-
-// Interface for vmstat metrics from API
-export interface VmstatMetric {
+// Data Interfaces
+export interface VmstatData {
   timestamp: string;
+  us: number;
+  sy: number;
+  idle: number;
+  avm: number;
   r: number;
   b: number;
-  avm: number;
   fre: number;
   pi: number;
   po: number;
   fr: number;
   interface_in: number;
   cs: number;
-  us: number;
-  sy: number;
-  idle: number;
+
 }
 
-// Interface for process metrics from API
-export interface ApiProcessMetric {
+export interface NetstatData {
+  timestamp: string;
+  interface: string;
+  ipkts: number;
+  ierrs: number;
+  opkts: number;
+  oerrs: number;
+  time: string;
+}
+
+export interface IostatData {
+  timestamp: string;
+  disk: string;
+  tps: number;
+  kb_read: number;
+  kb_wrtn: number;
+  service_time: number;
+
+}
+
+export interface ProcessData {
   timestamp: string;
   pid: number;
   user: string;
   cpu: number;
   mem: number;
   command: string;
+
+}
+
+export interface SystemSummary {
+  cpu_usage: number;
+  memory_usage: number;
+  disk_read: number;
+  disk_write: number;
+  network_packets: number;
+  network_errors: number;
+  system_load: number;
+  process_count: number;
+  uptime: number;
+}
+
+export interface ApiResponse<T> {
+  status: string;
+  data: T[];
+  timestamp: string;
+  count?: number;
+}
+
+export interface DateTimeRange {
+  start: string;
+  end: string;
 }
 
 @Injectable({
   providedIn: 'root'
 })
-export class MonitoringService {
-  private metricsSubject = new BehaviorSubject<MetricData[]>([]);
-  private processesSubject = new BehaviorSubject<ProcessData[]>([]);
-  private apiUrl = '/api/metrics';
-  
-  constructor(private http: HttpClient) {
-    // Initialize with data
-    this.refreshData();
-  }
+export class ApiService {
+  private readonly baseUrl = 'http://localhost:8000/api/metrics';
+  private realtimeSubject = new BehaviorSubject<any>(null);
+  private isMonitoring = false;
 
-  getMetricsData(): Observable<MetricData[]> {
-    return this.metricsSubject.asObservable();
-  }
+  constructor(private http: HttpClient) {}
 
-  getProcessData(): Observable<ProcessData[]> {
-    return this.processesSubject.asObservable();
-  }
-
-  refreshData() {
-    this.fetchRealtimeMetrics();
-    this.fetchProcessData();
-  }
-
-  private fetchRealtimeMetrics() {
-    this.http.get<VmstatMetric[]>(`${this.apiUrl}/realtime/?metric=vmstat`)
-      .pipe(
-        map(data => this.transformVmstatToMetrics(data)),
-        catchError(error => {
-          console.error('Error fetching metrics data:', error);
-          return this.getMockMetricsData();
-        })
-      )
-      .subscribe(transformedData => {
-        this.metricsSubject.next(transformedData);
+  // Realtime Data Methods
+  startRealtimeMonitoring(): Observable<any> {
+    if (!this.isMonitoring) {
+      this.isMonitoring = true;
+      interval(5000).subscribe(() => {
+        this.fetchRealtimeData().subscribe(data => {
+          this.realtimeSubject.next(data);
+        });
       });
-  }
-
-  private fetchProcessData() {
-    this.http.get<ApiProcessMetric[]>(`${this.apiUrl}/realtime/?metric=process`)
-      .pipe(
-        map(data => this.transformApiProcessesToProcessData(data)),
-        catchError(error => {
-          console.error('Error fetching process data:', error);
-          return this.getMockProcessData();
-        })
-      )
-      .subscribe(transformedData => {
-        this.processesSubject.next(transformedData);
-      });
-  }
-
-  private transformVmstatToMetrics(vmstatData: VmstatMetric[]): MetricData[] {
-    const result: MetricData[] = [];
-    
-    vmstatData.forEach(item => {
-      // CPU Usage metric (100 - idle%)
-      result.push({
-        timestamp: new Date(item.timestamp),
-        value: 100 - item.idle,
-        name: 'CPU Usage'
-      });
-      
-      // Memory Usage (using avm as approximate memory usage)
-      result.push({
-        timestamp: new Date(item.timestamp),
-        value: item.avm / 1024, // Convert to GB if necessary
-        name: 'Memory Usage (GB)'
-      });
-    });
-    
-    return result;
-  }
-
-  private transformApiProcessesToProcessData(apiProcesses: ApiProcessMetric[]): ProcessData[] {
-    return apiProcesses.map(proc => ({
-      id: proc.pid,
-      name: proc.command,
-      status: 'running', // Assuming all returned processes are running
-      usage: {
-        cpu: proc.cpu,
-        memory: proc.mem
-      },
-      startTime: new Date(proc.timestamp)
-    }));
-  }
-
-  // Fallback mock data generators
-  private getMockMetricsData(): Observable<MetricData[]> {
-    const metrics: MetricData[] = [];
-    const now = new Date();
-    
-    // CPU metrics
-    for (let i = 0; i < 24; i++) {
-      metrics.push({
-        timestamp: new Date(now.getTime() - (24 - i) * 3600000),
-        value: Math.random() * 100,
-        name: 'CPU Usage'
+      // Initial fetch
+      this.fetchRealtimeData().subscribe(data => {
+        this.realtimeSubject.next(data);
       });
     }
-    
-    // Memory metrics
-    for (let i = 0; i < 24; i++) {
-      metrics.push({
-        timestamp: new Date(now.getTime() - (24 - i) * 3600000),
-        value: Math.random() * 16,
-        name: 'Memory Usage (GB)'
-      });
-    }
-    
-    return of(metrics);
+    return this.realtimeSubject.asObservable();
   }
 
-  private getMockProcessData(): Observable<ProcessData[]> {
-    const now = new Date();
-    const processes: ProcessData[] = [
-      {
-        id: 1,
-        name: 'nginx',
-        status: 'running',
-        usage: { cpu: 2.5, memory: 1.2 },
-        startTime: new Date(now.getTime() - 86400000)
-      },
-      {
-        id: 2,
-        name: 'mongodb',
-        status: 'running',
-        usage: { cpu: 5.2, memory: 3.7 },
-        startTime: new Date(now.getTime() - 72000000)
-      },
-      {
-        id: 3,
-        name: 'node',
-        status: 'running',
-        usage: { cpu: 8.1, memory: 2.5 },
-        startTime: new Date(now.getTime() - 43200000)
-      },
-      {
-        id: 4,
-        name: 'postgres',
-        status: 'stopped',
-        usage: { cpu: 0, memory: 0 },
-        startTime: new Date(now.getTime() - 129600000)
-      }
-    ];
-    
-    return of(processes);
+  stopRealtimeMonitoring(): void {
+    this.isMonitoring = false;
   }
 
-  // Method for fetching historical data with date range
-  getHistoricalData(startDate: Date, endDate: Date): Observable<MetricData[]> {
-    const start = startDate.toISOString();
-    const end = endDate.toISOString();
-    
-    return this.http.get<VmstatMetric[]>(`${this.apiUrl}/historical/?metric=vmstat&start=${start}&end=${end}`)
+  private fetchRealtimeData(): Observable<ApiResponse<VmstatData>> {
+    const params = new HttpParams().set('metric', 'vmstat');
+    return this.http.get<ApiResponse<VmstatData>>(`${this.baseUrl}/realtime/`, { params })
       .pipe(
-        map(data => this.transformVmstatToMetrics(data)),
         catchError(error => {
-          console.error('Error fetching historical data:', error);
-          return this.getMockMetricsData();
+          console.error('Error fetching realtime data:', error);
+          return of({ status: 'error', data: [], timestamp: new Date().toISOString() });
         })
       );
+  }
+
+  getRealtimeVmstat(): Observable<ApiResponse<VmstatData>> {
+    return this.fetchRealtimeData();
+  }
+
+  getRealtimeNetstat(): Observable<ApiResponse<NetstatData>> {
+    const params = new HttpParams().set('metric', 'netstat');
+    return this.http.get<ApiResponse<NetstatData>>(`${this.baseUrl}/realtime/`, { params })
+      .pipe(
+        catchError(error => {
+          console.error('Error fetching realtime netstat:', error);
+          return of({ status: 'error', data: [], timestamp: new Date().toISOString() });
+        })
+      );
+  }
+
+  getRealtimeIostat(): Observable<ApiResponse<IostatData>> {
+    const params = new HttpParams().set('metric', 'iostat');
+    return this.http.get<ApiResponse<IostatData>>(`${this.baseUrl}/realtime/`, { params })
+      .pipe(
+        catchError(error => {
+          console.error('Error fetching realtime iostat:', error);
+          return of({ status: 'error', data: [], timestamp: new Date().toISOString() });
+        })
+      );
+  }
+
+  getRealtimeProcesses(): Observable<ApiResponse<ProcessData>> {
+    const params = new HttpParams().set('metric', 'process');
+    return this.http.get<ApiResponse<ProcessData>>(`${this.baseUrl}/realtime/`, { params })
+      .pipe(
+        catchError(error => {
+          console.error('Error fetching realtime process:', error);
+          return of({ status: 'error', data: [], timestamp: new Date().toISOString() });
+        })
+      );
+  }
+
+  // Historical Data Methods
+  getHistoricalVmstat(dateRange: DateTimeRange): Observable<ApiResponse<VmstatData>> {
+    const params = new HttpParams()
+      .set('metric', 'vmstat')
+      .set('start', dateRange.start)
+      .set('end', dateRange.end);
+    
+    return this.http.get<ApiResponse<VmstatData>>(`${this.baseUrl}/historical/`, { params })
+      .pipe(
+        catchError(error => {
+          console.error('Error fetching historical vmstat:', error);
+          return of({ status: 'error', data: [], timestamp: new Date().toISOString() });
+        })
+      );
+  }
+
+  getHistoricalNetstat(dateRange: DateTimeRange): Observable<ApiResponse<NetstatData>> {
+    const params = new HttpParams()
+      .set('metric', 'netstat')
+      .set('start', dateRange.start)
+      .set('end', dateRange.end);
+    
+    return this.http.get<ApiResponse<NetstatData>>(`${this.baseUrl}/historical/`, { params })
+      .pipe(
+        catchError(error => {
+          console.error('Error fetching historical netstat:', error);
+          return of({ status: 'error', data: [], timestamp: new Date().toISOString() });
+        })
+      );
+  }
+
+  getHistoricalIostat(dateRange: DateTimeRange): Observable<ApiResponse<IostatData>> {
+    const params = new HttpParams()
+      .set('metric', 'iostat')
+      .set('start', dateRange.start)
+      .set('end', dateRange.end);
+    
+    return this.http.get<ApiResponse<IostatData>>(`${this.baseUrl}/historical/`, { params })
+      .pipe(
+        catchError(error => {
+          console.error('Error fetching historical iostat:', error);
+          return of({ status: 'error', data: [], timestamp: new Date().toISOString() });
+        })
+      );
+  }
+
+  getHistoricalProcesses(dateRange: DateTimeRange, pid?: number): Observable<ApiResponse<ProcessData>> {
+    let params = new HttpParams()
+      .set('metric', 'process')
+      .set('start', dateRange.start)
+      .set('end', dateRange.end);
+    
+    if (pid) {
+      params = params.set('pid', pid.toString());
+    }
+    
+    return this.http.get<ApiResponse<ProcessData>>(`${this.baseUrl}/historical/`, { params })
+      .pipe(
+        catchError(error => {
+          console.error('Error fetching historical process:', error);
+          return of({ status: 'error', data: [], timestamp: new Date().toISOString() });
+        })
+      );
+  }
+
+  // Utility Methods
+  getProcessList(): Observable<ProcessData[]> {
+    return this.getRealtimeProcesses().pipe(
+      map(response => response.data || []),
+      map(process => process.filter(p => p.cpu > 0 || p.mem > 0))
+    );
+  }
+
+  calculateSystemSummary(vmstatData: VmstatData[], netstatData: NetstatData[], iostatData: IostatData[]): SystemSummary {
+    if (!vmstatData.length) {
+      return {
+        cpu_usage: 0,
+        memory_usage: 0,
+        disk_read: 0,
+        disk_write: 0,
+        network_packets: 0,
+        network_errors: 0,
+        system_load: 0,
+        process_count: 0,
+        uptime: 0
+      };
+    }
+
+    const latestVmstat = vmstatData[vmstatData.length - 1];
+    const cpuUsage = 100 - latestVmstat.idle;
+    const totalMemory = latestVmstat.avm + latestVmstat.fre;
+    const memoryUsage = totalMemory > 0 ? (latestVmstat.avm / totalMemory) * 100 : 0;
+
+    const totalDiskRead = iostatData.reduce((sum, data) => sum + data.kb_read, 0);
+    const totalDiskWrite = iostatData.reduce((sum, data) => sum + data.kb_wrtn, 0);
+
+    const totalNetworkPackets = netstatData.reduce((sum, data) => sum + data.ipkts + data.opkts, 0);
+    const totalNetworkErrors = netstatData.reduce((sum, data) => sum + data.ierrs + data.oerrs, 0);
+    return {
+      cpu_usage: Math.round(cpuUsage * 100) / 100,
+      memory_usage: Math.round(memoryUsage * 100) / 100,
+      disk_read: totalDiskRead,
+      disk_write: totalDiskWrite,
+      network_packets: totalNetworkPackets,
+      network_errors: totalNetworkErrors,
+      system_load: latestVmstat.r,
+      process_count: 0, // Will be updated by process data
+      uptime: 0
+    };
+  }
+
+  // Date/Time Utility Methods
+  formatDateTimeForApi(date: Date, time: string = '00:00:00'): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}T${time}`;
+  }
+
+  getCurrentDateTime(): string {
+    return new Date().toISOString();
+  }
+
+  getDateRange(days: number = 1): DateTimeRange {
+    const end = new Date();
+    const start = new Date();
+    start.setDate(start.getDate() - days);
+    
+    return {
+      start: start.toISOString(),
+      end: end.toISOString()
+    };
   }
 }

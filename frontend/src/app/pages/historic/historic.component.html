@@ -1,102 +1,374 @@
-<!-- src/app/pages/historic/historic.component.html -->
+<!-- src/app/pages/historic/historic.component.html - Improved version -->
 <div class="row">
   <div class="col-12">
     <nb-card>
       <nb-card-header>
-        <div class="d-flex justify-content-between align-items-center">
-          <div>
-            <h1>Historical System Metrics</h1>
-            <p class="text-hint mb-0">Analyze system performance over time</p>
+        <h5>Historical System Monitoring</h5>
+      </nb-card-header>
+      <nb-card-body>
+        
+        <!-- Date Range Form -->
+        <form [formGroup]="dateRangeForm" (ngSubmit)="onSubmit()" class="mb-4">
+          <div class="row">
+            <div class="col-md-3">
+              <label class="label">Start Date:</label>
+              <input 
+                type="date" 
+                formControlName="startDate" 
+                nbInput 
+                fullWidth
+                status="basic">
+            </div>
+            <div class="col-md-3">
+              <label class="label">Start Time:</label>
+              <input 
+                type="time" 
+                formControlName="startTime" 
+                nbInput 
+                fullWidth
+                status="basic">
+            </div>
+            <div class="col-md-3">
+              <label class="label">End Date:</label>
+              <input 
+                type="date" 
+                formControlName="endDate" 
+                nbInput 
+                fullWidth
+                status="basic">
+            </div>
+            <div class="col-md-3">
+              <label class="label">End Time:</label>
+              <input 
+                type="time" 
+                formControlName="endTime" 
+                nbInput 
+                fullWidth
+                status="basic">
+            </div>
           </div>
-          <form [formGroup]="dateRangeForm" (ngSubmit)="loadHistoricalData()" class="date-range-form">
-            <div class="d-flex align-items-center gap-2">
-              <input type="date" formControlName="startDate" class="form-control">
-              <span class="text-hint">to</span>
-              <input type="date" formControlName="endDate" class="form-control">
-              <button nbButton status="primary" size="small" [disabled]="loading">
-                <nb-icon *ngIf="loading" icon="loader-outline" class="spin"></nb-icon>
-                {{ loading ? 'Loading...' : 'Load Data' }}
+          
+          <div class="row mt-3">
+            <div class="col-12">
+              <button 
+                type="submit" 
+                nbButton 
+                status="primary" 
+                [disabled]="!dateRangeForm.valid || loading"
+                class="mr-2">
+                <nb-icon icon="search-outline" *ngIf="!loading"></nb-icon>
+                <nb-icon icon="loader-outline" *ngIf="loading" class="spin"></nb-icon>
+                Load Data
+              </button>
+              
+              <!-- Quick Selection Buttons -->
+              <button 
+                type="button" 
+                nbButton 
+                status="info" 
+                size="small" 
+                (click)="selectToday()"
+                class="mr-2">
+                Today
+              </button>
+              <button 
+                type="button" 
+                nbButton 
+                status="info" 
+                size="small" 
+                (click)="selectYesterday()"
+                class="mr-2">
+                Yesterday
+              </button>
+              <button 
+                type="button" 
+                nbButton 
+                status="info" 
+                size="small" 
+                (click)="selectLast24Hours()"
+                class="mr-2">
+                Last 24h
+              </button>
+              <button 
+                type="button" 
+                nbButton 
+                status="info" 
+                size="small" 
+                (click)="selectLastWeek()"
+                class="mr-2">
+                Last Week
+              </button>
+              <button 
+                type="button" 
+                nbButton 
+                status="info" 
+                size="small" 
+                (click)="selectLastMonth()">
+                Last Month
               </button>
             </div>
-          </form>
-        </div>
-      </nb-card-header>
-    </nb-card>
-  </div>
-</div>
+          </div>
+        </form>
 
-<!-- Charts Row 1: CPU and Memory -->
-<div class="row">
-  <div class="col-lg-6 col-md-12">
-    <nb-card>
-      <nb-card-header>
-        <span class="chart-title">CPU Usage History</span>
-      </nb-card-header>
-      <nb-card-body>
-        <div echarts [options]="cpuChartOption" class="chart"></div>
-      </nb-card-body>
-    </nb-card>
-  </div>
-
-  <div class="col-lg-6 col-md-12">
-    <nb-card>
-      <nb-card-header>
-        <span class="chart-title">Memory Usage History</span>
-      </nb-card-header>
-      <nb-card-body>
-        <div echarts [options]="memoryChartOption" class="chart"></div>
       </nb-card-body>
     </nb-card>
   </div>
 </div>
 
-<!-- Charts Row 2: Disk Activity -->
-<div class="row">
-  <div class="col-lg-6 col-md-12">
-    <nb-card>
-      <nb-card-header>
-        <span class="chart-title">Disk Read History</span>
-      </nb-card-header>
-      <nb-card-body>
-        <div echarts [options]="diskReadChartOption" class="chart"></div>
-      </nb-card-body>
-    </nb-card>
+<!-- Charts Section -->
+<div class="charts-section" *ngIf="!loading">
+  
+  <!-- CPU Usage Chart - Full Width -->
+  <div class="row">
+    <div class="col-12">
+      <nb-card class="chart-card">
+        <nb-card-header>
+          <h6 class="chart-title">
+            <nb-icon icon="cpu-outline" class="mr-2"></nb-icon>
+            CPU Usage Over Time
+          </h6>
+        </nb-card-header>
+        <nb-card-body>
+          <ngx-charts-line-chart
+            [view]="fullChartView"
+            [results]="cpuChartData"
+            [scheme]="cpuColorScheme"
+            [gradient]="gradient"
+            [xAxis]="showXAxis"
+            [yAxis]="showYAxis"
+            [legend]="showLegend"
+            [showXAxisLabel]="showXAxisLabel"
+            [showYAxisLabel]="showYAxisLabel"
+            [xAxisLabel]="cpuChartXAxisLabel"
+            [yAxisLabel]="cpuChartYAxisLabel"
+            [timeline]="false"
+            [autoScale]="autoScale"
+            [yScaleMax]="100"
+            [yAxisTickFormatting]="cpuValueFormatting"
+            [xAxisTickFormatting]="dateTickFormatting"
+            [curve]="'monotoneX'"
+            [animations]="false"
+            (select)="onSelect($event)"
+            (activate)="onActivate($event)"
+            (deactivate)="onDeactivate($event)">
+          </ngx-charts-line-chart>
+        </nb-card-body>
+      </nb-card>
+    </div>
   </div>
 
-  <div class="col-lg-6 col-md-12">
+  <!-- Memory Usage Chart - Full Width -->
+  <div class="row">
+    <div class="col-12">
+      <nb-card class="chart-card">
+        <nb-card-header>
+          <h6 class="chart-title">
+            <nb-icon icon="hard-drive-outline" class="mr-2"></nb-icon>
+            Memory Usage Over Time
+          </h6>
+        </nb-card-header>
+        <nb-card-body>
+          <ngx-charts-line-chart
+            [view]="fullChartView"
+            [results]="memoryChartData"
+            [scheme]="memoryColorScheme"
+            [gradient]="gradient"
+            [xAxis]="showXAxis"
+            [yAxis]="showYAxis"
+            [legend]="showLegend"
+            [showXAxisLabel]="showXAxisLabel"
+            [showYAxisLabel]="showYAxisLabel"
+            [xAxisLabel]="memoryChartXAxisLabel"
+            [yAxisLabel]="memoryChartYAxisLabel"
+            [timeline]="false"
+            [autoScale]="autoScale"
+            [yAxisTickFormatting]="memoryValueFormatting"
+            [xAxisTickFormatting]="dateTickFormatting"
+            [curve]="'monotoneX'"
+            [animations]="false"
+            (select)="onSelect($event)">
+          </ngx-charts-line-chart>
+        </nb-card-body>
+      </nb-card>
+    </div>
+  </div>
+
+  <!-- Disk I/O Charts Row -->
+  <div class="row">
+    <div class="col-12">
+      <nb-card class="chart-card">
+        <nb-card-header>
+          <h6 class="chart-title">
+            <nb-icon icon="download-outline" class="mr-2"></nb-icon>
+            Disk Read Activity
+          </h6>
+        </nb-card-header>
+        <nb-card-body>
+          <ngx-charts-line-chart
+            [view]="halfChartView"
+            [results]="diskReadChartData"
+            [scheme]="diskReadColorScheme"
+            [gradient]="gradient"
+            [xAxis]="showXAxis"
+            [yAxis]="showYAxis"
+            [legend]="showLegend"
+            [showXAxisLabel]="showXAxisLabel"
+            [showYAxisLabel]="showYAxisLabel"
+            [xAxisLabel]="diskReadChartXAxisLabel"
+            [yAxisLabel]="diskReadChartYAxisLabel"
+            [timeline]="false"
+            [autoScale]="autoScale"
+            [yAxisTickFormatting]="diskValueFormatting"
+            [xAxisTickFormatting]="dateTickFormatting"
+            [curve]="'monotoneX'"
+            [animations]="false"
+            (select)="onSelect($event)">
+          </ngx-charts-line-chart>
+        </nb-card-body>
+      </nb-card>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-12">
+      <nb-card class="chart-card">
+        <nb-card-header>
+          <h6 class="chart-title">
+            <nb-icon icon="upload-outline" class="mr-2"></nb-icon>
+            Disk Write Activity
+          </h6>
+        </nb-card-header>
+        <nb-card-body>
+          <ngx-charts-line-chart
+            [view]="halfChartView"
+            [results]="diskWriteChartData"
+            [scheme]="diskWriteColorScheme"
+            [gradient]="gradient"
+            [xAxis]="showXAxis"
+            [yAxis]="showYAxis"
+            [legend]="showLegend"
+            [showXAxisLabel]="showXAxisLabel"
+            [showYAxisLabel]="showYAxisLabel"
+            [xAxisLabel]="diskWriteChartXAxisLabel"
+            [yAxisLabel]="diskWriteChartYAxisLabel"
+            [timeline]="false"
+            [autoScale]="autoScale"
+            [yAxisTickFormatting]="diskValueFormatting"
+            [xAxisTickFormatting]="dateTickFormatting"
+            [curve]="'monotoneX'"
+            [animations]="false"
+            (select)="onSelect($event)">
+          </ngx-charts-line-chart>
+        </nb-card-body>
+      </nb-card>
+    </div>
+  </div>
+  
+
+  <!-- Network Charts Row -->
+  <div class="row">
+    <div class="col-12">
+      <nb-card class="chart-card">
+        <nb-card-header>
+          <h6 class="chart-title">
+            <nb-icon icon="wifi-outline" class="mr-2"></nb-icon>
+            Network Packet Traffic
+          </h6>
+        </nb-card-header>
+        <nb-card-body>
+          <ngx-charts-line-chart
+            [view]="halfChartView"
+            [results]="networkPacketsChartData"
+            [scheme]="networkPacketsColorScheme"
+            [gradient]="gradient"
+            [xAxis]="showXAxis"
+            [yAxis]="showYAxis"
+            [legend]="showLegend"
+            [showXAxisLabel]="showXAxisLabel"
+            [showYAxisLabel]="showYAxisLabel"
+            [xAxisLabel]="networkPacketsChartXAxisLabel"
+            [yAxisLabel]="networkPacketsChartYAxisLabel"
+            [timeline]="false"
+            [autoScale]="autoScale"
+            [yAxisTickFormatting]="networkValueFormatting"
+            [xAxisTickFormatting]="dateTickFormatting"
+            [curve]="'monotoneX'"
+            [animations]="false"
+            (select)="onSelect($event)">
+          </ngx-charts-line-chart>
+        </nb-card-body>
+      </nb-card>
+    </div>
+   </div>
+
+
+  <div class="row">
+    <div class="col-12">
+      <nb-card class="chart-card">
+        <nb-card-header>
+          <h6 class="chart-title">
+            <nb-icon icon="alert-triangle-outline" class="mr-2"></nb-icon>
+            Network Errors
+          </h6>
+        </nb-card-header>
+        <nb-card-body>
+          <ngx-charts-line-chart
+            [view]="halfChartView"
+            [results]="networkErrorsChartData"
+            [scheme]="networkErrorsColorScheme"
+            [gradient]="gradient"
+            [xAxis]="showXAxis"
+            [yAxis]="showYAxis"
+            [legend]="showLegend"
+            [showXAxisLabel]="showXAxisLabel"
+            [showYAxisLabel]="showYAxisLabel"
+            [xAxisLabel]="networkErrorsChartXAxisLabel"
+            [yAxisLabel]="networkErrorsChartYAxisLabel"
+            [timeline]="false"
+            [autoScale]="autoScale"
+            [yAxisTickFormatting]="networkValueFormatting"
+            [xAxisTickFormatting]="dateTickFormatting"
+            [curve]="'monotoneX'"
+            [animations]="false"
+            (select)="onSelect($event)">
+          </ngx-charts-line-chart>
+        </nb-card-body>
+      </nb-card>
+    </div>
+  </div>
+
+</div>
+
+<!-- Loading State -->
+<div class="row" *ngIf="loading">
+  <div class="col-12">
     <nb-card>
-      <nb-card-header>
-        <span class="chart-title">Disk Write History</span>
-      </nb-card-header>
-      <nb-card-body>
-        <div echarts [options]="diskWriteChartOption" class="chart"></div>
+      <nb-card-body class="loading-container">
+        <nb-spinner size="large"></nb-spinner>
+        <h6 class="mt-3">Loading historical data...</h6>
+        <p>Please wait while we fetch your system metrics.</p>
       </nb-card-body>
     </nb-card>
   </div>
 </div>
 
-<!-- Charts Row 3: Network Activity -->
-<div class="row">
-  <div class="col-lg-6 col-md-12">
+<!-- No Data State -->
+<div class="row" *ngIf="!loading && cpuChartData.length === 0">
+  <div class="col-12">
     <nb-card>
-      <nb-card-header>
-        <span class="chart-title">Network Packets History</span>
-      </nb-card-header>
-      <nb-card-body>
-        <div echarts [options]="networkPacketsChartOption" class="chart"></div>
-      </nb-card-body>
-    </nb-card>
-  </div>
-
-  <div class="col-lg-6 col-md-12">
-    <nb-card>
-      <nb-card-header>
-        <span class="chart-title">Network Errors History</span>
-      </nb-card-header>
-      <nb-card-body>
-        <div echarts [options]="networkErrorsChartOption" class="chart"></div>
+      <nb-card-body class="no-data-container">
+        <nb-icon 
+          icon="bar-chart-outline" 
+          status="info" 
+          [options]="{width: '64px', height: '64px'}"
+          class="no-data-icon">
+        </nb-icon>
+        <h6 class="no-data-title">No Data Available</h6>
+        <p class="no-data-message">
+          No monitoring data found for the selected time range.<br>
+          Please try selecting a different date range or check if monitoring is active.
+        </p>
       </nb-card-body>
     </nb-card>
   </div>
 </div>
-

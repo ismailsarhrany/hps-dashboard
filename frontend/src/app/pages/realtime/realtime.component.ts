@@ -2,7 +2,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { NbThemeService } from '@nebular/theme';
-import { MockMonitoringService, VmstatData, NetstatData, IostatData, ProcessData } from '../../services/mock-monitoring.service';
+import { ApiService, VmstatData, NetstatData, IostatData, ProcessData, SystemSummary } from '../../services/monitoring.service';
 
 @Component({
   selector: 'ngx-realtime',
@@ -12,7 +12,10 @@ import { MockMonitoringService, VmstatData, NetstatData, IostatData, ProcessData
 export class RealtimeComponent implements OnInit, OnDestroy {
   
   private dataSubscription: Subscription;
-  private summarySubscription: Subscription;
+  private vmstatSubscription: Subscription;
+  private netstatSubscription: Subscription;
+  private iostatSubscription: Subscription;
+  private processSubscription: Subscription;
   private colors: any;
   private echartTheme: any;
 
@@ -49,7 +52,7 @@ export class RealtimeComponent implements OnInit, OnDestroy {
 
   constructor(
     private theme: NbThemeService,
-    private monitoringService: MockMonitoringService
+    private apiService: ApiService
   ) {}
 
   ngOnInit() {
@@ -57,17 +60,119 @@ export class RealtimeComponent implements OnInit, OnDestroy {
       this.colors = config.variables;
       this.echartTheme = config.name;
       this.initializeCharts();
-      this.subscribeToRealtimeData();
-      this.subscribeToSystemSummary();
+      this.startRealtimeMonitoring();
     });
   }
 
   ngOnDestroy() {
+    this.stopAllSubscriptions();
+    this.apiService.stopRealtimeMonitoring();
+  }
+
+  private stopAllSubscriptions() {
     if (this.dataSubscription) {
       this.dataSubscription.unsubscribe();
     }
-    if (this.summarySubscription) {
-      this.summarySubscription.unsubscribe();
+    if (this.vmstatSubscription) {
+      this.vmstatSubscription.unsubscribe();
+    }
+    if (this.netstatSubscription) {
+      this.netstatSubscription.unsubscribe();
+    }
+    if (this.iostatSubscription) {
+      this.iostatSubscription.unsubscribe();
+    }
+    if (this.processSubscription) {
+      this.processSubscription.unsubscribe();
+    }
+  }
+
+  private startRealtimeMonitoring() {
+    // Start the realtime monitoring service
+
+    // Subscribe to individual metric streams
+  this.vmstatSubscription = this.apiService.getRealtimeVmstat().subscribe(dataArray => {
+  // Vérifier si dataArray est bien un tableau et contient des éléments
+    if (Array.isArray(dataArray) && dataArray.length > 0) {
+      this.processVmstatData(dataArray);
+  }
+});
+
+
+  this.netstatSubscription = this.apiService.getRealtimeNetstat().subscribe(dataArray => {
+    if (Array.isArray(dataArray) && dataArray.length > 0) {
+      this.processNetstatData(dataArray);
+   }
+  });
+
+  this.iostatSubscription = this.apiService.getRealtimeIostat().subscribe(dataArray => {
+    if (Array.isArray(dataArray) && dataArray.length > 0) {
+      this.processIostatData(dataArray);
+    }
+  });
+
+
+  this.processSubscription = this.apiService.getRealtimeProcesses().subscribe(dataArray => {
+      if (Array.isArray(dataArray)) { // Pas besoin de vérifier length > 0 ici
+      this.processCount = dataArray.length;
+    } 
+  });}
+
+
+  private processVmstatData(data: VmstatData[]) {
+    if (data && data.length > 0) {
+      this.cpuData.push(...data);
+      this.memoryData.push(...data);
+      
+      // Calculate current CPU and memory usage from latest data
+      const latest = data[data.length - 1];
+      this.currentCpuUsage = Math.round((100 - latest.idle) * 100) / 100;
+      
+      const totalMemory = latest.avm + latest.fre;
+      this.currentMemoryUsage = totalMemory > 0 ? Math.round((latest.avm / totalMemory) * 100 * 100) / 100 : 0;
+      this.systemLoad = latest.r;
+      
+      this.trimDataArrays();
+      this.updateCharts();
+    }
+  }
+
+  private processNetstatData(data: NetstatData[]) {
+    if (data && data.length > 0) {
+      this.networkPacketsData.push(...data);
+      this.networkErrorsData.push(...data);
+      
+      // Calculate totals
+      this.totalNetworkPackets = data.reduce((sum, item) => sum + item.ipkts + item.opkts, 0);
+      this.totalNetworkErrors = data.reduce((sum, item) => sum + item.ierrs + item.oerrs, 0);
+      
+      // Determine network status
+      this.networkStatus = this.totalNetworkErrors > 0 ? 'Errors Detected' : 'Active';
+      
+      this.trimDataArrays();
+      this.updateCharts();
+    }
+  }
+
+  private processIostatData(data: IostatData[]) {
+    if (data && data.length > 0) {
+      this.diskReadData.push(...data);
+      this.diskWriteData.push(...data);
+      
+      // Calculate totals
+      this.totalDiskRead = data.reduce((sum, item) => sum + item.kb_read, 0);
+      this.totalDiskWrite = data.reduce((sum, item) => sum + item.kb_wrtn, 0);
+      
+      // Determine disk status based on activity
+      const totalActivity = this.totalDiskRead + this.totalDiskWrite;
+      if (totalActivity > 10000) {
+        this.diskStatus = 'High Load';
+      } else {
+        this.diskStatus = 'Normal';
+      }
+      
+      this.trimDataArrays();
+      this.updateCharts();
     }
   }
 
@@ -285,49 +390,6 @@ export class RealtimeComponent implements OnInit, OnDestroy {
         itemStyle: { color: '#ff6b6b' }
       }]
     };
-  }
-
-  private subscribeToRealtimeData() {
-    this.dataSubscription = this.monitoringService.getRealtimeMetrics().subscribe(data => {
-      this.lastUpdateTime = new Date();
-      
-      // Update data arrays
-      if (data.vmstat && data.vmstat.length > 0) {
-        this.cpuData.push(...data.vmstat);
-        this.memoryData.push(...data.vmstat);
-      }
-
-      if (data.iostat && data.iostat.length > 0) {
-        this.diskReadData.push(...data.iostat);
-        this.diskWriteData.push(...data.iostat);
-      }
-
-      if (data.netstat && data.netstat.length > 0) {
-        this.networkPacketsData.push(...data.netstat);
-        this.networkErrorsData.push(...data.netstat);
-      }
-
-      // Keep only last 50 points for performance
-      this.trimDataArrays();
-
-      // Update charts
-      this.updateCharts();
-    });
-  }
-
-  private subscribeToSystemSummary() {
-    this.summarySubscription = this.monitoringService.getSystemSummary().subscribe(summary => {
-      this.currentCpuUsage = summary.cpu.usage;
-      this.currentMemoryUsage = summary.memory.usage_percent;
-      this.totalDiskRead = Math.round(summary.disk.total_read);
-      this.totalDiskWrite = Math.round(summary.disk.total_write);
-      this.totalNetworkPackets = summary.network.total_packets;
-      this.totalNetworkErrors = summary.network.total_errors;
-      this.diskStatus = summary.disk.status;
-      this.networkStatus = summary.network.status;
-      this.processCount = summary.processes.total;
-      this.systemLoad = summary.cpu.usage + (summary.memory.usage_percent / 4); // Combined load metric
-    });
   }
 
   private trimDataArrays() {

@@ -14,7 +14,7 @@ import { HistoricModule } from './historic/historic.module';
 import { ProcessModule } from './process/process.module';
 import { PredictionModule } from './prediction/prediction.module';
 
-import { MonitoringService } from '../services/monitoring.service';
+import { ApiService } from '../services/monitoring.service';
 
 @NgModule({
   imports: [
@@ -36,7 +36,7 @@ import { MonitoringService } from '../services/monitoring.service';
     PagesComponent,
   ],
   providers: [
-    MonitoringService
+    ApiService
   ]
 })
 export class PagesModule {

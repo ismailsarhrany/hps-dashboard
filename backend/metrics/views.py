@@ -22,7 +22,7 @@ def get_metric_model(metric):
 
 class RealtimeMetricsView(View):
     """
-    API endpoint to get the last 15 minutes of data for a given metric.
+    API endpoint to get the last 1 minutes of data for a given metric.
     """
     def get(self, request):
         metric = request.GET.get('metric')
@@ -35,7 +35,7 @@ class RealtimeMetricsView(View):
             }, status=400)
 
         now = timezone.now()
-        start_time = now - timedelta(minutes=15)
+        start_time = now - timedelta(minutes=1)
         
         try:
             data = model.objects.filter(timestamp__gte=start_time).values()
@@ -55,6 +55,73 @@ class RealtimeMetricsView(View):
                 "details": str(e)
             }, status=500)
 
+class HistoricalMetricsView(View):
+    """
+    API endpoint to get historical data for a given metric within a time range.
+    Returns raw data without any aggregation.
+    """
+    def get(self, request):
+        metric = request.GET.get('metric')
+        start_str = request.GET.get('start')
+        end_str = request.GET.get('end')
+        
+        if not all([metric, start_str, end_str]):
+            return JsonResponse({
+                "error": "Missing required parameters",
+                "required": ["metric", "start", "end"]
+            }, status=400)
+            
+        try:
+            start = parse_datetime(start_str)
+            end = parse_datetime(end_str)
+            
+            if not start or not end:
+                return JsonResponse({
+                    "error": "Invalid datetime format. Use ISO format (e.g., 2024-01-01T00:00:00Z)"
+                }, status=400)
+            
+            model = get_metric_model(metric)
+            
+            if not model:
+                return JsonResponse({
+                    "error": "Invalid metric type",
+                    "available_metrics": list(metric_model_map.keys())
+                }, status=400)
+
+            if start > end:
+                return JsonResponse({
+                    "error": "Start time must be before end time"
+                }, status=400)
+
+            # Get raw data without any aggregation
+            data = model.objects.filter(
+                timestamp__range=(start, end)
+            ).order_by('timestamp').values()
+            
+            if not data.exists():
+                return JsonResponse({
+                    "message": f"No data available for metric '{metric}' in the specified time range",
+                    "start_time": start.isoformat(),
+                    "end_time": end.isoformat(),
+                    "count": 0
+                }, status=404)
+            
+            return JsonResponse({
+                "data": list(data),
+                "count": len(data),
+                "start_time": start.isoformat(),
+                "end_time": end.isoformat(),
+                "metric": metric
+            }, safe=False)
+            
+        except Exception as e:
+            return JsonResponse({
+                "error": "Processing error",
+                "details": str(e)
+            }, status=500)
+
+# Optional: Keep this class if you want to add aggregation functionality later
+# but with a separate endpoint
 class TimeAggregator:
     @staticmethod
     def get_aggregation(model, start, end):
@@ -78,43 +145,6 @@ class TimeAggregator:
                            avg_cpu=Avg('us') + Avg('sy'),
                            max_mem=Max('avm')
                        )
-
-class HistoricalMetricsView(View):
-    def get(self, request):
-        metric = request.GET.get('metric')
-        start_str = request.GET.get('start')
-        end_str = request.GET.get('end')
-        
-        if not all([metric, start_str, end_str]):
-            return JsonResponse({
-                "error": "Missing required parameters",
-                "required": ["metric", "start", "end"]
-            }, status=400)
-            
-        try:
-            start = parse_datetime(start_str)
-            end = parse_datetime(end_str)
-            model = metric_model_map.get(metric.lower())
-            
-            if not model:
-                return JsonResponse({
-                    "error": "Invalid metric type",
-                    "available_metrics": list(metric_model_map.keys())
-                }, status=400)
-
-            if start > end:
-                return JsonResponse({
-                    "error": "Start time must be before end time"
-                }, status=400)
-
-            data = TimeAggregator.get_aggregation(model, start, end)
-            return JsonResponse(list(data), safe=False)
-            
-        except Exception as e:
-            return JsonResponse({
-                "error": "Processing error",
-                "details": str(e)
-            }, status=500)
 
 # Keep the debug view for routing tests
 def debug_view(request):

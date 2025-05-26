@@ -1,48 +1,395 @@
 // src/app/pages/historic/historic.component.scss
-@import '@nebular/theme/styles/theming';
 
-:host {
-  display: block;
+// Main container styling
+.row {
+  margin-bottom: 1.5rem;
   
-  .date-range-form {
-    .form-control {
-      background: var(--form-control-background-color);
-      border: 1px solid var(--border-color);
-      border-radius: var(--border-radius);
-      padding: 0.375rem 0.75rem;
-      color: var(--text-color);
-    }
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
 
-    nb-button {
-      margin-left: 1rem;
-    }
-
-    .spin {
-      animation: spin 1s linear infinite;
+// Date range form styling
+.date-range-form {
+  .label {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    display: block;
+    color: nb-theme(text-basic-color);
+  }
+  
+  .form-control {
+    margin-bottom: 1rem;
+  }
+  
+  .quick-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 1rem;
+    
+    .btn {
+      flex: 0 0 auto;
     }
   }
+}
 
-  .chart {
-    height: 400px;
+// Charts section - Full width layout
+.charts-section {
+  width: 100%;
+  
+  // Make each chart row take full width
+  .row {
     width: 100%;
+    margin-left: 0;
+    margin-right: 0;
+    
+    .col-12, .col-md-6 {
+      padding-left: 0;
+      padding-right: 0;
+      width: 100%; // Force full width for all charts
+    }
   }
-
-  nb-card {
-    margin-bottom: 1.5rem;
+  
+  // Chart card styling
+  .chart-card {
+    margin-bottom: 2rem;
+    box-shadow: nb-theme(card-shadow);
+    border: 1px solid nb-theme(card-border-color);
+    border-radius: nb-theme(card-border-radius);
     
     nb-card-header {
-      border-bottom: 1px solid var(--separator);
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid nb-theme(card-separator-color);
+      background-color: nb-theme(card-header-background-color);
       
       .chart-title {
-        font-weight: 600;
+        margin: 0;
         font-size: 1.1rem;
+        font-weight: 600;
+        color: nb-theme(text-basic-color);
+        display: flex;
+        align-items: center;
+        
+        nb-icon {
+          margin-right: 0.5rem;
+          font-size: 1.2rem;
+        }
+      }
+    }
+    
+    nb-card-body {
+      padding: 1.5rem;
+      background-color: nb-theme(card-background-color);
+      
+      // NGX Charts container
+      ngx-charts-line-chart {
+        width: 100%;
+        height: 400px; // Increased height for better visibility
+        display: block;
+        
+        // Custom chart styling
+        ::ng-deep {
+          .line-chart {
+            width: 100% !important;
+            height: 100% !important;
+          }
+          
+          .chart {
+            width: 100% !important;
+            height: 100% !important;
+          }
+          
+          // Grid lines
+          .gridline-path {
+            stroke: nb-theme(border-basic-color-4);
+            stroke-opacity: 0.3;
+          }
+          
+          // Axis styling
+          .tick text {
+            fill: nb-theme(text-hint-color);
+            font-size: 12px;
+          }
+          
+          .axis-label {
+            fill: nb-theme(text-basic-color);
+            font-size: 13px;
+            font-weight: 500;
+          }
+          
+          // Legend styling
+          .legend {
+            .legend-labels {
+              .legend-label {
+                .legend-label-text {
+                  fill: nb-theme(text-basic-color);
+                  font-size: 12px;
+                }
+              }
+            }
+          }
+          
+          // Line styling
+          .line-series {
+            .line {
+              stroke-width: 2.5px;
+              fill: none;
+            }
+            
+            .line-highlight {
+              stroke-width: 3px;
+            }
+          }
+          
+          // Circle points
+          .line-series .circle {
+            r: 3;
+            stroke-width: 2;
+            
+            &:hover {
+              r: 5;
+              stroke-width: 3;
+            }
+          }
+          
+          // Tooltip styling
+          .tooltip-anchor {
+            .tooltip {
+              background-color: nb-theme(tooltip-background-color);
+              border: 1px solid nb-theme(tooltip-border-color);
+              border-radius: nb-theme(tooltip-border-radius);
+              color: nb-theme(tooltip-text-color);
+              padding: 0.75rem;
+              font-size: 12px;
+              box-shadow: nb-theme(tooltip-shadow);
+              
+              .tooltip-label {
+                font-weight: 600;
+                margin-bottom: 0.25rem;
+              }
+              
+              .tooltip-val {
+                font-family: monospace;
+              }
+            }
+          }
+          
+          // Data zoom controls (commented out but available)
+          /*
+          .data-zoom-controls {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 100;
+            display: flex;
+            gap: 0.5rem;
+            
+            .zoom-btn {
+              padding: 0.25rem 0.5rem;
+              background: nb-theme(button-basic-background-color);
+              border: 1px solid nb-theme(button-basic-border-color);
+              border-radius: 4px;
+              cursor: pointer;
+              font-size: 12px;
+              color: nb-theme(button-basic-text-color);
+              
+              &:hover {
+                background: nb-theme(button-basic-hover-background-color);
+              }
+              
+              &.active {
+                background: nb-theme(button-primary-background-color);
+                color: nb-theme(button-primary-text-color);
+                border-color: nb-theme(button-primary-border-color);
+              }
+            }
+          }
+          
+          .zoom-selection {
+            fill: nb-theme(color-primary-transparent-200);
+            stroke: nb-theme(color-primary-500);
+            stroke-width: 1;
+            stroke-dasharray: 3,3;
+          }
+          */
+        }
       }
     }
   }
 }
 
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+// Loading state styling
+.loading-container {
+  text-align: center;
+  padding: 3rem 2rem;
+  
+  nb-spinner {
+    margin: 0 auto 1rem;
+  }
+  
+  h6 {
+    color: nb-theme(text-basic-color);
+    margin-bottom: 0.5rem;
+  }
+  
+  p {
+    color: nb-theme(text-hint-color);
+    margin: 0;
+  }
 }
 
+// No data state styling
+.no-data-container {
+  text-align: center;
+  padding: 3rem 2rem;
+  
+  .no-data-icon {
+    margin-bottom: 1.5rem;
+    opacity: 0.6;
+  }
+  
+  .no-data-title {
+    color: nb-theme(text-basic-color);
+    margin-bottom: 1rem;
+    font-size: 1.25rem;
+  }
+  
+  .no-data-message {
+    color: nb-theme(text-hint-color);
+    margin: 0;
+    line-height: 1.5;
+  }
+}
+
+// Form button styling
+.form-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  
+  .primary-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    
+    nb-icon {
+      font-size: 1rem;
+      
+      &.spin {
+        animation: spin 1s linear infinite;
+      }
+    }
+  }
+  
+  .quick-select-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-left: auto;
+    
+    @media (max-width: 768px) {
+      margin-left: 0;
+      width: 100%;
+      justify-content: flex-start;
+    }
+  }
+}
+
+// Responsive adjustments
+@media (max-width: 768px) {
+  .charts-section {
+    .chart-card {
+      margin-bottom: 1.5rem;
+      
+      nb-card-body {
+        padding: 1rem;
+        
+        ngx-charts-line-chart {
+          height: 300px; // Smaller height on mobile
+        }
+      }
+    }
+  }
+  
+  .date-range-form {
+    .row {
+      .col-md-3 {
+        margin-bottom: 1rem;
+      }
+    }
+    
+    .quick-buttons {
+      justify-content: flex-start;
+      
+      .btn {
+        flex: 1 1 auto;
+        min-width: 80px;
+      }
+    }
+  }
+}
+
+@media (max-width: 576px) {
+  .charts-section {
+    .chart-card {
+      nb-card-header {
+        padding: 1rem;
+        
+        .chart-title {
+          font-size: 1rem;
+        }
+      }
+      
+      nb-card-body {
+        padding: 0.75rem;
+        
+        ngx-charts-line-chart {
+          height: 250px; // Even smaller on very small screens
+          
+          ::ng-deep {
+            .tick text {
+              font-size: 10px;
+            }
+            
+            .axis-label {
+              font-size: 11px;
+            }
+            
+            .legend .legend-labels .legend-label .legend-label-text {
+              font-size: 10px;
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+// Animation for loading spinner
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+// Print styles
+@media print {
+  .charts-section {
+    .chart-card {
+      break-inside: avoid;
+      margin-bottom: 1rem;
+      
+      nb-card-body {
+        ngx-charts-line-chart {
+          height: 300px;
+        }
+      }
+    }
+  }
+  
+  .date-range-form,
+  .form-buttons {
+    display: none;
+  }
+}
