@@ -1,4 +1,4 @@
-<!-- src/app/pages/historic/historic.component.html - Improved version -->
+<!-- src/app/pages/historic/historic.component.html - Updated for Split ECharts -->
 <div class="row">
   <div class="col-12">
     <nb-card>
@@ -118,220 +118,155 @@
 <!-- Charts Section -->
 <div class="charts-section" *ngIf="!loading">
   
-  <!-- CPU Usage Chart - Full Width -->
+  <!-- CPU Usage Chart (User & System) -->
   <div class="row">
     <div class="col-12">
       <nb-card class="chart-card">
         <nb-card-header>
           <h6 class="chart-title">
             <nb-icon icon="cpu-outline" class="mr-2"></nb-icon>
-            CPU Usage Over Time
+            CPU Usage (User & System)
           </h6>
         </nb-card-header>
         <nb-card-body>
-          <ngx-charts-line-chart
-            [view]="fullChartView"
-            [results]="cpuChartData"
-            [scheme]="cpuColorScheme"
-            [gradient]="gradient"
-            [xAxis]="showXAxis"
-            [yAxis]="showYAxis"
-            [legend]="showLegend"
-            [showXAxisLabel]="showXAxisLabel"
-            [showYAxisLabel]="showYAxisLabel"
-            [xAxisLabel]="cpuChartXAxisLabel"
-            [yAxisLabel]="cpuChartYAxisLabel"
-            [timeline]="false"
-            [autoScale]="autoScale"
-            [yScaleMax]="100"
-            [yAxisTickFormatting]="cpuValueFormatting"
-            [xAxisTickFormatting]="dateTickFormatting"
-            [curve]="'monotoneX'"
-            [animations]="false"
-            (select)="onSelect($event)"
-            (activate)="onActivate($event)"
-            (deactivate)="onDeactivate($event)">
-          </ngx-charts-line-chart>
+          <div echarts [options]="cpuChartOption" class="echart"></div>
         </nb-card-body>
       </nb-card>
     </div>
   </div>
 
-  <!-- Memory Usage Chart - Full Width -->
+  <!-- Memory Usage Chart (Used Only) -->
   <div class="row">
     <div class="col-12">
       <nb-card class="chart-card">
         <nb-card-header>
           <h6 class="chart-title">
             <nb-icon icon="hard-drive-outline" class="mr-2"></nb-icon>
-            Memory Usage Over Time
+            Used Memory Over Time
           </h6>
         </nb-card-header>
         <nb-card-body>
-          <ngx-charts-line-chart
-            [view]="fullChartView"
-            [results]="memoryChartData"
-            [scheme]="memoryColorScheme"
-            [gradient]="gradient"
-            [xAxis]="showXAxis"
-            [yAxis]="showYAxis"
-            [legend]="showLegend"
-            [showXAxisLabel]="showXAxisLabel"
-            [showYAxisLabel]="showYAxisLabel"
-            [xAxisLabel]="memoryChartXAxisLabel"
-            [yAxisLabel]="memoryChartYAxisLabel"
-            [timeline]="false"
-            [autoScale]="autoScale"
-            [yAxisTickFormatting]="memoryValueFormatting"
-            [xAxisTickFormatting]="dateTickFormatting"
-            [curve]="'monotoneX'"
-            [animations]="false"
-            (select)="onSelect($event)">
-          </ngx-charts-line-chart>
+          <div echarts [options]="memoryChartOption" class="echart"></div>
         </nb-card-body>
       </nb-card>
     </div>
   </div>
 
-  <!-- Disk I/O Charts Row -->
+  <!-- Disk Read Charts Row -->
   <div class="row">
-    <div class="col-12">
+    <div class="col-md-6">
       <nb-card class="chart-card">
         <nb-card-header>
           <h6 class="chart-title">
             <nb-icon icon="download-outline" class="mr-2"></nb-icon>
-            Disk Read Activity
+            Disk Read Rate (KB/s)
           </h6>
         </nb-card-header>
         <nb-card-body>
-          <ngx-charts-line-chart
-            [view]="halfChartView"
-            [results]="diskReadChartData"
-            [scheme]="diskReadColorScheme"
-            [gradient]="gradient"
-            [xAxis]="showXAxis"
-            [yAxis]="showYAxis"
-            [legend]="showLegend"
-            [showXAxisLabel]="showXAxisLabel"
-            [showYAxisLabel]="showYAxisLabel"
-            [xAxisLabel]="diskReadChartXAxisLabel"
-            [yAxisLabel]="diskReadChartYAxisLabel"
-            [timeline]="false"
-            [autoScale]="autoScale"
-            [yAxisTickFormatting]="diskValueFormatting"
-            [xAxisTickFormatting]="dateTickFormatting"
-            [curve]="'monotoneX'"
-            [animations]="false"
-            (select)="onSelect($event)">
-          </ngx-charts-line-chart>
+          <div echarts [options]="diskReadRateChartOption" class="echart"></div>
+        </nb-card-body>
+      </nb-card>
+    </div>
+    <div class="col-md-6">
+      <nb-card class="chart-card">
+        <nb-card-header>
+          <h6 class="chart-title">
+            <nb-icon icon="activity-outline" class="mr-2"></nb-icon> <!-- Changed icon -->
+            Disk Read Operations
+          </h6>
+        </nb-card-header>
+        <nb-card-body>
+          <div echarts [options]="diskReadOpsChartOption" class="echart"></div>
         </nb-card-body>
       </nb-card>
     </div>
   </div>
 
+  <!-- Disk Write Charts Row -->
   <div class="row">
-    <div class="col-12">
+    <div class="col-md-6">
       <nb-card class="chart-card">
         <nb-card-header>
           <h6 class="chart-title">
             <nb-icon icon="upload-outline" class="mr-2"></nb-icon>
-            Disk Write Activity
+            Disk Write Rate (KB/s)
           </h6>
         </nb-card-header>
         <nb-card-body>
-          <ngx-charts-line-chart
-            [view]="halfChartView"
-            [results]="diskWriteChartData"
-            [scheme]="diskWriteColorScheme"
-            [gradient]="gradient"
-            [xAxis]="showXAxis"
-            [yAxis]="showYAxis"
-            [legend]="showLegend"
-            [showXAxisLabel]="showXAxisLabel"
-            [showYAxisLabel]="showYAxisLabel"
-            [xAxisLabel]="diskWriteChartXAxisLabel"
-            [yAxisLabel]="diskWriteChartYAxisLabel"
-            [timeline]="false"
-            [autoScale]="autoScale"
-            [yAxisTickFormatting]="diskValueFormatting"
-            [xAxisTickFormatting]="dateTickFormatting"
-            [curve]="'monotoneX'"
-            [animations]="false"
-            (select)="onSelect($event)">
-          </ngx-charts-line-chart>
+          <div echarts [options]="diskWriteRateChartOption" class="echart"></div>
+        </nb-card-body>
+      </nb-card>
+    </div>
+    <div class="col-md-6">
+      <nb-card class="chart-card">
+        <nb-card-header>
+          <h6 class="chart-title">
+            <nb-icon icon="activity-outline" class="mr-2"></nb-icon> <!-- Changed icon -->
+            Disk Write Operations
+          </h6>
+        </nb-card-header>
+        <nb-card-body>
+          <div echarts [options]="diskWriteOpsChartOption" class="echart"></div>
         </nb-card-body>
       </nb-card>
     </div>
   </div>
   
-
-  <!-- Network Charts Row -->
+  <!-- Network Packets Charts Row -->
   <div class="row">
-    <div class="col-12">
+    <div class="col-md-6">
       <nb-card class="chart-card">
         <nb-card-header>
           <h6 class="chart-title">
-            <nb-icon icon="wifi-outline" class="mr-2"></nb-icon>
-            Network Packet Traffic
+            <nb-icon icon="arrow-downward-outline" class="mr-2"></nb-icon> <!-- Changed icon -->
+            Network Packets In
           </h6>
         </nb-card-header>
         <nb-card-body>
-          <ngx-charts-line-chart
-            [view]="halfChartView"
-            [results]="networkPacketsChartData"
-            [scheme]="networkPacketsColorScheme"
-            [gradient]="gradient"
-            [xAxis]="showXAxis"
-            [yAxis]="showYAxis"
-            [legend]="showLegend"
-            [showXAxisLabel]="showXAxisLabel"
-            [showYAxisLabel]="showYAxisLabel"
-            [xAxisLabel]="networkPacketsChartXAxisLabel"
-            [yAxisLabel]="networkPacketsChartYAxisLabel"
-            [timeline]="false"
-            [autoScale]="autoScale"
-            [yAxisTickFormatting]="networkValueFormatting"
-            [xAxisTickFormatting]="dateTickFormatting"
-            [curve]="'monotoneX'"
-            [animations]="false"
-            (select)="onSelect($event)">
-          </ngx-charts-line-chart>
+          <div echarts [options]="networkPacketsInChartOption" class="echart"></div>
         </nb-card-body>
       </nb-card>
     </div>
-   </div>
+    <div class="col-md-6">
+      <nb-card class="chart-card">
+        <nb-card-header>
+          <h6 class="chart-title">
+            <nb-icon icon="arrow-upward-outline" class="mr-2"></nb-icon> <!-- Changed icon -->
+            Network Packets Out
+          </h6>
+        </nb-card-header>
+        <nb-card-body>
+          <div echarts [options]="networkPacketsOutChartOption" class="echart"></div>
+        </nb-card-body>
+      </nb-card>
+    </div>
+  </div>
 
-
+  <!-- Network Errors Charts Row -->
   <div class="row">
-    <div class="col-12">
+    <div class="col-md-6">
       <nb-card class="chart-card">
         <nb-card-header>
           <h6 class="chart-title">
             <nb-icon icon="alert-triangle-outline" class="mr-2"></nb-icon>
-            Network Errors
+            Network Errors In
           </h6>
         </nb-card-header>
         <nb-card-body>
-          <ngx-charts-line-chart
-            [view]="halfChartView"
-            [results]="networkErrorsChartData"
-            [scheme]="networkErrorsColorScheme"
-            [gradient]="gradient"
-            [xAxis]="showXAxis"
-            [yAxis]="showYAxis"
-            [legend]="showLegend"
-            [showXAxisLabel]="showXAxisLabel"
-            [showYAxisLabel]="showYAxisLabel"
-            [xAxisLabel]="networkErrorsChartXAxisLabel"
-            [yAxisLabel]="networkErrorsChartYAxisLabel"
-            [timeline]="false"
-            [autoScale]="autoScale"
-            [yAxisTickFormatting]="networkValueFormatting"
-            [xAxisTickFormatting]="dateTickFormatting"
-            [curve]="'monotoneX'"
-            [animations]="false"
-            (select)="onSelect($event)">
-          </ngx-charts-line-chart>
+          <div echarts [options]="networkErrorsInChartOption" class="echart"></div>
+        </nb-card-body>
+      </nb-card>
+    </div>
+    <div class="col-md-6">
+      <nb-card class="chart-card">
+        <nb-card-header>
+          <h6 class="chart-title">
+            <nb-icon icon="alert-triangle-outline" class="mr-2"></nb-icon>
+            Network Errors Out
+          </h6>
+        </nb-card-header>
+        <nb-card-body>
+          <div echarts [options]="networkErrorsOutChartOption" class="echart"></div>
         </nb-card-body>
       </nb-card>
     </div>
@@ -353,7 +288,7 @@
 </div>
 
 <!-- No Data State -->
-<div class="row" *ngIf="!loading && cpuChartData.length === 0">
+<div class="row" *ngIf="!loading && vmstatData.length === 0 && netstatData.length === 0 && iostatData.length === 0">
   <div class="col-12">
     <nb-card>
       <nb-card-body class="no-data-container">
@@ -372,3 +307,4 @@
     </nb-card>
   </div>
 </div>
+

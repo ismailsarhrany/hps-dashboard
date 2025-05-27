@@ -1,4 +1,4 @@
-// src/app/pages/historic/historic.module.ts
+// src/app/pages/historic/historic.module.ts - Alternative approach
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule } from '@angular/forms';
@@ -10,11 +10,16 @@ import {
   NbInputModule,
   NbIconModule,
   NbSpinnerModule,
-  NbLayoutModule
+  NbLayoutModule,
+  NbTooltipModule,
+  NbAlertModule
 } from '@nebular/theme';
 
-// NGX Charts Modules
-import { NgxChartsModule } from '@swimlane/ngx-charts';
+// Simple ECharts Module import (no configuration)
+import { NgxEchartsModule } from 'ngx-echarts';
+
+// Theme Module
+import { ThemeModule } from '../../@theme/theme.module';
 
 // Components
 import { HistoricComponent } from './historic.component';
@@ -28,6 +33,7 @@ import { HistoricRoutingModule } from './historic-routing.module';
     CommonModule,
     ReactiveFormsModule,
     HistoricRoutingModule,
+    ThemeModule,
     
     // Nebular Modules
     NbCardModule,
@@ -36,9 +42,11 @@ import { HistoricRoutingModule } from './historic-routing.module';
     NbIconModule,
     NbSpinnerModule,
     NbLayoutModule,
+    NbTooltipModule,
+    NbAlertModule,
     
-    // NGX Charts
-    NgxChartsModule
+    // ECharts Module - Simple import
+    NgxEchartsModule
   ]
 })
 export class HistoricModule { }

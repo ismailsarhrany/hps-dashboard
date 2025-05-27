@@ -1,9 +1,14 @@
+// src/app/pages/historic/historic-routing.module.ts
 import { NgModule } from '@angular/core';
-import { Routes, RouterModule } from '@angular/router';
-
+import { RouterModule, Routes } from '@angular/router';
 import { HistoricComponent } from './historic.component';
 
-const routes: Routes = [{ path: '', component: HistoricComponent }];
+const routes: Routes = [
+  {
+    path: '',
+    component: HistoricComponent
+  }
+];
 
 @NgModule({
   imports: [RouterModule.forChild(routes)],

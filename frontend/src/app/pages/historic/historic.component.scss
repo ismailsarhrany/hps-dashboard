@@ -1,4 +1,4 @@
-// src/app/pages/historic/historic.component.scss
+// src/app/pages/historic/historic.component.scss - Updated for ECharts
 
 // Main container styling
 .row {
@@ -82,137 +82,24 @@
       padding: 1.5rem;
       background-color: nb-theme(card-background-color);
       
-      // NGX Charts container
-      ngx-charts-line-chart {
+      // ECharts container styling
+      .echart {
         width: 100%;
-        height: 400px; // Increased height for better visibility
+        height: 400px; // Fixed height for better visibility
         display: block;
+        border-radius: 4px;
+        overflow: hidden;
         
-        // Custom chart styling
-        ::ng-deep {
-          .line-chart {
-            width: 100% !important;
-            height: 100% !important;
-          }
-          
-          .chart {
-            width: 100% !important;
-            height: 100% !important;
-          }
-          
-          // Grid lines
-          .gridline-path {
-            stroke: nb-theme(border-basic-color-4);
-            stroke-opacity: 0.3;
-          }
-          
-          // Axis styling
-          .tick text {
-            fill: nb-theme(text-hint-color);
-            font-size: 12px;
-          }
-          
-          .axis-label {
-            fill: nb-theme(text-basic-color);
-            font-size: 13px;
-            font-weight: 500;
-          }
-          
-          // Legend styling
-          .legend {
-            .legend-labels {
-              .legend-label {
-                .legend-label-text {
-                  fill: nb-theme(text-basic-color);
-                  font-size: 12px;
-                }
-              }
-            }
-          }
-          
-          // Line styling
-          .line-series {
-            .line {
-              stroke-width: 2.5px;
-              fill: none;
-            }
-            
-            .line-highlight {
-              stroke-width: 3px;
-            }
-          }
-          
-          // Circle points
-          .line-series .circle {
-            r: 3;
-            stroke-width: 2;
-            
-            &:hover {
-              r: 5;
-              stroke-width: 3;
-            }
-          }
-          
-          // Tooltip styling
-          .tooltip-anchor {
-            .tooltip {
-              background-color: nb-theme(tooltip-background-color);
-              border: 1px solid nb-theme(tooltip-border-color);
-              border-radius: nb-theme(tooltip-border-radius);
-              color: nb-theme(tooltip-text-color);
-              padding: 0.75rem;
-              font-size: 12px;
-              box-shadow: nb-theme(tooltip-shadow);
-              
-              .tooltip-label {
-                font-weight: 600;
-                margin-bottom: 0.25rem;
-              }
-              
-              .tooltip-val {
-                font-family: monospace;
-              }
-            }
-          }
-          
-          // Data zoom controls (commented out but available)
-          /*
-          .data-zoom-controls {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            z-index: 100;
-            display: flex;
-            gap: 0.5rem;
-            
-            .zoom-btn {
-              padding: 0.25rem 0.5rem;
-              background: nb-theme(button-basic-background-color);
-              border: 1px solid nb-theme(button-basic-border-color);
-              border-radius: 4px;
-              cursor: pointer;
-              font-size: 12px;
-              color: nb-theme(button-basic-text-color);
-              
-              &:hover {
-                background: nb-theme(button-basic-hover-background-color);
-              }
-              
-              &.active {
-                background: nb-theme(button-primary-background-color);
-                color: nb-theme(button-primary-text-color);
-                border-color: nb-theme(button-primary-border-color);
-              }
-            }
-          }
-          
-          .zoom-selection {
-            fill: nb-theme(color-primary-transparent-200);
-            stroke: nb-theme(color-primary-500);
-            stroke-width: 1;
-            stroke-dasharray: 3,3;
-          }
-          */
+        // Ensure proper sizing
+        echarts-directive {
+          width: 100% !important;
+          height: 100% !important;
+          display: block;
+        }
+        
+        // ECharts canvas styling
+        canvas {
+          border-radius: 4px;
         }
       }
     }
@@ -297,6 +184,31 @@
   }
 }
 
+// ECharts specific styling adjustments
+.charts-section {
+  .chart-card {
+    // Ensure proper chart container styling
+    nb-card-body {
+      .echart {
+        // Make sure chart is properly sized
+        min-height: 400px;
+        position: relative;
+        
+        // Responsive height adjustments
+        @media (max-width: 768px) {
+          height: 300px;
+          min-height: 300px;
+        }
+        
+        @media (max-width: 576px) {
+          height: 250px;
+          min-height: 250px;
+        }
+      }
+    }
+  }
+}
+
 // Responsive adjustments
 @media (max-width: 768px) {
   .charts-section {
@@ -305,10 +217,6 @@
       
       nb-card-body {
         padding: 1rem;
-        
-        ngx-charts-line-chart {
-          height: 300px; // Smaller height on mobile
-        }
       }
     }
   }
@@ -344,24 +252,6 @@
       
       nb-card-body {
         padding: 0.75rem;
-        
-        ngx-charts-line-chart {
-          height: 250px; // Even smaller on very small screens
-          
-          ::ng-deep {
-            .tick text {
-              font-size: 10px;
-            }
-            
-            .axis-label {
-              font-size: 11px;
-            }
-            
-            .legend .legend-labels .legend-label .legend-label-text {
-              font-size: 10px;
-            }
-          }
-        }
       }
     }
   }
@@ -381,7 +271,7 @@
       margin-bottom: 1rem;
       
       nb-card-body {
-        ngx-charts-line-chart {
+        .echart {
           height: 300px;
         }
       }
@@ -391,5 +281,35 @@
   .date-range-form,
   .form-buttons {
     display: none;
+  }
+}
+
+// Theme-specific adjustments
+:host ::ng-deep {
+  // Ensure ECharts tooltip works well with Nebular themes
+  .echarts-tooltip {
+    z-index: 9999 !important;
+  }
+  
+  // Custom scrollbar for chart zoom areas (if needed)
+  .echart {
+    &::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    
+    &::-webkit-scrollbar-track {
+      background: nb-theme(background-basic-color-2);
+      border-radius: 3px;
+    }
+    
+    &::-webkit-scrollbar-thumb {
+      background: nb-theme(color-basic-600);
+      border-radius: 3px;
+      
+      &:hover {
+        background: nb-theme(color-basic-700);
+      }
+    }
   }
 }
