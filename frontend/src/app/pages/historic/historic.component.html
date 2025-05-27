@@ -1,4 +1,4 @@
-<!-- src/app/pages/historic/historic.component.html - Updated for Split ECharts -->
+<!-- src/app/pages/historic/historic.component.html - Updated for Loading Overlay -->
 <div class="row">
   <div class="col-12">
     <nb-card>
@@ -115,181 +115,177 @@
   </div>
 </div>
 
-<!-- Charts Section -->
-<div class="charts-section" *ngIf="!loading">
-  
-  <!-- CPU Usage Chart (User & System) -->
-  <div class="row">
-    <div class="col-12">
-      <nb-card class="chart-card">
-        <nb-card-header>
-          <h6 class="chart-title">
-            <nb-icon icon="cpu-outline" class="mr-2"></nb-icon>
-            CPU Usage (User & System)
-          </h6>
-        </nb-card-header>
-        <nb-card-body>
-          <div echarts [options]="cpuChartOption" class="echart"></div>
-        </nb-card-body>
-      </nb-card>
+<!-- Main Content Area (Charts + Loading Overlay) -->
+<div class="content-area">
+
+  <!-- Charts Section (Dimmed during loading) -->
+  <div class="charts-section" [class.loading-active]="loading">
+    
+    <!-- CPU Usage Chart (User & System) -->
+    <div class="row">
+      <div class="col-12">
+        <nb-card class="chart-card">
+          <nb-card-header>
+            <h6 class="chart-title">
+              <nb-icon icon="cpu-outline" class="mr-2"></nb-icon>
+              CPU Usage (User & System)
+            </h6>
+          </nb-card-header>
+          <nb-card-body>
+            <div echarts [options]="cpuChartOption" class="echart"></div>
+          </nb-card-body>
+        </nb-card>
+      </div>
     </div>
+
+    <!-- Memory Usage Chart (Used Only) -->
+    <div class="row">
+      <div class="col-12">
+        <nb-card class="chart-card">
+          <nb-card-header>
+            <h6 class="chart-title">
+              <nb-icon icon="hard-drive-outline" class="mr-2"></nb-icon>
+              Used Memory Over Time
+            </h6>
+          </nb-card-header>
+          <nb-card-body>
+            <div echarts [options]="memoryChartOption" class="echart"></div>
+          </nb-card-body>
+        </nb-card>
+      </div>
+    </div>
+
+    <!-- Disk Read Charts Row -->
+    <div class="row">
+      <div class="col-md-6">
+        <nb-card class="chart-card">
+          <nb-card-header>
+            <h6 class="chart-title">
+              <nb-icon icon="download-outline" class="mr-2"></nb-icon>
+              Disk Read Rate (KB/s)
+            </h6>
+          </nb-card-header>
+          <nb-card-body>
+            <div echarts [options]="diskReadRateChartOption" class="echart"></div>
+          </nb-card-body>
+        </nb-card>
+      </div>
+      <div class="col-md-6">
+        <nb-card class="chart-card">
+          <nb-card-header>
+            <h6 class="chart-title">
+              <nb-icon icon="activity-outline" class="mr-2"></nb-icon>
+              Disk Read Operations
+            </h6>
+          </nb-card-header>
+          <nb-card-body>
+            <div echarts [options]="diskReadOpsChartOption" class="echart"></div>
+          </nb-card-body>
+        </nb-card>
+      </div>
+    </div>
+
+    <!-- Disk Write Charts Row -->
+    <div class="row">
+      <div class="col-md-6">
+        <nb-card class="chart-card">
+          <nb-card-header>
+            <h6 class="chart-title">
+              <nb-icon icon="upload-outline" class="mr-2"></nb-icon>
+              Disk Write Rate (KB/s)
+            </h6>
+          </nb-card-header>
+          <nb-card-body>
+            <div echarts [options]="diskWriteRateChartOption" class="echart"></div>
+          </nb-card-body>
+        </nb-card>
+      </div>
+      <div class="col-md-6">
+        <nb-card class="chart-card">
+          <nb-card-header>
+            <h6 class="chart-title">
+              <nb-icon icon="activity-outline" class="mr-2"></nb-icon>
+              Disk Write Operations
+            </h6>
+          </nb-card-header>
+          <nb-card-body>
+            <div echarts [options]="diskWriteOpsChartOption" class="echart"></div>
+          </nb-card-body>
+        </nb-card>
+      </div>
+    </div>
+    
+    <!-- Network Packets Charts Row -->
+    <div class="row">
+      <div class="col-md-6">
+        <nb-card class="chart-card">
+          <nb-card-header>
+            <h6 class="chart-title">
+              <nb-icon icon="arrow-downward-outline" class="mr-2"></nb-icon>
+              Network Packets In
+            </h6>
+          </nb-card-header>
+          <nb-card-body>
+            <div echarts [options]="networkPacketsInChartOption" class="echart"></div>
+          </nb-card-body>
+        </nb-card>
+      </div>
+      <div class="col-md-6">
+        <nb-card class="chart-card">
+          <nb-card-header>
+            <h6 class="chart-title">
+              <nb-icon icon="arrow-upward-outline" class="mr-2"></nb-icon>
+              Network Packets Out
+            </h6>
+          </nb-card-header>
+          <nb-card-body>
+            <div echarts [options]="networkPacketsOutChartOption" class="echart"></div>
+          </nb-card-body>
+        </nb-card>
+      </div>
+    </div>
+
+    <!-- Network Errors Charts Row -->
+    <div class="row">
+      <div class="col-md-6">
+        <nb-card class="chart-card">
+          <nb-card-header>
+            <h6 class="chart-title">
+              <nb-icon icon="alert-triangle-outline" class="mr-2"></nb-icon>
+              Network Errors In
+            </h6>
+          </nb-card-header>
+          <nb-card-body>
+            <div echarts [options]="networkErrorsInChartOption" class="echart"></div>
+          </nb-card-body>
+        </nb-card>
+      </div>
+      <div class="col-md-6">
+        <nb-card class="chart-card">
+          <nb-card-header>
+            <h6 class="chart-title">
+              <nb-icon icon="alert-triangle-outline" class="mr-2"></nb-icon>
+              Network Errors Out
+            </h6>
+          </nb-card-header>
+          <nb-card-body>
+            <div echarts [options]="networkErrorsOutChartOption" class="echart"></div>
+          </nb-card-body>
+        </nb-card>
+      </div>
+    </div>
+
+  </div> <!-- End charts-section -->
+
+  <!-- Loading Overlay -->
+  <div class="loading-overlay" *ngIf="loading">
+    <nb-spinner size="large"></nb-spinner>
+    <!-- <h6 class="mt-3">Loading historical data...</h6> -->
+    <p>Please wait while we fetch your system metrics.</p>
   </div>
 
-  <!-- Memory Usage Chart (Used Only) -->
-  <div class="row">
-    <div class="col-12">
-      <nb-card class="chart-card">
-        <nb-card-header>
-          <h6 class="chart-title">
-            <nb-icon icon="hard-drive-outline" class="mr-2"></nb-icon>
-            Used Memory Over Time
-          </h6>
-        </nb-card-header>
-        <nb-card-body>
-          <div echarts [options]="memoryChartOption" class="echart"></div>
-        </nb-card-body>
-      </nb-card>
-    </div>
-  </div>
-
-  <!-- Disk Read Charts Row -->
-  <div class="row">
-    <div class="col-md-6">
-      <nb-card class="chart-card">
-        <nb-card-header>
-          <h6 class="chart-title">
-            <nb-icon icon="download-outline" class="mr-2"></nb-icon>
-            Disk Read Rate (KB/s)
-          </h6>
-        </nb-card-header>
-        <nb-card-body>
-          <div echarts [options]="diskReadRateChartOption" class="echart"></div>
-        </nb-card-body>
-      </nb-card>
-    </div>
-    <div class="col-md-6">
-      <nb-card class="chart-card">
-        <nb-card-header>
-          <h6 class="chart-title">
-            <nb-icon icon="activity-outline" class="mr-2"></nb-icon> <!-- Changed icon -->
-            Disk Read Operations
-          </h6>
-        </nb-card-header>
-        <nb-card-body>
-          <div echarts [options]="diskReadOpsChartOption" class="echart"></div>
-        </nb-card-body>
-      </nb-card>
-    </div>
-  </div>
-
-  <!-- Disk Write Charts Row -->
-  <div class="row">
-    <div class="col-md-6">
-      <nb-card class="chart-card">
-        <nb-card-header>
-          <h6 class="chart-title">
-            <nb-icon icon="upload-outline" class="mr-2"></nb-icon>
-            Disk Write Rate (KB/s)
-          </h6>
-        </nb-card-header>
-        <nb-card-body>
-          <div echarts [options]="diskWriteRateChartOption" class="echart"></div>
-        </nb-card-body>
-      </nb-card>
-    </div>
-    <div class="col-md-6">
-      <nb-card class="chart-card">
-        <nb-card-header>
-          <h6 class="chart-title">
-            <nb-icon icon="activity-outline" class="mr-2"></nb-icon> <!-- Changed icon -->
-            Disk Write Operations
-          </h6>
-        </nb-card-header>
-        <nb-card-body>
-          <div echarts [options]="diskWriteOpsChartOption" class="echart"></div>
-        </nb-card-body>
-      </nb-card>
-    </div>
-  </div>
-  
-  <!-- Network Packets Charts Row -->
-  <div class="row">
-    <div class="col-md-6">
-      <nb-card class="chart-card">
-        <nb-card-header>
-          <h6 class="chart-title">
-            <nb-icon icon="arrow-downward-outline" class="mr-2"></nb-icon> <!-- Changed icon -->
-            Network Packets In
-          </h6>
-        </nb-card-header>
-        <nb-card-body>
-          <div echarts [options]="networkPacketsInChartOption" class="echart"></div>
-        </nb-card-body>
-      </nb-card>
-    </div>
-    <div class="col-md-6">
-      <nb-card class="chart-card">
-        <nb-card-header>
-          <h6 class="chart-title">
-            <nb-icon icon="arrow-upward-outline" class="mr-2"></nb-icon> <!-- Changed icon -->
-            Network Packets Out
-          </h6>
-        </nb-card-header>
-        <nb-card-body>
-          <div echarts [options]="networkPacketsOutChartOption" class="echart"></div>
-        </nb-card-body>
-      </nb-card>
-    </div>
-  </div>
-
-  <!-- Network Errors Charts Row -->
-  <div class="row">
-    <div class="col-md-6">
-      <nb-card class="chart-card">
-        <nb-card-header>
-          <h6 class="chart-title">
-            <nb-icon icon="alert-triangle-outline" class="mr-2"></nb-icon>
-            Network Errors In
-          </h6>
-        </nb-card-header>
-        <nb-card-body>
-          <div echarts [options]="networkErrorsInChartOption" class="echart"></div>
-        </nb-card-body>
-      </nb-card>
-    </div>
-    <div class="col-md-6">
-      <nb-card class="chart-card">
-        <nb-card-header>
-          <h6 class="chart-title">
-            <nb-icon icon="alert-triangle-outline" class="mr-2"></nb-icon>
-            Network Errors Out
-          </h6>
-        </nb-card-header>
-        <nb-card-body>
-          <div echarts [options]="networkErrorsOutChartOption" class="echart"></div>
-        </nb-card-body>
-      </nb-card>
-    </div>
-  </div>
-
-</div>
-
-<!-- Loading State -->
-<div class="row" *ngIf="loading">
-  <div class="col-12">
-    <nb-card>
-      <nb-card-body class="loading-container">
-        <nb-spinner size="large"></nb-spinner>
-        <h6 class="mt-3">Loading historical data...</h6>
-        <p>Please wait while we fetch your system metrics.</p>
-      </nb-card-body>
-    </nb-card>
-  </div>
-</div>
-
-<!-- No Data State -->
-<div class="row" *ngIf="!loading && vmstatData.length === 0 && netstatData.length === 0 && iostatData.length === 0">
-  <div class="col-12">
+  <!-- No Data State (Shown when not loading and no data) -->
+  <div class="no-data-container-wrapper" *ngIf="!loading && vmstatData.length === 0 && netstatData.length === 0 && iostatData.length === 0">
     <nb-card>
       <nb-card-body class="no-data-container">
         <nb-icon 
@@ -306,5 +302,6 @@
       </nb-card-body>
     </nb-card>
   </div>
-</div>
+
+</div> <!-- End content-area -->
 

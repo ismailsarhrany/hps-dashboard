@@ -1,4 +1,8 @@
-// src/app/pages/historic/historic.component.scss - Updated for ECharts
+// src/app/pages/historic/historic.component.scss - Updated for Loading Overlay
+
+// Import Nebular theme functions
+@use "@nebular/theme/styles/theming" as *;
+@use "@nebular/theme/styles/themes/default" as *;
 
 // Main container styling
 .row {
@@ -34,9 +38,23 @@
   }
 }
 
+// Content Area - Relative positioning for overlay
+.content-area {
+  position: relative;
+  min-height: 300px; // Ensure it has some height even when empty initially
+}
+
 // Charts section - Full width layout
 .charts-section {
   width: 100%;
+  transition: opacity 0.3s ease-in-out; // Smooth transition for loading state
+
+  // Styles when loading is active
+  &.loading-active {
+    opacity: 0.4;
+    pointer-events: none; // Prevent interaction with charts during load
+    filter: blur(2px); // Optional: add a blur effect
+  }
   
   // Make each chart row take full width
   .row {
@@ -47,7 +65,7 @@
     .col-12, .col-md-6 {
       padding-left: 0;
       padding-right: 0;
-      width: 100%; // Force full width for all charts
+      // Removed width: 100% here, rely on bootstrap grid
     }
   }
   
@@ -91,11 +109,11 @@
         overflow: hidden;
         
         // Ensure proper sizing
-        echarts-directive {
-          width: 100% !important;
-          height: 100% !important;
-          display: block;
-        }
+        // ::ng-deep echarts-directive { // Use ::ng-deep carefully if needed
+        //   width: 100% !important;
+        //   height: 100% !important;
+        //   display: block;
+        // }
         
         // ECharts canvas styling
         canvas {
@@ -106,27 +124,43 @@
   }
 }
 
-// Loading state styling
-.loading-container {
+// Loading Overlay Styling
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background-color: rgba(nb-theme(background-basic-color-1), 0.8); // Semi-transparent background based on theme
+  z-index: 10;
+  border-radius: nb-theme(card-border-radius); // Match card radius
   text-align: center;
-  padding: 3rem 2rem;
-  
+  padding: 2rem;
+
   nb-spinner {
-    margin: 0 auto 1rem;
+    margin-bottom: 1rem;
   }
-  
+
   h6 {
     color: nb-theme(text-basic-color);
     margin-bottom: 0.5rem;
   }
-  
+
   p {
     color: nb-theme(text-hint-color);
     margin: 0;
   }
 }
 
-// No data state styling
+// No data state styling (wrapper and container)
+.no-data-container-wrapper {
+  margin-top: 1rem; // Add some space if it appears after the form
+}
+
 .no-data-container {
   text-align: center;
   padding: 3rem 2rem;
@@ -187,14 +221,11 @@
 // ECharts specific styling adjustments
 .charts-section {
   .chart-card {
-    // Ensure proper chart container styling
     nb-card-body {
       .echart {
-        // Make sure chart is properly sized
         min-height: 400px;
         position: relative;
         
-        // Responsive height adjustments
         @media (max-width: 768px) {
           height: 300px;
           min-height: 300px;
@@ -279,7 +310,8 @@
   }
   
   .date-range-form,
-  .form-buttons {
+  .form-buttons,
+  .loading-overlay { // Hide overlay in print
     display: none;
   }
 }
@@ -313,3 +345,4 @@
     }
   }
 }
+

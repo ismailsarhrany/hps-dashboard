@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'reports.apps.ReportsConfig',
     'rest_framework',  # Django REST framework
     'corsheaders',  # CORS headers
+    'channels',  # Django Channels for WebSockets
 ]
 
 MIDDLEWARE = [

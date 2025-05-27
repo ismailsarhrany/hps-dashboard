@@ -87,7 +87,7 @@ services:
       postgres:
         condition: service_healthy
       kafka:
-        condition: service_started
+        condition: service_started # Ou service_healthy si vous avez un healthcheck Kafka fiable
       redis:
         condition: service_healthy
     env_file:
@@ -96,18 +96,24 @@ services:
       REDIS_URL: redis://redis:6379/0
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       DEBUG: "True"
-    command: >
-      sh -c "python manage.py migrate &&
-             python manage.py create_kafka_topics &&
-             gunicorn --bind 0.0.0.0:8000 core.wsgi:application"
+    # Supprimez ou commentez l'ancienne commande Gunicorn/WSGI
+    # command: >
+    #   sh -c "python manage.py migrate &&
+    #          python manage.py create_kafka_topics &&
+    #          gunicorn --bind 0.0.0.0:8000 core.wsgi:application"
+    # La commande est maintenant définie par le CMD dans le Dockerfile
     networks:
       - app-network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 20s
+    # Le healthcheck peut nécessiter un ajustement si les migrations prennent du temps
+    # healthcheck:
+    #   test: ["CMD", "curl", "-f", "http://localhost:8000"]
+    #   interval: 30s
+    #   timeout: 10s
+    #   retries: 5
+    #   start_period: 60s # Augmenter potentiellement le start_period
+
+  # ... (autres services )
+
 
   # --- Kafka UI ---
   kafka-ui:
