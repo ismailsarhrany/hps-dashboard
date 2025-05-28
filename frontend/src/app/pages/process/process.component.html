@@ -8,6 +8,139 @@
             <h1>Process Monitoring</h1>
             <p class="text-hint mb-0">Track individual process resource consumption</p>
           </div>
+          <div class="monitoring-status">
+            <nb-badge status="success" size="medium">
+              <nb-icon icon="activity-outline"></nb-icon>
+              Live
+            </nb-badge>
+            <small class="text-hint ml-2">Updated: {{ lastUpdateTime | date:'HH:mm:ss' }}</small>
+          </div>
+        </div>
+      </nb-card-header>
+    </nb-card>
+  </div>
+</div>
+
+<!-- Process Table Section -->
+<div class="row">
+  <div class="col-12">
+    <nb-card>
+      <nb-card-header>
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <span class="chart-title">Active Processes</span>
+            <small class="text-hint d-block">Real-time process resource usage</small>
+          </div>
+          <nb-badge status="info" size="small" class="realtime-badge">
+            <nb-icon icon="radio-outline" class="pulse-icon"></nb-icon>
+            Real-time
+          </nb-badge>
+        </div>
+      </nb-card-header>
+      <nb-card-body>
+        <div class="table-responsive">
+          <table class="table process-table">
+            <thead>
+              <tr>
+                <th>PID</th>
+                <th>User</th>
+                <th>CPU %</th>
+                <th>Memory %</th>
+                <th>Command</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let process of activeProcesses" [class.high-usage]="process.cpu > 50 || process.mem > 50">
+                <td>{{ process.pid }}</td>
+                <td>{{ process.user }}</td>
+                <td>
+                  <div class="usage-cell">
+                    <span [ngClass]="getCpuStatusClass(process.cpu)">{{ process.cpu }}%</span>
+                    <nb-progress-bar [value]="process.cpu" [status]="getCpuStatus(process.cpu)" size="tiny"></nb-progress-bar>
+                  </div>
+                </td>
+                <td>
+                  <div class="usage-cell">
+                    <span [ngClass]="getMemStatusClass(process.mem)">{{ process.mem }}%</span>
+                    <nb-progress-bar [value]="process.mem" [status]="getMemStatus(process.mem)" size="tiny"></nb-progress-bar>
+                  </div>
+                </td>
+                <td class="command-cell">{{ process.command }}</td>
+                <td>
+                  <button nbButton ghost size="small" status="primary" (click)="selectProcess(process)">
+                    <nb-icon icon="bar-chart-outline"></nb-icon>
+                    Analyze
+                  </button>
+                </td>
+              </tr>
+              <tr *ngIf="activeProcesses.length === 0">
+                <td colspan="6" class="text-center py-4">
+                  <nb-icon icon="alert-circle-outline" status="warning"></nb-icon>
+                  <span class="ml-2">No active processes data available</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </nb-card-body>
+    </nb-card>
+  </div>
+</div>
+
+<!-- Top Processes Charts Row -->
+<div class="row">
+  <div class="col-lg-6 col-md-12">
+    <nb-card>
+      <nb-card-header>
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <span class="chart-title">Top CPU Consumers</span>
+            <small class="text-hint d-block">Processes using most CPU resources</small>
+          </div>
+          <nb-badge status="danger" size="small" class="realtime-badge">
+            <nb-icon icon="radio-outline" class="pulse-icon"></nb-icon>
+            Real-time
+          </nb-badge>
+        </div>
+      </nb-card-header>
+      <nb-card-body>
+        <div echarts [options]="topCpuChartOption" class="chart"></div>
+      </nb-card-body>
+    </nb-card>
+  </div>
+
+  <div class="col-lg-6 col-md-12">
+    <nb-card>
+      <nb-card-header>
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <span class="chart-title">Top Memory Consumers</span>
+            <small class="text-hint d-block">Processes using most memory resources</small>
+          </div>
+          <nb-badge status="warning" size="small" class="realtime-badge">
+            <nb-icon icon="radio-outline" class="pulse-icon"></nb-icon>
+            Real-time
+          </nb-badge>
+        </div>
+      </nb-card-header>
+      <nb-card-body>
+        <div echarts [options]="topMemChartOption" class="chart"></div>
+      </nb-card-body>
+    </nb-card>
+  </div>
+</div>
+
+<!-- Process Analysis Section -->
+<div class="row">
+  <div class="col-12">
+    <nb-card>
+      <nb-card-header>
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <span class="chart-title">Process Analysis</span>
+            <small class="text-hint d-block">Historical and detailed process metrics</small>
+          </div>
           <form [formGroup]="filterForm" (ngSubmit)="loadHistoricalProcessData()" class="process-filter-form">
             <div class="d-flex align-items-center gap-2">
               <nb-select placeholder="Select Process" formControlName="selectedProcess">
@@ -30,44 +163,125 @@
   </div>
 </div>
 
-<!-- Realtime Chart -->
-<div class="row">
-  <div class="col-12">
+<!-- Selected Process Charts -->
+<div class="row" *ngIf="selectedProcessData">
+  <div class="col-lg-6 col-md-12">
     <nb-card>
       <nb-card-header>
-        <span class="chart-title">Live Process Resource Usage</span>
-        <nb-badge status="info" size="small" class="realtime-badge">
-          <nb-icon icon="radio-outline" class="pulse-icon"></nb-icon>
-          Real-time
-        </nb-badge>
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <span class="chart-title">CPU Usage History</span>
+            <small class="text-hint d-block">Process: {{ selectedProcessInfo }}</small>
+          </div>
+        </div>
       </nb-card-header>
       <nb-card-body>
-        <div echarts [options]="realtimeChartOption" class="chart"></div>
+        <div echarts [options]="processCpuChartOption" class="chart"></div>
+      </nb-card-body>
+    </nb-card>
+  </div>
+
+  <div class="col-lg-6 col-md-12">
+    <nb-card>
+      <nb-card-header>
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <span class="chart-title">Memory Usage History</span>
+            <small class="text-hint d-block">Process: {{ selectedProcessInfo }}</small>
+          </div>
+        </div>
+      </nb-card-header>
+      <nb-card-body>
+        <div echarts [options]="processMemChartOption" class="chart"></div>
       </nb-card-body>
     </nb-card>
   </div>
 </div>
 
-<!-- Weekly and Historical Charts -->
-<div class="row">
-  <div class="col-lg-6 col-md-12">
+<!-- Process Statistics Summary -->
+<div class="row" *ngIf="selectedProcessData">
+  <div class="col-12">
     <nb-card>
       <nb-card-header>
-        <span class="chart-title">Weekly Process Activity</span>
+        <span class="chart-title">Process Statistics Summary</span>
       </nb-card-header>
       <nb-card-body>
-        <div echarts [options]="weeklyChartOption" class="chart"></div>
+        <div class="process-stats-grid">
+          <div class="stat-item">
+            <div class="stat-label">Average CPU</div>
+            <div class="stat-value" [ngClass]="getCpuStatusClass(processStats.avgCpu)">
+              {{ processStats.avgCpu | number:'1.1-1' }}%
+            </div>
+            <div class="stat-sparkline">
+              <!-- Sparkline chart would go here -->
+            </div>
+          </div>
+          
+          <div class="stat-item">
+            <div class="stat-label">Peak CPU</div>
+            <div class="stat-value" [ngClass]="getCpuStatusClass(processStats.peakCpu)">
+              {{ processStats.peakCpu | number:'1.1-1' }}%
+            </div>
+            <div class="stat-time">{{ processStats.peakCpuTime | date:'short' }}</div>
+          </div>
+          
+          <div class="stat-item">
+            <div class="stat-label">Average Memory</div>
+            <div class="stat-value" [ngClass]="getMemStatusClass(processStats.avgMem)">
+              {{ processStats.avgMem | number:'1.1-1' }}%
+            </div>
+            <div class="stat-sparkline">
+              <!-- Sparkline chart would go here -->
+            </div>
+          </div>
+          
+          <div class="stat-item">
+            <div class="stat-label">Peak Memory</div>
+            <div class="stat-value" [ngClass]="getMemStatusClass(processStats.peakMem)">
+              {{ processStats.peakMem | number:'1.1-1' }}%
+            </div>
+            <div class="stat-time">{{ processStats.peakMemTime | date:'short' }}</div>
+          </div>
+          
+          <div class="stat-item">
+            <div class="stat-label">Runtime</div>
+            <div class="stat-value">{{ processStats.runtime }}</div>
+          </div>
+          
+          <div class="stat-item">
+            <div class="stat-label">Status</div>
+            <div class="stat-value">
+              <nb-badge [status]="processStats.isActive ? 'success' : 'basic'" size="small">
+                {{ processStats.isActive ? 'Active' : 'Inactive' }}
+              </nb-badge>
+            </div>
+          </div>
+        </div>
       </nb-card-body>
     </nb-card>
   </div>
+</div>
 
-  <div class="col-lg-6 col-md-12">
+<!-- No Process Selected State -->
+<div class="row" *ngIf="!selectedProcessData && !loading">
+  <div class="col-12">
     <nb-card>
-      <nb-card-header>
-        <span class="chart-title">Historical Process Analysis</span>
-      </nb-card-header>
-      <nb-card-body>
-        <div echarts [options]="historicalChartOption" class="chart"></div>
+      <nb-card-body class="empty-state">
+        <nb-icon icon="options-2-outline" status="info" class="empty-icon"></nb-icon>
+        <h3>No Process Selected</h3>
+        <p class="text-hint">Select a process from the table above or use the filter to analyze historical data.</p>
+      </nb-card-body>
+    </nb-card>
+  </div>
+</div>
+
+<!-- Loading State -->
+<div class="row" *ngIf="loading">
+  <div class="col-12">
+    <nb-card>
+      <nb-card-body class="loading-state">
+        <nb-spinner status="primary"></nb-spinner>
+        <p>Loading process data...</p>
       </nb-card-body>
     </nb-card>
   </div>

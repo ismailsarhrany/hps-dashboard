@@ -110,6 +110,28 @@ AIX_HOST = os.environ.get('AIX_HOST')
 AIX_USER = os.environ.get('AIX_USER')
 AIX_PASSWORD = os.environ.get('AIX_PASSWORD')
 
+# Settings for better timestamp ordering
+KAFKA_CONSUMER_BATCH_INTERVAL = 2.0  # seconds
+KAFKA_CONSUMER_MAX_BUFFER_AGE = 5.0  # seconds  
+KAFKA_CONSUMER_MAX_BUFFER_SIZE = 100  # messages
+
+# Logging configuration
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'loggers': {
+        'metrics.consumers.metric_consumer': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+        },
+    },
+}
+
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators

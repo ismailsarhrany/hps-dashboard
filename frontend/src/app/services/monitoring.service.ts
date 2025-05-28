@@ -145,7 +145,7 @@ export class ApiService {
       );
   }
 
-  getRealtimeProcesses(): Observable<ApiResponse<ProcessData>> {
+  getRealtimeProcess(): Observable<ApiResponse<ProcessData>> {
     const params = new HttpParams().set('metric', 'process');
     return this.http.get<ApiResponse<ProcessData>>(`${this.baseUrl}/realtime/`, { params })
       .pipe(
@@ -223,7 +223,7 @@ export class ApiService {
 
   // Utility Methods
   getProcessList(): Observable<ProcessData[]> {
-    return this.getRealtimeProcesses().pipe(
+    return this.getRealtimeProcess().pipe(
       map(response => response.data || []),
       map(process => process.filter(p => p.cpu > 0 || p.mem > 0))
     );

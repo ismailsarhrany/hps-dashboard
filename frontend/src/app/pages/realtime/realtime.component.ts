@@ -1,8 +1,7 @@
-// src/app/pages/realtime/realtime.component.ts
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { NbThemeService } from '@nebular/theme';
-import { ApiService, VmstatData, NetstatData, IostatData, ProcessData, SystemSummary } from '../../services/monitoring.service';
+import { RealtimeService, VmstatData, NetstatData, IostatData, ProcessData, RealtimeConnectionStatus } from '../../services/realtime.service';
 
 @Component({
   selector: 'ngx-realtime',
@@ -16,6 +15,7 @@ export class RealtimeComponent implements OnInit, OnDestroy {
   private netstatSubscription: Subscription;
   private iostatSubscription: Subscription;
   private processSubscription: Subscription;
+  private connectionSubscription: Subscription;
   private colors: any;
   private echartTheme: any;
 
@@ -50,9 +50,12 @@ export class RealtimeComponent implements OnInit, OnDestroy {
   processCount: number = 0;
   lastUpdateTime: Date = new Date();
 
+  // Configuration pour la fenêtre temporelle
+  private readonly timeWindowSeconds: number = 60; // Fenêtre de 60 secondes
+
   constructor(
     private theme: NbThemeService,
-    private apiService: ApiService
+    private realtimeService: RealtimeService
   ) {}
 
   ngOnInit() {
@@ -66,113 +69,193 @@ export class RealtimeComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     this.stopAllSubscriptions();
-    this.apiService.stopRealtimeMonitoring();
+    this.realtimeService.stopRealtimeMonitoring();
   }
 
   private stopAllSubscriptions() {
-    if (this.dataSubscription) {
-      this.dataSubscription.unsubscribe();
-    }
-    if (this.vmstatSubscription) {
-      this.vmstatSubscription.unsubscribe();
-    }
-    if (this.netstatSubscription) {
-      this.netstatSubscription.unsubscribe();
-    }
-    if (this.iostatSubscription) {
-      this.iostatSubscription.unsubscribe();
-    }
-    if (this.processSubscription) {
-      this.processSubscription.unsubscribe();
-    }
+    [
+      this.vmstatSubscription,
+      this.netstatSubscription,
+      this.iostatSubscription,
+      this.processSubscription,
+      this.connectionSubscription
+    ].forEach(sub => sub?.unsubscribe());
   }
 
   private startRealtimeMonitoring() {
-    // Start the realtime monitoring service
+    this.realtimeService.startRealtimeMonitoring();
 
-    // Subscribe to individual metric streams
-  this.vmstatSubscription = this.apiService.getRealtimeVmstat().subscribe(dataArray => {
-  // Vérifier si dataArray est bien un tableau et contient des éléments
-    if (Array.isArray(dataArray) && dataArray.length > 0) {
-      this.processVmstatData(dataArray);
-  }
-});
-
-
-  this.netstatSubscription = this.apiService.getRealtimeNetstat().subscribe(dataArray => {
-    if (Array.isArray(dataArray) && dataArray.length > 0) {
-      this.processNetstatData(dataArray);
-   }
-  });
-
-  this.iostatSubscription = this.apiService.getRealtimeIostat().subscribe(dataArray => {
-    if (Array.isArray(dataArray) && dataArray.length > 0) {
-      this.processIostatData(dataArray);
-    }
-  });
-
-
-  this.processSubscription = this.apiService.getRealtimeProcesses().subscribe(dataArray => {
-      if (Array.isArray(dataArray)) { // Pas besoin de vérifier length > 0 ici
-      this.processCount = dataArray.length;
-    } 
-  });}
-
-
-  private processVmstatData(data: VmstatData[]) {
-    if (data && data.length > 0) {
-      this.cpuData.push(...data);
-      this.memoryData.push(...data);
-      
-      // Calculate current CPU and memory usage from latest data
-      const latest = data[data.length - 1];
-      this.currentCpuUsage = Math.round((100 - latest.idle) * 100) / 100;
-      
-      const totalMemory = latest.avm + latest.fre;
-      this.currentMemoryUsage = totalMemory > 0 ? Math.round((latest.avm / totalMemory) * 100 * 100) / 100 : 0;
-      this.systemLoad = latest.r;
-      
-      this.trimDataArrays();
-      this.updateCharts();
-    }
-  }
-
-  private processNetstatData(data: NetstatData[]) {
-    if (data && data.length > 0) {
-      this.networkPacketsData.push(...data);
-      this.networkErrorsData.push(...data);
-      
-      // Calculate totals
-      this.totalNetworkPackets = data.reduce((sum, item) => sum + item.ipkts + item.opkts, 0);
-      this.totalNetworkErrors = data.reduce((sum, item) => sum + item.ierrs + item.oerrs, 0);
-      
-      // Determine network status
-      this.networkStatus = this.totalNetworkErrors > 0 ? 'Errors Detected' : 'Active';
-      
-      this.trimDataArrays();
-      this.updateCharts();
-    }
-  }
-
-  private processIostatData(data: IostatData[]) {
-    if (data && data.length > 0) {
-      this.diskReadData.push(...data);
-      this.diskWriteData.push(...data);
-      
-      // Calculate totals
-      this.totalDiskRead = data.reduce((sum, item) => sum + item.kb_read, 0);
-      this.totalDiskWrite = data.reduce((sum, item) => sum + item.kb_wrtn, 0);
-      
-      // Determine disk status based on activity
-      const totalActivity = this.totalDiskRead + this.totalDiskWrite;
-      if (totalActivity > 10000) {
-        this.diskStatus = 'High Load';
-      } else {
-        this.diskStatus = 'Normal';
+    // Handle connection status changes
+    this.connectionSubscription = this.realtimeService.getOverallConnectionStatus().subscribe(status => {
+      if (status === RealtimeConnectionStatus.CONNECTED) {
+        this.lastUpdateTime = new Date();
       }
-      
-      this.trimDataArrays();
-      this.updateCharts();
+    });
+
+    // Process individual data points
+    this.vmstatSubscription = this.realtimeService.getRealtimeVmstat().subscribe(
+      data => this.processVmstatData(data)
+    );
+
+    this.netstatSubscription = this.realtimeService.getRealtimeNetstat().subscribe(
+      data => this.processNetstatData(data)
+    );
+
+    this.iostatSubscription = this.realtimeService.getRealtimeIostat().subscribe(
+      data => this.processIostatData(data)
+    );
+
+    this.processSubscription = this.realtimeService.getRealtimeProcess().subscribe(
+      data => this.processProcessData(data)
+    );
+  }
+
+  private processProcessData(data: ProcessData) {
+    this.processCount++;
+    this.trimAndSortDataArrays();
+  }
+
+  private processVmstatData(data: VmstatData) {
+    // Validate timestamp before adding
+    const timestamp = new Date(data.timestamp);
+    if (isNaN(timestamp.getTime())) {
+      console.warn('Invalid timestamp in vmstat data:', data.timestamp);
+      return;
+    }
+
+    // Check for duplicate or out-of-order data
+    const lastItem = this.cpuData[this.cpuData.length - 1];
+    if (lastItem) {
+      const lastTimestamp = new Date(lastItem.timestamp);
+      if (timestamp <= lastTimestamp) {
+        console.warn('Out of order or duplicate vmstat data detected:', {
+          current: data.timestamp,
+          last: lastItem.timestamp
+        });
+      }
+    }
+
+    this.cpuData.push(data);
+    this.memoryData.push(data);
+    
+    this.currentCpuUsage = Math.round((100 - data.idle) * 100) / 100;
+    const totalMemory = data.avm + data.fre;
+    this.currentMemoryUsage = totalMemory > 0 
+      ? Math.round((data.avm / totalMemory) * 100 * 100) / 100 
+      : 0;
+    this.systemLoad = data.r;
+    
+    this.trimAndSortDataArrays();
+    this.updateCharts();
+    this.lastUpdateTime = new Date();
+  }
+
+  private processNetstatData(data: NetstatData) {
+    // Validate timestamp
+    const timestamp = new Date(data.timestamp);
+    if (isNaN(timestamp.getTime())) {
+      console.warn('Invalid timestamp in netstat data:', data.timestamp);
+      return;
+    }
+
+    this.networkPacketsData.push(data);
+    this.networkErrorsData.push(data);
+    
+    this.totalNetworkPackets += data.ipkts + data.opkts;
+    this.totalNetworkErrors += data.ierrs + data.oerrs;
+    this.networkStatus = this.totalNetworkErrors > 0 ? 'Errors Detected' : 'Active';
+    
+    this.trimAndSortDataArrays();
+    this.updateCharts();
+  }
+
+  private processIostatData(data: IostatData) {
+    // Validate timestamp
+    const timestamp = new Date(data.timestamp);
+    if (isNaN(timestamp.getTime())) {
+      console.warn('Invalid timestamp in iostat data:', data.timestamp);
+      return;
+    }
+
+    this.diskReadData.push(data);
+    this.diskWriteData.push(data);
+    
+    this.totalDiskRead += data.kb_read;
+    this.totalDiskWrite += data.kb_wrtn;
+    
+    const totalActivity = this.totalDiskRead + this.totalDiskWrite;
+    this.diskStatus = totalActivity > 10000 ? 'High Load' : 'Normal';
+    
+    this.trimAndSortDataArrays();
+    this.updateCharts();
+  }
+
+  private trimAndSortDataArrays() {
+    const maxPoints = 50;
+    const maxTimeWindow = this.timeWindowSeconds * 1000; // 60 secondes en millisecondes
+    
+    // Calculer le timestamp de coupure (60 secondes dans le passé)
+    const now = new Date().getTime();
+    const cutoffTime = now - maxTimeWindow;
+    
+    // Fonction générique pour filtrer par timestamp
+    const filterByTimestamp = <T extends { timestamp: string }>(arr: T[]): T[] => {
+      return arr.filter(item => {
+        const itemTime = new Date(item.timestamp).getTime();
+        return !isNaN(itemTime) && itemTime >= cutoffTime;
+      });
+    };
+    
+    // Fonction générique pour trier par timestamp
+    const sortByTimestamp = <T extends { timestamp: string }>(arr: T[]): T[] => {
+      return [...arr].sort((a, b) => {
+        const dateA = new Date(a.timestamp).getTime();
+        const dateB = new Date(b.timestamp).getTime();
+        
+        if (isNaN(dateA) || isNaN(dateB)) {
+          return 0;
+        }
+        
+        return dateA - dateB;
+      });
+    };
+    
+    // Traiter chaque type de données séparément pour éviter les problèmes de typage
+    
+    // CPU Data (VmstatData)
+    this.cpuData = sortByTimestamp(filterByTimestamp(this.cpuData));
+    if (this.cpuData.length > maxPoints) {
+      this.cpuData = this.cpuData.slice(this.cpuData.length - maxPoints);
+    }
+    
+    // Memory Data (VmstatData)
+    this.memoryData = sortByTimestamp(filterByTimestamp(this.memoryData));
+    if (this.memoryData.length > maxPoints) {
+      this.memoryData = this.memoryData.slice(this.memoryData.length - maxPoints);
+    }
+    
+    // Disk Read Data (IostatData)
+    this.diskReadData = sortByTimestamp(filterByTimestamp(this.diskReadData));
+    if (this.diskReadData.length > maxPoints) {
+      this.diskReadData = this.diskReadData.slice(this.diskReadData.length - maxPoints);
+    }
+    
+    // Disk Write Data (IostatData)
+    this.diskWriteData = sortByTimestamp(filterByTimestamp(this.diskWriteData));
+    if (this.diskWriteData.length > maxPoints) {
+      this.diskWriteData = this.diskWriteData.slice(this.diskWriteData.length - maxPoints);
+    }
+    
+    // Network Packets Data (NetstatData)
+    this.networkPacketsData = sortByTimestamp(filterByTimestamp(this.networkPacketsData));
+    if (this.networkPacketsData.length > maxPoints) {
+      this.networkPacketsData = this.networkPacketsData.slice(this.networkPacketsData.length - maxPoints);
+    }
+    
+    // Network Errors Data (NetstatData)
+    this.networkErrorsData = sortByTimestamp(filterByTimestamp(this.networkErrorsData));
+    if (this.networkErrorsData.length > maxPoints) {
+      this.networkErrorsData = this.networkErrorsData.slice(this.networkErrorsData.length - maxPoints);
     }
   }
 
@@ -372,6 +455,10 @@ export class RealtimeComponent implements OnInit, OnDestroy {
           color: this.echartTheme === 'dark' ? '#ffffff' : '#000000'
         }
       },
+      yAxis: {
+        ...baseOption.yAxis,
+        max: 1 // Set max to 1 since errors are small values
+      },
       legend: {
         ...baseOption.legend,
         data: ['Input Errors', 'Output Errors']
@@ -392,128 +479,157 @@ export class RealtimeComponent implements OnInit, OnDestroy {
     };
   }
 
-  private trimDataArrays() {
-    const maxPoints = 50;
-    
-    if (this.cpuData.length > maxPoints) {
-      this.cpuData = this.cpuData.slice(-maxPoints);
-    }
-    if (this.memoryData.length > maxPoints) {
-      this.memoryData = this.memoryData.slice(-maxPoints);
-    }
-    if (this.diskReadData.length > maxPoints) {
-      this.diskReadData = this.diskReadData.slice(-maxPoints);
-    }
-    if (this.diskWriteData.length > maxPoints) {
-      this.diskWriteData = this.diskWriteData.slice(-maxPoints);
-    }
-    if (this.networkPacketsData.length > maxPoints) {
-      this.networkPacketsData = this.networkPacketsData.slice(-maxPoints);
-    }
-    if (this.networkErrorsData.length > maxPoints) {
-      this.networkErrorsData = this.networkErrorsData.slice(-maxPoints);
-    }
-  }
-
   private updateCharts() {
-    // Update CPU chart
+    // Calculer la fenêtre temporelle pour les graphiques
+    const now = new Date();
+    const oneMinuteAgo = new Date(now.getTime() - this.timeWindowSeconds * 1000);
+
+    // Update CPU chart with validation
     this.cpuChartOption = {
       ...this.cpuChartOption,
+      xAxis: {
+        ...this.cpuChartOption.xAxis,
+        min: oneMinuteAgo.getTime(),
+        max: now.getTime()
+      },
       series: [{
         ...this.cpuChartOption.series[0],
-        data: this.cpuData.map(item => [item.timestamp, item.us])
+        data: this.cpuData
+          .filter(item => !isNaN(new Date(item.timestamp).getTime()))
+          .map(item => [item.timestamp, item.us])
       }, {
         ...this.cpuChartOption.series[1],
-        data: this.cpuData.map(item => [item.timestamp, item.sy])
+        data: this.cpuData
+          .filter(item => !isNaN(new Date(item.timestamp).getTime()))
+          .map(item => [item.timestamp, item.sy])
       }]
     };
 
-    // Update Memory chart (convert to GB)
+    // Update Memory chart (convert to GB) with validation
     this.memoryChartOption = {
       ...this.memoryChartOption,
+      xAxis: {
+        ...this.memoryChartOption.xAxis,
+        min: oneMinuteAgo.getTime(),
+        max: now.getTime()
+      },
       series: [{
         ...this.memoryChartOption.series[0],
-        data: this.memoryData.map(item => [item.timestamp, Math.round(item.avm / 1024 / 1024 * 100) / 100])
+        data: this.memoryData
+          .filter(item => !isNaN(new Date(item.timestamp).getTime()))
+          .map(item => [item.timestamp, Math.round(item.avm / 1024 / 1024 * 100) / 100])
       }, {
         ...this.memoryChartOption.series[1],
-        data: this.memoryData.map(item => [item.timestamp, Math.round(item.fre / 1024 / 1024 * 100) / 100])
+        data: this.memoryData
+          .filter(item => !isNaN(new Date(item.timestamp).getTime()))
+          .map(item => [item.timestamp, Math.round(item.fre / 1024 / 1024 * 100) / 100])
       }]
     };
 
-    // Update Disk Read chart (aggregate all disks)
-    const diskReadByTime = this.aggregateDiskData(this.diskReadData, 'kb_read');
+    // Update disk charts with proper aggregation and sorting
+    const validDiskReadData = this.diskReadData.filter(item => !isNaN(new Date(item.timestamp).getTime()));
+    const validDiskWriteData = this.diskWriteData.filter(item => !isNaN(new Date(item.timestamp).getTime()));
+    
+    const disks = [...new Set(this.diskReadData.map(d => d.disk))];
     this.diskReadChartOption = {
-      ...this.diskReadChartOption,
-      series: [{
-        ...this.diskReadChartOption.series[0],
-        data: Object.entries(diskReadByTime).map(([timestamp, value]) => [timestamp, value])
-      }]
+        ...this.diskReadChartOption,
+        xAxis: {
+          ...this.diskReadChartOption.xAxis,
+          min: oneMinuteAgo.getTime(),
+          max: now.getTime()
+        },
+        legend: {
+            ...this.diskReadChartOption.legend,
+            data: disks
+        },
+        series: disks.map(disk => ({
+            name: disk,
+            type: 'line',
+            data: this.diskReadData
+                .filter(d => d.disk === disk)
+                .map(item => [item.timestamp, item.kb_read]),
+            smooth: true,
+            itemStyle: { color: this.getRandomColor(disk) }
+        }))
     };
-
-    // Update Disk Write chart (aggregate all disks)
-    const diskWriteByTime = this.aggregateDiskData(this.diskWriteData, 'kb_wrtn');
     this.diskWriteChartOption = {
-      ...this.diskWriteChartOption,
-      series: [{
-        ...this.diskWriteChartOption.series[0],
-        data: Object.entries(diskWriteByTime).map(([timestamp, value]) => [timestamp, value])
-      }]
+        ...this.diskWriteChartOption,
+        xAxis: {
+          ...this.diskWriteChartOption.xAxis,
+          min: oneMinuteAgo.getTime(),
+          max: now.getTime()
+        },
+        legend: {
+            ...this.diskWriteChartOption.legend,
+            data: disks
+        },
+        series: disks.map(disk => ({
+            name: disk,
+            type: 'line',
+            data: this.diskReadData
+                .filter(d => d.disk === disk)
+                .map(item => [item.timestamp, item.kb_read]),
+            smooth: true,
+            itemStyle: { color: this.getRandomColor(disk) }
+        }))
     };
-
-    // Update Network Packets chart
+    
+    // Update Network charts with validation and explicit time window
     this.networkPacketsChartOption = {
       ...this.networkPacketsChartOption,
+      xAxis: {
+        ...this.networkPacketsChartOption.xAxis,
+        min: oneMinuteAgo.getTime(),
+        max: now.getTime()
+      },
       series: [{
         ...this.networkPacketsChartOption.series[0],
-        data: this.networkPacketsData.map(item => [item.timestamp, item.ipkts])
+        data: this.networkPacketsData
+          .filter(item => !isNaN(new Date(item.timestamp).getTime()))
+          .map(item => [item.timestamp, item.ipkts])
       }, {
         ...this.networkPacketsChartOption.series[1],
-        data: this.networkPacketsData.map(item => [item.timestamp, item.opkts])
+        data: this.networkPacketsData
+          .filter(item => !isNaN(new Date(item.timestamp).getTime()))
+          .map(item => [item.timestamp, item.opkts])
       }]
     };
 
-    // Update Network Errors chart
     this.networkErrorsChartOption = {
       ...this.networkErrorsChartOption,
+      xAxis: {
+        ...this.networkErrorsChartOption.xAxis,
+        min: oneMinuteAgo.getTime(),
+        max: now.getTime()
+      },
       series: [{
         ...this.networkErrorsChartOption.series[0],
-        data: this.networkErrorsData.map(item => [item.timestamp, item.ierrs])
+        data: this.networkErrorsData
+          .filter(item => !isNaN(new Date(item.timestamp).getTime()))
+          .map(item => [item.timestamp, item.ierrs])
       }, {
         ...this.networkErrorsChartOption.series[1],
-        data: this.networkErrorsData.map(item => [item.timestamp, item.oerrs])
+        data: this.networkErrorsData
+          .filter(item => !isNaN(new Date(item.timestamp).getTime()))
+          .map(item => [item.timestamp, item.oerrs])
       }]
     };
   }
 
-  private aggregateDiskData(diskData: IostatData[], field: keyof IostatData): { [timestamp: string]: number } {
-    const aggregated: { [timestamp: string]: number } = {};
+  // Fonction utilitaire pour générer des couleurs cohérentes pour les disques
+  private getRandomColor(seed: string): string {
+    // Générer une couleur basée sur le nom du disque pour la cohérence
+    const colors = [
+      '#3366ff', '#00d68f', '#ff3d71', '#ffaa00', 
+      '#42aaff', '#8061ef', '#ff6b6b', '#00d9bf'
+    ];
     
-    diskData.forEach(item => {
-      const timestamp = item.timestamp;
-      if (!aggregated[timestamp]) {
-        aggregated[timestamp] = 0;
-      }
-      aggregated[timestamp] += Number(item[field]) || 0;
-    });
-
-    return aggregated;
+    // Utiliser une somme simple des codes de caractères comme hachage
+    const hash = seed.split('').reduce((sum, char) => sum + char.charCodeAt(0), 0);
+    return colors[hash % colors.length];
   }
 
-  // Status color methods
-  getStatusColor(status: string): string {
-    switch (status) {
-      case 'Normal':
-      case 'Active':
-        return 'success';
-      case 'High Load':
-        return 'warning';
-      case 'Errors Detected':
-        return 'danger';
-      default:
-        return 'info';
-    }
-  }
-
+  // Status color getters
   getCpuStatusColor(): string {
     if (this.currentCpuUsage > 80) return 'danger';
     if (this.currentCpuUsage > 60) return 'warning';
@@ -521,14 +637,26 @@ export class RealtimeComponent implements OnInit, OnDestroy {
   }
 
   getMemoryStatusColor(): string {
-    if (this.currentMemoryUsage > 85) return 'danger';
+    if (this.currentMemoryUsage > 90) return 'danger';
     if (this.currentMemoryUsage > 70) return 'warning';
     return 'success';
   }
 
   getSystemLoadColor(): string {
-    if (this.systemLoad > 80) return 'danger';
-    if (this.systemLoad > 60) return 'warning';
+    if (this.systemLoad > 5) return 'danger';
+    if (this.systemLoad > 2) return 'warning';
     return 'success';
+  }
+
+  getStatusColor(status: string): string {
+    switch (status) {
+      case 'High Load':
+      case 'Errors Detected':
+        return 'warning';
+      case 'Critical':
+        return 'danger';
+      default:
+        return 'success';
+    }
   }
 }
