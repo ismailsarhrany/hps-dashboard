@@ -32,18 +32,15 @@ class MetricProducer:
             self.producer = None
 
     def produce_metric(self, metric_type, data):
-        """Produce metric with improved timestamp handling."""
+        """Produce metric with microsecond-precision ordering."""
         if not self.producer:
             logger.error("Kafka producer is not initialized. Cannot produce metric.")
             return
-            
-        topic = f"metrics_{metric_type}"
         
-        # Create timestamp at the exact moment of production
-        # This ensures consistent ordering based on actual collection time
-        timestamp = datetime.now()
+        topic = f"metrics_{metric_type}"
     
-        # Make timestamp timezone-aware
+        # Create high-precision timestamp
+        timestamp = datetime.now()
         if settings.USE_TZ:
             tz = pytz.timezone(getattr(settings, "TIME_ZONE", "UTC"))
             if timestamp.tzinfo is None:
@@ -51,47 +48,31 @@ class MetricProducer:
             else:
                 timestamp = timestamp.astimezone(tz)
         else:
-            # If USE_TZ is False, still make it UTC for consistency
             if timestamp.tzinfo is None:
                 timestamp = timestamp.replace(tzinfo=pytz.UTC)
-        
+    
         try:
-            # Create message with high-precision timestamp
+            # Use microsecond precision for better ordering
+            unix_timestamp_us = int(timestamp.timestamp() * 1000000)  # microseconds
+            message_key = f"{metric_type}_{unix_timestamp_us}"
+        
             message_value = json.dumps({
                 "timestamp": timestamp.isoformat(),
                 "data": data,
-                "producer_time": time.time()  # Add Unix timestamp for debugging
+                "producer_time": timestamp.timestamp(),
+                "sequence_id": unix_timestamp_us  # Add sequence ID for ordering
             })
-            
-            # Use timestamp as the message key for better partitioning
-            # This helps maintain order within the same partition
-            message_key = f"{metric_type}_{int(timestamp.timestamp())}"
-            
+        
             self.producer.produce(
                 topic=topic, 
                 value=message_value, 
                 key=message_key,
                 callback=self.delivery_report
             )
-            
-            # Poll for delivery reports (non-blocking)
+        
             self.producer.poll(0)
-            
-            logger.debug(f"Produced {metric_type} metric to topic {topic} with timestamp {timestamp.isoformat()}")
+            logger.debug(f"Produced {metric_type} metric with sequence_id {unix_timestamp_us}")
 
-        except BufferError:
-            logger.warning(f"Kafka producer queue is full. Flushing and retrying for topic {topic}...")
-            self.producer.flush(timeout=5)
-            try:
-                self.producer.produce(
-                    topic=topic, 
-                    value=message_value, 
-                    key=message_key,
-                    callback=self.delivery_report
-                )
-                self.producer.poll(0)
-            except Exception as e:
-                logger.error(f"Error producing metric to topic {topic} after flush: {str(e)}")
         except Exception as e:
             logger.error(f"Error producing metric to topic {topic}: {str(e)}")
 

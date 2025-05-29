@@ -84,11 +84,11 @@
           <div class="disk-stats">
             <div class="stat">
               <span class="label">Read:</span>
-              <span class="value text-info">{{ totalDiskRead | number:'1.0-0' }} KB/s</span>
+              <span class="value text-info">{{ currentDiskReadRate | number:'1.0-0' }} KB/s</span>
             </div>
             <div class="stat">
               <span class="label">Write:</span>
-              <span class="value text-warning">{{ totalDiskWrite | number:'1.0-0' }} KB/s</span>
+              <span class="value text-warning">{{ currentDiskWriteRate | number:'1.0-0' }} KB/s</span>
             </div>
           </div>
           <nb-badge [status]="getStatusColor(diskStatus)" size="small" class="status-badge">
@@ -112,11 +112,11 @@
           <div class="network-stats">
             <div class="stat">
               <span class="label">Packets:</span>
-              <span class="value text-primary">{{ totalNetworkPackets | number:'1.0-0' }}</span>
+              <span class="value text-primary">{{ currentTotalNetworkRate | number:'1.0-0' }}</span>
             </div>
             <div class="stat">
               <span class="label">Errors:</span>
-              <span class="value text-danger">{{ totalNetworkErrors }}</span>
+              <span class="value text-danger">{{ currentTotalNetworkRate }}</span>
             </div>
           </div>
           <nb-badge [status]="getStatusColor(networkStatus)" size="small" class="status-badge">
@@ -266,7 +266,7 @@
       <nb-card-header>
         <div class="d-flex justify-content-between align-items-center">
           <div>
-            <span class="chart-title">Network Packets</span>
+            <span class="chart-title">Network Packet rates</span>
             <small class="text-hint d-block">Input and output packet rates</small>
           </div>
           <nb-badge status="primary" size="small" class="realtime-badge">
@@ -286,7 +286,7 @@
       <nb-card-header>
         <div class="d-flex justify-content-between align-items-center">
           <div>
-            <span class="chart-title">Network Errors</span>
+            <span class="chart-title">Network Errors rate</span>
             <small class="text-hint d-block">Input and output error rates</small>
           </div>
           <nb-badge status="danger" size="small" class="realtime-badge">

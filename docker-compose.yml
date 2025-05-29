@@ -96,12 +96,6 @@ services:
       REDIS_URL: redis://redis:6379/0
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       DEBUG: "True"
-    # Supprimez ou commentez l'ancienne commande Gunicorn/WSGI
-    # command: >
-    #   sh -c "python manage.py migrate &&
-    #          python manage.py create_kafka_topics &&
-    #          gunicorn --bind 0.0.0.0:8000 core.wsgi:application"
-    # La commande est maintenant définie par le CMD dans le Dockerfile
     networks:
       - app-network
     # Le healthcheck peut nécessiter un ajustement si les migrations prennent du temps

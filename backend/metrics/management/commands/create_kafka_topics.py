@@ -11,7 +11,7 @@ class Command(BaseCommand):
         admin_client = AdminClient({'bootstrap.servers': bootstrap_servers})
         
         topics = ['metrics_vmstat', 'metrics_iostat', 'metrics_netstat', 'metrics_process']
-        new_topics = [NewTopic(topic, num_partitions=1, replication_factor=1) for topic in topics]
+        new_topics = [NewTopic(topic, num_partitions=3, replication_factor=1) for topic in topics]
         
         # Create topics
         fs = admin_client.create_topics(new_topics)
