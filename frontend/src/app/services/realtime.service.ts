@@ -1,9 +1,24 @@
-import { Injectable, OnDestroy } from '@angular/core';
-import { Observable, Subject, BehaviorSubject, timer, EMPTY, interval } from 'rxjs';
-import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
-import { retry, retryWhen, delay, tap, catchError, filter, map } from 'rxjs/operators';
+import { Injectable, OnDestroy } from "@angular/core";
+import {
+  Observable,
+  Subject,
+  BehaviorSubject,
+  timer,
+  EMPTY,
+  interval,
+} from "rxjs";
+import { webSocket, WebSocketSubject } from "rxjs/webSocket";
+import {
+  retry,
+  retryWhen,
+  delay,
+  tap,
+  catchError,
+  filter,
+  map,
+} from "rxjs/operators";
 
-// Interfaces matching your existing data structures
+// Interfaces matching your existing data structures (kept for reference within values)
 export interface VmstatData {
   timestamp: string;
   r: number;
@@ -27,7 +42,12 @@ export interface NetstatData {
   ierrs: number;
   opkts: number;
   oerrs: number;
-  time: number;
+  time?: number; // Optional as it might not always be present
+  // Rates added by backend
+  ipkts_rate?: number;
+  opkts_rate?: number;
+  ierrs_rate?: number;
+  oerrs_rate?: number;
 }
 
 export interface IostatData {
@@ -37,6 +57,9 @@ export interface IostatData {
   kb_read: number;
   kb_wrtn: number;
   service_time: number;
+  // Rates added by backend
+  kb_read_rate?: number;
+  kb_wrtn_rate?: number;
 }
 
 export interface ProcessData {
@@ -48,21 +71,23 @@ export interface ProcessData {
   command: string;
 }
 
-// Updated WebSocket message structure to match Django consumer output
-export interface WebSocketMessage {
-  metric: 'vmstat' | 'netstat' | 'iostat' | 'process';
-  timestamp: string;
-  values: VmstatData | NetstatData | IostatData | ProcessData;
-  id?: number;
-  parsed_timestamp?: string;
+// --- MODIFIED: Renamed and defined to match component's expectation ---
+// Represents the full structure received from WebSocket, including rates in 'values'
+export interface WebSocketData {
+  metric: "vmstat" | "netstat" | "iostat" | "process";
+  timestamp: string; // Top-level timestamp from Django consumer
+  values: VmstatData | NetstatData | IostatData | ProcessData; // Contains raw data AND rates
+  id?: number; // Optional DB id
+  sequence_id?: number; // Optional sequence id
 }
+// --- END MODIFICATION ---
 
 export enum RealtimeConnectionStatus {
-  DISCONNECTED = 'disconnected',
-  CONNECTING = 'connecting',
-  CONNECTED = 'connected',
-  RECONNECTING = 'reconnecting',
-  ERROR = 'error'
+  DISCONNECTED = "disconnected",
+  CONNECTING = "connecting",
+  CONNECTED = "connected",
+  RECONNECTING = "reconnecting",
+  ERROR = "error",
 }
 
 export interface MetricConnectionInfo {
@@ -78,75 +103,76 @@ interface BufferConfig {
   flushInterval: number;
 }
 
-// Simplified buffered data item
-interface BufferedDataItem<T> {
-  data: T;
-  timestamp: Date;
-  originalTimestamp: string;
+// Simplified buffered data item - stores the full WebSocketData
+interface BufferedDataItem {
+  data: WebSocketData; // Store the full message
+  timestamp: Date; // Parsed timestamp for sorting
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: "root",
 })
 export class RealtimeService implements OnDestroy {
-  private readonly BASE_WS_URL = 'ws://localhost:8000/ws/metrics';
+  private readonly BASE_WS_URL = "ws://localhost:8000/ws/metrics";
   private readonly RECONNECT_INTERVAL = 5000;
   private readonly MAX_RECONNECT_ATTEMPTS = 10;
 
-  // Simplified buffer configuration
   private readonly bufferConfig: BufferConfig = {
-    maxSize: 50, // Reduced buffer size
-    flushInterval: 500 // Flush every 500ms
+    maxSize: 50,
+    flushInterval: 500,
   };
 
-  // Individual WebSocket connections for each metric
   private websockets: {
     [key: string]: WebSocketSubject<any> | null;
   } = {
     vmstat: null,
     iostat: null,
     netstat: null,
-    process: null
+    process: null,
   };
 
-  // Connection status for each metric
   private connectionStatus: {
     [key: string]: BehaviorSubject<RealtimeConnectionStatus>;
   } = {
-    vmstat: new BehaviorSubject<RealtimeConnectionStatus>(RealtimeConnectionStatus.DISCONNECTED),
-    iostat: new BehaviorSubject<RealtimeConnectionStatus>(RealtimeConnectionStatus.DISCONNECTED),
-    netstat: new BehaviorSubject<RealtimeConnectionStatus>(RealtimeConnectionStatus.DISCONNECTED),
-    process: new BehaviorSubject<RealtimeConnectionStatus>(RealtimeConnectionStatus.DISCONNECTED)
+    vmstat: new BehaviorSubject<RealtimeConnectionStatus>(
+      RealtimeConnectionStatus.DISCONNECTED
+    ),
+    iostat: new BehaviorSubject<RealtimeConnectionStatus>(
+      RealtimeConnectionStatus.DISCONNECTED
+    ),
+    netstat: new BehaviorSubject<RealtimeConnectionStatus>(
+      RealtimeConnectionStatus.DISCONNECTED
+    ),
+    process: new BehaviorSubject<RealtimeConnectionStatus>(
+      RealtimeConnectionStatus.DISCONNECTED
+    ),
   };
 
-  // Reconnection attempts for each metric
   private reconnectAttempts: { [key: string]: number } = {
     vmstat: 0,
     iostat: 0,
     netstat: 0,
-    process: 0
+    process: 0,
   };
 
-  // Simplified data buffers
+  // Buffers store the full WebSocketData
   private dataBuffers: {
-    [key: string]: BufferedDataItem<any>[];
+    [key: string]: BufferedDataItem[];
   } = {
     vmstat: [],
     iostat: [],
     netstat: [],
-    process: []
+    process: [],
   };
 
-  // Data streams for each metric
-  private vmstatSubject$ = new Subject<VmstatData>();
-  private netstatSubject$ = new Subject<NetstatData>();
-  private iostatSubject$ = new Subject<IostatData>();
-  private processSubject$ = new Subject<ProcessData>();
+  // --- MODIFIED: Subjects now emit WebSocketData for netstat/iostat ---
+  private vmstatSubject$ = new Subject<VmstatData>(); // Vmstat doesn't have rates calculated
+  private netstatSubject$ = new Subject<WebSocketData>();
+  private iostatSubject$ = new Subject<WebSocketData>();
+  private processSubject$ = new Subject<ProcessData>(); // Process doesn't have rates calculated
+  // --- END MODIFICATION ---
 
-  // Active connections tracking
   private activeConnections = new Set<string>();
-
-  // Buffer flush timer
   private flushTimer: any;
 
   constructor() {
@@ -160,164 +186,127 @@ export class RealtimeService implements OnDestroy {
     }
   }
 
-  /**
-   * Start the buffer flush timer
-   */
   private startBufferFlushTimer(): void {
     this.flushTimer = setInterval(() => {
       this.flushAllBuffers();
     }, this.bufferConfig.flushInterval);
   }
 
-  /**
-   * Parse timestamp string to Date object with better error handling
-   */
   private parseTimestamp(timestamp: string): Date {
-    // Handle ISO and Unix timestamps consistently
-    if (timestamp.includes('T')) {
-        return new Date(timestamp);
-    } else if (!isNaN(Number(timestamp))) {
-        return new Date(Number(timestamp) * 1000);
-    } else {
-        // Fallback to current time
-        console.warn('Unparseable timestamp:', timestamp);
-        return new Date();
-    }
-}
-
-  /**
-   * Transform raw Django consumer message to expected format
-   */
-  private transformMessage(rawMessage: any, metric: string): WebSocketMessage | null {
     try {
-      if (!rawMessage || typeof rawMessage !== 'object') {
-        console.warn(`Invalid message format for ${metric}:`, rawMessage);
-        return null;
+      // Handle ISO format primarily
+      if (timestamp?.includes("T")) {
+        return new Date(timestamp);
+      } else {
+        console.warn("Unexpected timestamp format:", timestamp);
+        return new Date(); // Fallback
       }
-
-      // Check if it's already in the expected format
-      if (rawMessage.metric && rawMessage.values && rawMessage.values.timestamp) {
-        return rawMessage as WebSocketMessage;
-      }
-      
-      // Handle direct data from Django consumer
-      if (rawMessage.timestamp) {
-        return {
-          metric: metric as any,
-          timestamp: rawMessage.timestamp,
-          values: rawMessage,
-          id: rawMessage.id,
-          parsed_timestamp: rawMessage.parsed_timestamp
-        };
-      }
-      
-      console.warn(`Unable to transform message for ${metric}:`, rawMessage);
-      return null;
-    } catch (error) {
-      console.error(`Error transforming message for ${metric}:`, error, rawMessage);
-      return null;
+    } catch (e) {
+      console.error("Error parsing timestamp:", timestamp, e);
+      return new Date(); // Fallback
     }
   }
 
-  /**
-   * Add data to buffer - simplified approach
-   */
-  private addToBuffer<T>(metric: string, data: T): void {
-    if (!data || !(data as any).timestamp) {
-      console.warn(`Invalid data for ${metric}, missing timestamp:`, data);
+  // --- MODIFIED: Add data to buffer - expects full WebSocketData ---
+  private addToBuffer(metric: string, message: WebSocketData): void {
+    if (!message || !message.timestamp) {
+      console.warn(
+        `Invalid message for ${metric}, missing timestamp:`,
+        message
+      );
       return;
     }
 
-    const timestamp = this.parseTimestamp((data as any).timestamp);
-    
-    const bufferedItem: BufferedDataItem<T> = {
-      data,
+    const timestamp = this.parseTimestamp(message.timestamp);
+
+    const bufferedItem: BufferedDataItem = {
+      data: message, // Store the full message
       timestamp,
-      originalTimestamp: (data as any).timestamp
     };
 
-    // Add to buffer
     this.dataBuffers[metric].push(bufferedItem);
 
-    // Keep buffer size manageable
     if (this.dataBuffers[metric].length > this.bufferConfig.maxSize) {
-      this.dataBuffers[metric].pop(); // Remove oldest item
+      // Remove oldest item if buffer exceeds max size
+      this.dataBuffers[metric].shift();
     }
   }
+  // --- END MODIFICATION ---
 
-  /**
-   * Simplified buffer flushing - just sort and emit oldest items
-   */
   private flushBuffer(metric: string): void {
     const buffer = this.dataBuffers[metric];
     if (buffer.length === 0) return;
 
-    // Sort buffer by timestamp
     buffer.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
 
-    // Emit all items in chronological order
     while (buffer.length > 0) {
       const item = buffer.shift()!;
-      this.emitSortedData(metric, item.data);
+      this.emitSortedData(metric, item.data); // Emit the full WebSocketData
     }
   }
 
-  /**
-   * Flush all buffers
-   */
   private flushAllBuffers(): void {
-    Object.keys(this.dataBuffers).forEach(metric => {
+    Object.keys(this.dataBuffers).forEach((metric) => {
       this.flushBuffer(metric);
     });
   }
 
-  /**
-   * Emit sorted data to the appropriate subject
-   */
-  private emitSortedData(metric: string, data: any): void {
+  // --- MODIFIED: Emit full WebSocketData for netstat/iostat ---
+  private emitSortedData(metric: string, data: WebSocketData): void {
     try {
       switch (metric) {
-        case 'vmstat':
-          this.vmstatSubject$.next(data as VmstatData);
+        case "vmstat":
+          // Vmstat doesn't have rates, emit only values
+          this.vmstatSubject$.next(data.values as VmstatData);
           break;
-        case 'netstat':
-          this.netstatSubject$.next(data as NetstatData);
+        case "netstat":
+          this.netstatSubject$.next(data); // Emit the full object
           break;
-        case 'iostat':
-          this.iostatSubject$.next(data as IostatData);
+        case "iostat":
+          this.iostatSubject$.next(data); // Emit the full object
           break;
-        case 'process':
-          this.processSubject$.next(data as ProcessData);
+        case "process":
+          // Process doesn't have rates, emit only values
+          this.processSubject$.next(data.values as ProcessData);
           break;
         default:
-          console.warn('Unknown metric type:', metric);
+          console.warn("Unknown metric type:", metric);
       }
     } catch (error) {
       console.error(`Error emitting ${metric} data:`, error, data);
     }
   }
+  // --- END MODIFICATION ---
 
-  /**
-   * Get connection status for a specific metric
-   */
   getConnectionStatus(metric: string): Observable<RealtimeConnectionStatus> {
     return this.connectionStatus[metric]?.asObservable() || EMPTY;
   }
 
-  /**
-   * Get overall connection status
-   */
   getOverallConnectionStatus(): Observable<RealtimeConnectionStatus> {
-    return new Observable(observer => {
+    // Logic remains the same
+    return new Observable((observer) => {
       const subscription = timer(0, 1000).subscribe(() => {
-        const statuses = Object.values(this.connectionStatus).map(status => status.value);
+        const statuses = Object.values(this.connectionStatus).map(
+          (status) => status.value
+        );
 
-        if (statuses.every(status => status === RealtimeConnectionStatus.CONNECTED)) {
+        if (
+          statuses.every(
+            (status) => status === RealtimeConnectionStatus.CONNECTED
+          )
+        ) {
           observer.next(RealtimeConnectionStatus.CONNECTED);
-        } else if (statuses.some(status => status === RealtimeConnectionStatus.CONNECTING ||
-                                          status === RealtimeConnectionStatus.RECONNECTING)) {
+        } else if (
+          statuses.some(
+            (status) =>
+              status === RealtimeConnectionStatus.CONNECTING ||
+              status === RealtimeConnectionStatus.RECONNECTING
+          )
+        ) {
           observer.next(RealtimeConnectionStatus.CONNECTING);
-        } else if (statuses.some(status => status === RealtimeConnectionStatus.ERROR)) {
+        } else if (
+          statuses.some((status) => status === RealtimeConnectionStatus.ERROR)
+        ) {
           observer.next(RealtimeConnectionStatus.ERROR);
         } else {
           observer.next(RealtimeConnectionStatus.DISCONNECTED);
@@ -328,9 +317,6 @@ export class RealtimeService implements OnDestroy {
     });
   }
 
-  /**
-   * Connect to a specific metric WebSocket
-   */
   private connectToMetric(metric: string): Observable<any> {
     if (this.websockets[metric] && !this.websockets[metric]!.closed) {
       return this.websockets[metric]!.asObservable();
@@ -339,8 +325,6 @@ export class RealtimeService implements OnDestroy {
     const url = `${this.BASE_WS_URL}/${metric}/`;
     this.connectionStatus[metric].next(RealtimeConnectionStatus.CONNECTING);
     console.log(`Connecting to ${metric} WebSocket:`, url);
-
-    // Clear buffer on new connection
     this.dataBuffers[metric] = [];
 
     this.websockets[metric] = webSocket<any>({
@@ -348,36 +332,45 @@ export class RealtimeService implements OnDestroy {
       openObserver: {
         next: () => {
           console.log(`${metric} WebSocket connected successfully`);
-          this.connectionStatus[metric].next(RealtimeConnectionStatus.CONNECTED);
+          this.connectionStatus[metric].next(
+            RealtimeConnectionStatus.CONNECTED
+          );
           this.reconnectAttempts[metric] = 0;
           this.activeConnections.add(metric);
-        }
+        },
       },
       closeObserver: {
         next: (event) => {
           console.log(`${metric} WebSocket disconnected:`, event);
-          this.connectionStatus[metric].next(RealtimeConnectionStatus.DISCONNECTED);
+          this.connectionStatus[metric].next(
+            RealtimeConnectionStatus.DISCONNECTED
+          );
           this.activeConnections.delete(metric);
           this.websockets[metric] = null;
-
-          // Only attempt reconnection if it wasn't a normal closure
           if (event.code !== 1000) {
             this.handleReconnection(metric);
           }
-        }
-      }
+        },
+      },
     });
 
     return this.websockets[metric]!.pipe(
+      // --- MODIFIED: Ensure rawMessage is treated as WebSocketData ---
       tap((rawMessage: any) => {
-        const transformedMessage = this.transformMessage(rawMessage, metric);
-        if (transformedMessage) {
-          this.handleIncomingMessage(metric, transformedMessage);
+        // Assuming rawMessage is already in WebSocketData format from backend
+        if (rawMessage && rawMessage.metric && rawMessage.values) {
+          this.handleIncomingMessage(metric, rawMessage as WebSocketData);
+        } else {
+          console.warn(
+            `Received unexpected message format for ${metric}:`,
+            rawMessage
+          );
         }
       }),
-      retryWhen(errors =>
+      // --- END MODIFICATION ---
+      retryWhen((errors) =>
         errors.pipe(
-          tap(error => {
+          tap((error) => {
             console.error(`${metric} WebSocket error:`, error);
             this.connectionStatus[metric].next(RealtimeConnectionStatus.ERROR);
             this.websockets[metric]?.complete();
@@ -387,22 +380,34 @@ export class RealtimeService implements OnDestroy {
           tap(() => {
             if (this.reconnectAttempts[metric] < this.MAX_RECONNECT_ATTEMPTS) {
               this.reconnectAttempts[metric]++;
-              this.connectionStatus[metric].next(RealtimeConnectionStatus.RECONNECTING);
-              console.log(`${metric} reconnection attempt ${this.reconnectAttempts[metric]}/${this.MAX_RECONNECT_ATTEMPTS}`);
+              this.connectionStatus[metric].next(
+                RealtimeConnectionStatus.RECONNECTING
+              );
+              console.log(
+                `${metric} reconnection attempt ${this.reconnectAttempts[metric]}/${this.MAX_RECONNECT_ATTEMPTS}`
+              );
             } else {
               console.error(`${metric} max reconnection attempts reached.`);
-              this.connectionStatus[metric].next(RealtimeConnectionStatus.ERROR);
+              this.connectionStatus[metric].next(
+                RealtimeConnectionStatus.ERROR
+              );
             }
           }),
-          filter(() => this.reconnectAttempts[metric] < this.MAX_RECONNECT_ATTEMPTS &&
-                       this.connectionStatus[metric].value !== RealtimeConnectionStatus.CONNECTED &&
-                       this.connectionStatus[metric].value !== RealtimeConnectionStatus.CONNECTING
-                )
+          filter(
+            () =>
+              this.reconnectAttempts[metric] < this.MAX_RECONNECT_ATTEMPTS &&
+              this.connectionStatus[metric].value !==
+                RealtimeConnectionStatus.CONNECTED &&
+              this.connectionStatus[metric].value !==
+                RealtimeConnectionStatus.CONNECTING
+          )
         )
       ),
-      catchError(error => {
+      catchError((error) => {
         console.error(`${metric} WebSocket stream error after retries:`, error);
-        if (this.connectionStatus[metric].value !== RealtimeConnectionStatus.ERROR) {
+        if (
+          this.connectionStatus[metric].value !== RealtimeConnectionStatus.ERROR
+        ) {
           this.connectionStatus[metric].next(RealtimeConnectionStatus.ERROR);
         }
         this.websockets[metric] = null;
@@ -411,172 +416,134 @@ export class RealtimeService implements OnDestroy {
     );
   }
 
-  /**
-   * Connect to all metric WebSockets
-   */
-  connectAll(): void {
-    const metrics = ['vmstat', 'iostat', 'netstat', 'process'];
+  private handleReconnection(metric: string): void {
+    if (this.reconnectAttempts[metric] < this.MAX_RECONNECT_ATTEMPTS) {
+      timer(this.RECONNECT_INTERVAL).subscribe(() => {
+        if (
+          this.connectionStatus[metric].value ===
+          RealtimeConnectionStatus.DISCONNECTED
+        ) {
+          console.log(`Attempting to reconnect ${metric}...`);
+          this.connectToMetric(metric).subscribe({
+            error: (err) =>
+              console.error(`Reconnection failed for ${metric}:`, err),
+          });
+        }
+      });
+    } else {
+      console.error(
+        `${metric} max reconnection attempts reached. Stopping reconnection.`
+      );
+      this.connectionStatus[metric].next(RealtimeConnectionStatus.ERROR);
+    }
+  }
 
-    metrics.forEach(metric => {
+  connectAll(): void {
+    const metrics = ["vmstat", "iostat", "netstat", "process"];
+    metrics.forEach((metric) => {
       if (!this.websockets[metric]) {
         this.connectToMetric(metric).subscribe({
-          error: (error) => {
-            console.error(`Subscription error for ${metric}:`, error);
-          },
-          complete: () => {
-            console.log(`${metric} subscription completed.`);
-          }
+          error: (error) =>
+            console.error(`Subscription error for ${metric}:`, error),
+          complete: () => console.log(`${metric} subscription completed.`),
         });
       }
     });
   }
 
-  /**
-   * Connect to specific metrics
-   */
   connectToMetrics(metrics: string[]): void {
-    metrics.forEach(metric => {
-      if (['vmstat', 'iostat', 'netstat', 'process'].includes(metric)) {
+    metrics.forEach((metric) => {
+      if (["vmstat", "iostat", "netstat", "process"].includes(metric)) {
         if (!this.websockets[metric]) {
           this.connectToMetric(metric).subscribe({
-            error: (error) => {
-              console.error(`Subscription error for ${metric}:`, error);
-            },
-            complete: () => {
-              console.log(`${metric} subscription completed.`);
-            }
+            error: (error) =>
+              console.error(`Subscription error for ${metric}:`, error),
+            complete: () => console.log(`${metric} subscription completed.`),
           });
         }
       }
     });
   }
 
-  /**
-   * Disconnect from a specific metric
-   */
   disconnect(metric: string): void {
     if (this.websockets[metric]) {
       console.log(`Disconnecting ${metric} WebSocket`);
-      this.websockets[metric]!.complete();
+      this.websockets[metric]!.complete(); // Use code 1000 for normal closure
       this.websockets[metric] = null;
     }
     this.activeConnections.delete(metric);
-    this.connectionStatus[metric].next(RealtimeConnectionStatus.DISCONNECTED);
+    if (
+      this.connectionStatus[metric].value !==
+      RealtimeConnectionStatus.DISCONNECTED
+    ) {
+      this.connectionStatus[metric].next(RealtimeConnectionStatus.DISCONNECTED);
+    }
     this.reconnectAttempts[metric] = 0;
     this.dataBuffers[metric] = [];
   }
 
-  /**
-   * Disconnect from all WebSockets
-   */
   disconnectAll(): void {
-    Object.keys(this.websockets).forEach(metric => {
+    Object.keys(this.websockets).forEach((metric) => {
       this.disconnect(metric);
-    });
-    Object.keys(this.connectionStatus).forEach(metric => {
-      if (this.connectionStatus[metric].value !== RealtimeConnectionStatus.DISCONNECTED) {
-        this.connectionStatus[metric].next(RealtimeConnectionStatus.DISCONNECTED);
-      }
     });
   }
 
-  /**
-   * Start realtime monitoring for all metrics
-   */
   startRealtimeMonitoring(): void {
     this.connectAll();
   }
 
-  /**
-   * Start realtime monitoring for specific metrics
-   */
   startSelectiveMonitoring(metrics: string[]): void {
     this.connectToMetrics(metrics);
   }
 
-  /**
-   * Stop realtime monitoring
-   */
   stopRealtimeMonitoring(): void {
     this.disconnectAll();
   }
 
-  /**
-   * Get vmstat data stream
-   */
+  // --- MODIFIED: Return type changed for netstat/iostat ---
   getRealtimeVmstat(): Observable<VmstatData> {
     return this.vmstatSubject$.asObservable();
   }
 
-  /**
-   * Get netstat data stream
-   */
-  getRealtimeNetstat(): Observable<NetstatData> {
+  getRealtimeNetstat(): Observable<WebSocketData> {
     return this.netstatSubject$.asObservable();
   }
 
-  /**
-   * Get iostat data stream
-   */
-  getRealtimeIostat(): Observable<IostatData> {
+  getRealtimeIostat(): Observable<WebSocketData> {
     return this.iostatSubject$.asObservable();
   }
 
-  /**
-   * Get process data stream
-   */
   getRealtimeProcess(): Observable<ProcessData> {
     return this.processSubject$.asObservable();
   }
+  // --- END MODIFICATION ---
 
-  /**
-   * Send message through specific WebSocket
-   */
   sendMessage(metric: string, message: any): void {
-    if (this.websockets[metric] &&
-        this.connectionStatus[metric].value === RealtimeConnectionStatus.CONNECTED) {
+    if (
+      this.websockets[metric] &&
+      this.connectionStatus[metric].value === RealtimeConnectionStatus.CONNECTED
+    ) {
       this.websockets[metric]!.next(message);
     } else {
-      console.warn(`${metric} WebSocket not connected, cannot send message:`, message);
+      console.warn(
+        `${metric} WebSocket not connected, cannot send message:`,
+        message
+      );
     }
   }
 
-  /**
-   * Handle incoming WebSocket messages
-   */
-  private handleIncomingMessage(metric: string, message: WebSocketMessage): void {
+  // --- MODIFIED: Handle full WebSocketData ---
+  private handleIncomingMessage(metric: string, message: WebSocketData): void {
     try {
-        // Use top-level timestamp instead of values.timestamp
-        const correctedData = {
-            ...message.values,
-            timestamp: message.timestamp // Use top-level timestamp
-        };
-        
-        // Add to buffer for timestamp sorting
-        this.addToBuffer(metric, correctedData);
+      // Add the full message to the buffer
+      this.addToBuffer(metric, message);
     } catch (error) {
-        console.error(`Error handling ${metric} message:`, error, message);
+      console.error(
+        `Error handling incoming message for ${metric}:`,
+        error,
+        message
+      );
     }
   }
-
-  /**
-   * Handle reconnection logic for specific metric
-   */
-  private handleReconnection(metric: string): void {
-    console.log(`Reconnection logic triggered for ${metric}. Relying on retryWhen.`);
-  }
-
-  /**
-   * Check if a specific metric WebSocket is connected
-   */
-  isConnected(metric: string): boolean {
-    return this.connectionStatus[metric]?.value === RealtimeConnectionStatus.CONNECTED;
-  }
-
-  /**
-   * Check if all required WebSockets are connected
-   */
-  areAllConnected(metrics: string[]): boolean {
-    return metrics.every(metric => this.isConnected(metric));
-  }
+  // --- END MODIFICATION ---
 }
