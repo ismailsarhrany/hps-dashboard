@@ -6,6 +6,7 @@ import logging
 
 logger = logging.getLogger(__name__) # Add logging
 
+
 class AIXClient:
     def __init__(self, max_retries=3, retry_delay=5): # Add retry parameters
         self.host = settings.AIX_HOST
@@ -178,3 +179,18 @@ class AIXClient:
 #                 return None # Or raise
 #         return self._pool[host]
 
+class ConnectionPool:
+    _instance = None
+    def __new__(cls):
+        if not cls._instance:
+            cls._instance = super().__new__(cls)
+            cls._pool = {}
+        return cls._instance
+    
+    def get_client(self, host):
+        if host not in self._pool or not self._pool[host].ssh.get_transport().is_active():
+            client = AIXClient()
+            client.host = host
+            client._ensure_connection()
+            self._pool[host] = client
+        return self._pool[host]

@@ -23,6 +23,7 @@ def get_metric_model(metric):
 class RealtimeMetricsView(View):
     """
     API endpoint to get the last 1 minutes of data for a given metric.
+
     """
     def get(self, request):
         metric = request.GET.get('metric')
@@ -55,11 +56,13 @@ class RealtimeMetricsView(View):
                 "details": str(e)
             }, status=500)
 
+
 class HistoricalMetricsView(View):
     """
     API endpoint to get historical data for a given metric within a time range.
     Returns raw data without any aggregation.
     """
+
     def get(self, request):
         metric = request.GET.get('metric')
         start_str = request.GET.get('start')
@@ -74,7 +77,7 @@ class HistoricalMetricsView(View):
         try:
             start = parse_datetime(start_str)
             end = parse_datetime(end_str)
-            
+           
             if not start or not end:
                 return JsonResponse({
                     "error": "Invalid datetime format. Use ISO format (e.g., 2024-01-01T00:00:00Z)"
@@ -113,12 +116,14 @@ class HistoricalMetricsView(View):
                 "end_time": end.isoformat(),
                 "metric": metric
             }, safe=False)
+
             
         except Exception as e:
             return JsonResponse({
                 "error": "Processing error",
                 "details": str(e)
             }, status=500)
+
 
 # Optional: Keep this class if you want to add aggregation functionality later
 # but with a separate endpoint

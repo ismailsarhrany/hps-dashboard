@@ -39,6 +39,7 @@ class MetricConsumer:
             self.consumer = None
             return
             
+
         self.channel_layer = get_channel_layer()
         self.running = True
         
@@ -78,6 +79,20 @@ class MetricConsumer:
             # Update last sent sequence
             self.last_sent_sequence[metric_type] = sequence_id
             logger.debug(f"Sent {metric_type} message with sequence_id {sequence_id}")
+
+            
+            # Broadcast via WebSocket
+            async_to_sync(self.channel_layer.group_send)(
+                "metrics",
+                {
+                    "type": "metric.update",
+                    "data": {
+                        "metric": msg.topic().replace('metrics_', ''),
+                        "timestamp": instance_data['timestamp'],
+                        "values": instance_data
+                    }
+                }
+            )
             
         except Exception as e:
             logger.error(f"Error sending message for {metric_type}: {e}")

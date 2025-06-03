@@ -1,4 +1,6 @@
-# metrics/routing.py
+
+# metrics/consumers/routing.py
+
 from django.urls import re_path
 from . import consumers
 
@@ -10,5 +12,6 @@ websocket_urlpatterns = [
     re_path(r'ws/metrics/process/$', consumers.ProcessConsumer.as_asgi()),
     
     # General metrics URL (for backwards compatibility)
+
     re_path(r'ws/metrics/$', consumers.MetricConsumer.as_asgi()),
 ]

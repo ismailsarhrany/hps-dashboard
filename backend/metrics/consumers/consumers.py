@@ -124,3 +124,4 @@ class MetricConsumer(AsyncWebsocketConsumer):
             logger.debug(f"Sent general metric data: {event['data']['timestamp']}")
         except Exception as e:
             logger.error(f"Error sending general metric data: {e}")
+
