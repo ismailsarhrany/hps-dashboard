@@ -87,11 +87,7 @@ services:
       postgres:
         condition: service_healthy
       kafka:
-<<<<<<< HEAD
         condition: service_started # Ou service_healthy si vous avez un healthcheck Kafka fiable
-=======
-        condition: service_started
->>>>>>> 04483ca (bettering the apis)
       redis:
         condition: service_healthy
     env_file:
@@ -100,13 +96,6 @@ services:
       REDIS_URL: redis://redis:6379/0
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       DEBUG: "True"
-<<<<<<< HEAD
-=======
-    command: >
-      sh -c "python manage.py migrate &&
-             python manage.py create_kafka_topics &&
-             gunicorn --bind 0.0.0.0:8000 core.wsgi:application"
->>>>>>> 04483ca (bettering the apis)
     networks:
       - app-network
     # Le healthcheck peut nécessiter un ajustement si les migrations prennent du temps
@@ -117,12 +106,6 @@ services:
     #   retries: 5
     #   start_period: 60s # Augmenter potentiellement le start_period
 
-<<<<<<< HEAD
-  # ... (autres services )
-
-
-=======
->>>>>>> 04483ca (bettering the apis)
   # --- Kafka UI ---
   kafka-ui:
     image: provectuslabs/kafka-ui:latest
