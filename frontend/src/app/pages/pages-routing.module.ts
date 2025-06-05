@@ -88,7 +88,11 @@ const routes: Routes = [{
         .then(m => m.ProcessModule) },
       { path: 'prediction',
         loadChildren: () => import('./prediction/prediction.module')
-        .then(m => m.PredictionModule) }
+        .then(m => m.PredictionModule) },
+        {path: 'anomaly',
+        loadChildren: () => import('./anomaly/anomaly.module')
+        .then(m => m.AnomalyModule)
+        }
   ],
 },
 ];

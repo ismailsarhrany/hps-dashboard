@@ -13,6 +13,8 @@ import { RealtimeModule } from './realtime/realtime.module';
 import { HistoricModule } from './historic/historic.module';
 import { ProcessModule } from './process/process.module';
 import { PredictionModule } from './prediction/prediction.module';
+import { AnomalyModule } from './anomaly/anomaly.module';
+
 
 import { ApiService } from '../services/monitoring.service';
 
@@ -30,10 +32,12 @@ import { ApiService } from '../services/monitoring.service';
     RealtimeModule,
     HistoricModule,
     ProcessModule,
-    PredictionModule
+    PredictionModule,
+    AnomalyModule
   ],
   declarations: [
     PagesComponent,
+
   ],
   providers: [
     ApiService
