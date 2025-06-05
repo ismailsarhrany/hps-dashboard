@@ -42,18 +42,14 @@ export class RealtimeComponent implements OnInit, OnDestroy {
   private echartTheme: any;
 
   // --- Données pour les graphiques ---
-  // CPU/Memory (données brutes)
   cpuData: VmstatData[] = [];
   memoryData: VmstatData[] = [];
-
-  // Disk/Network (stockent les points de taux reçus du backend)
   diskReadRatePoints: RatePoint[] = [];
   diskWriteRatePoints: RatePoint[] = [];
   networkInputRatePoints: RatePoint[] = [];
   networkOutputRatePoints: RatePoint[] = [];
   networkInputErrorRatePoints: RatePoint[] = [];
   networkOutputErrorRatePoints: RatePoint[] = [];
-  // --- Fin Données pour les graphiques ---
 
   // Chart options
   cpuChartOption: any = {};
@@ -63,15 +59,15 @@ export class RealtimeComponent implements OnInit, OnDestroy {
   networkPacketsChartOption: any = {};
   networkErrorsChartOption: any = {};
 
-  // Summary widgets data (mis à jour avec les taux reçus)
+  // Summary widgets data
   currentCpuUsage: number = 0;
   currentMemoryUsage: number = 0;
   diskStatus: string = "Normal";
   networkStatus: string = "Active";
   currentDiskReadRate: number = 0;
   currentDiskWriteRate: number = 0;
-  currentNetInputRate: number = 0;
-  currentNetOutputRate: number = 0;
+  currentNetInputRate: number = 0; // Note: This might become less meaningful with multiple interfaces
+  currentNetOutputRate: number = 0; // Note: This might become less meaningful with multiple interfaces
   currentTotalNetworkRate: number = 0;
   currentTotalErrorRate: number = 0;
 
@@ -124,13 +120,10 @@ export class RealtimeComponent implements OnInit, OnDestroy {
         }
       });
 
-    // S'abonner aux différents flux de données du service
     this.vmstatSubscription = this.realtimeService
       .getRealtimeVmstat()
-      .subscribe((data) => this.processVmstatData(data as VmstatData)); // Cast si nécessaire
+      .subscribe((data) => this.processVmstatData(data as VmstatData));
 
-    // Utiliser un observable générique si le service le fournit
-    // ou s'abonner aux sujets spécifiques comme avant
     this.netstatSubscription = this.realtimeService
       .getRealtimeNetstat()
       .subscribe((data) => this.processNetstatData(data as WebSocketData));
@@ -145,19 +138,14 @@ export class RealtimeComponent implements OnInit, OnDestroy {
   }
 
   private processProcessData(data: ProcessData) {
-    // Logique simple, pas de taux ici
     this.processCount++;
   }
-
-  // --- Traitement des données reçues (utilise les taux du backend) ---
 
   private processVmstatData(data: VmstatData) {
     const timestamp = new Date(data.timestamp);
     if (isNaN(timestamp.getTime())) return;
-    // Stocker les données brutes pour CPU/Mem
     this.cpuData.push(data);
     this.memoryData.push(data);
-    // Mettre à jour les widgets
     this.currentCpuUsage = Math.round((100 - data.idle) * 100) / 100;
     const totalMemory = data.avm + data.fre;
     this.currentMemoryUsage =
@@ -165,35 +153,30 @@ export class RealtimeComponent implements OnInit, OnDestroy {
         ? Math.round((data.avm / totalMemory) * 100 * 100) / 100
         : 0;
     this.systemLoad = data.r;
-    // Déclencher la mise à jour
     this.trimAndSortDataArrays();
     this.updateCharts();
     this.lastUpdateTime = new Date();
   }
 
   private processNetstatData(wsData: WebSocketData) {
-    // Extraire les valeurs et les taux du champ 'values'
     const data = wsData.values;
     const currentTimestamp = new Date(data.timestamp).getTime();
     if (isNaN(currentTimestamp)) return;
-    const interfaceKey = data.interface || "default";
+    const interfaceKey = data.interface || "default"; // Use 'default' if interface is missing
 
-    // Utiliser directement les taux fournis par le backend
-    // Utiliser 0 si le champ n'existe pas (sécurité)
-    this.currentNetInputRate = data.ipkts_rate ?? 0;
-    this.currentNetOutputRate = data.opkts_rate ?? 0;
+    const inputRate = data.ipkts_rate ?? 0;
+    const outputRate = data.opkts_rate ?? 0;
     const inputErrorRate = data.ierrs_rate ?? 0;
     const outputErrorRate = data.oerrs_rate ?? 0;
 
-    // Ajouter les points de taux aux tableaux dédiés
     this.networkInputRatePoints.push({
       timestamp: currentTimestamp,
-      rate: this.currentNetInputRate,
+      rate: inputRate,
       id: interfaceKey,
     });
     this.networkOutputRatePoints.push({
       timestamp: currentTimestamp,
-      rate: this.currentNetOutputRate,
+      rate: outputRate,
       id: interfaceKey,
     });
     this.networkInputErrorRatePoints.push({
@@ -207,55 +190,57 @@ export class RealtimeComponent implements OnInit, OnDestroy {
       id: interfaceKey,
     });
 
-    // Mettre à jour les widgets
+    // Update summary widgets (consider how to aggregate/display with multiple interfaces)
+    // For now, let's sum all interfaces for the total widgets
     this.currentTotalNetworkRate =
-      this.currentNetInputRate + this.currentNetOutputRate;
-    this.currentTotalErrorRate = inputErrorRate + outputErrorRate;
+      this.networkInputRatePoints.reduce((sum, p) => sum + p.rate, 0) +
+      this.networkOutputRatePoints.reduce((sum, p) => sum + p.rate, 0);
+    this.currentTotalErrorRate =
+      this.networkInputErrorRatePoints.reduce((sum, p) => sum + p.rate, 0) +
+      this.networkOutputErrorRatePoints.reduce((sum, p) => sum + p.rate, 0);
     this.networkStatus =
       this.currentTotalErrorRate > 0.1 ? "Errors Detected" : "Active";
 
-    // Déclencher la mise à jour
     this.trimAndSortDataArrays();
     this.updateCharts();
   }
 
   private processIostatData(wsData: WebSocketData) {
-    // Extraire les valeurs et les taux du champ 'values'
     const data = wsData.values;
     const currentTimestamp = new Date(data.timestamp).getTime();
     if (isNaN(currentTimestamp)) return;
-    const diskKey = data.disk;
+    const diskKey = data.disk || "default"; // Use 'default' if disk is missing
 
-    // Utiliser directement les taux fournis par le backend
-    this.currentDiskReadRate = data.kb_read_rate ?? 0;
-    this.currentDiskWriteRate = data.kb_wrtn_rate ?? 0;
+    const readRate = data.kb_read_rate ?? 0;
+    const writeRate = data.kb_wrtn_rate ?? 0;
 
-    // Ajouter les points de taux aux tableaux dédiés
     this.diskReadRatePoints.push({
       timestamp: currentTimestamp,
-      rate: this.currentDiskReadRate,
+      rate: readRate,
       id: diskKey,
     });
     this.diskWriteRatePoints.push({
       timestamp: currentTimestamp,
-      rate: this.currentDiskWriteRate,
+      rate: writeRate,
       id: diskKey,
     });
 
-    // Mettre à jour les widgets
+    // Update summary widgets (summing across disks)
+    this.currentDiskReadRate = this.diskReadRatePoints.reduce(
+      (sum, p) => sum + p.rate,
+      0
+    );
+    this.currentDiskWriteRate = this.diskWriteRatePoints.reduce(
+      (sum, p) => sum + p.rate,
+      0
+    );
     const totalActivityRate =
       this.currentDiskReadRate + this.currentDiskWriteRate;
     this.diskStatus = totalActivityRate > 10000 ? "High Load" : "Normal";
 
-    // Déclencher la mise à jour
     this.trimAndSortDataArrays();
     this.updateCharts();
   }
-
-  // --- Fin Traitement des données reçues ---
-
-  // PAS DE FONCTION calculateRate ICI
-  // PAS DE CACHES previousNetstatValues / previousIostatValues ICI
 
   private trimAndSortDataArrays() {
     const now = new Date().getTime();
@@ -271,7 +256,7 @@ export class RealtimeComponent implements OnInit, OnDestroy {
             : item.timestamp;
         return !isNaN(itemTime) && itemTime >= cutoffTime;
       });
-      // Tri déplacé dans createDiskSeriesData pour les disques, mais conservé ici pour les autres
+      // Sort is crucial for line charts
       filtered.sort((a, b) => {
         const timeA =
           typeof a.timestamp === "string"
@@ -283,16 +268,17 @@ export class RealtimeComponent implements OnInit, OnDestroy {
             : b.timestamp;
         return timeA - timeB;
       });
+      // Limit points *after* sorting and filtering by time
       if (filtered.length > this.maxPointsPerSeries) {
+        // Keep the most recent points
         filtered = filtered.slice(filtered.length - this.maxPointsPerSeries);
       }
       return filtered;
     };
 
-    // Appliquer aux tableaux de données brutes ET aux tableaux de taux
+    // Apply to all data arrays
     this.cpuData = filterAndSort(this.cpuData);
     this.memoryData = filterAndSort(this.memoryData);
-    // Le filtrage temporel est toujours utile ici, mais le tri fin est fait dans updateCharts pour les disques
     this.diskReadRatePoints = filterAndSort(this.diskReadRatePoints);
     this.diskWriteRatePoints = filterAndSort(this.diskWriteRatePoints);
     this.networkInputRatePoints = filterAndSort(this.networkInputRatePoints);
@@ -306,7 +292,6 @@ export class RealtimeComponent implements OnInit, OnDestroy {
   }
 
   private initializeCharts() {
-    // ... (Initialisation des options de base reste identique) ...
     const baseOption = {
       backgroundColor: this.echartTheme === "dark" ? "#222b45" : "#ffffff",
       tooltip: {
@@ -318,12 +303,13 @@ export class RealtimeComponent implements OnInit, OnDestroy {
           },
         },
         formatter: (params: any[]) => {
+          if (!params || params.length === 0) return "";
           let tooltip = `${new Date(
             params[0].axisValue
           ).toLocaleString()}<br/>`;
           params.forEach((param) => {
             const value =
-              typeof param.value[1] === "number"
+              param.value && typeof param.value[1] === "number"
                 ? param.value[1].toFixed(2)
                 : "N/A";
             tooltip += `${param.marker} ${param.seriesName}: ${value}<br/>`;
@@ -332,7 +318,10 @@ export class RealtimeComponent implements OnInit, OnDestroy {
         },
       },
       legend: {
-        data: [],
+        data: [], // Will be populated dynamically
+        type: "scroll", // Allow scrolling if many items
+        orient: "horizontal",
+        top: "top",
         textStyle: {
           color: this.echartTheme === "dark" ? "#ffffff" : "#000000",
         },
@@ -340,7 +329,7 @@ export class RealtimeComponent implements OnInit, OnDestroy {
       grid: {
         left: "3%",
         right: "4%",
-        bottom: "3%",
+        bottom: "10%", // Adjust bottom to make space for scrollable legend
         containLabel: true,
       },
       xAxis: {
@@ -366,13 +355,22 @@ export class RealtimeComponent implements OnInit, OnDestroy {
           color: this.echartTheme === "dark" ? "#ffffff" : "#000000",
           formatter: "{value}",
         },
+        splitLine: {
+          lineStyle: {
+            color: this.echartTheme === "dark" ? "#3c3f4c" : "#eee",
+          },
+        },
       },
     };
 
-    // Initialiser les options (les séries seront remplies dans updateCharts)
+    // Initialize options - series and legend data will be overwritten in updateCharts
     this.cpuChartOption = {
       ...baseOption,
-      /* title, */ yAxis: { ...baseOption.yAxis, max: 100 },
+      yAxis: {
+        ...baseOption.yAxis,
+        max: 100,
+        axisLabel: { formatter: "{value} %" },
+      },
       legend: { ...baseOption.legend, data: ["User CPU", "System CPU"] },
       series: [
         {
@@ -395,10 +393,8 @@ export class RealtimeComponent implements OnInit, OnDestroy {
     };
     this.memoryChartOption = {
       ...baseOption,
-      /* title, */ legend: {
-        ...baseOption.legend,
-        data: ["Used Memory", "Free Memory"],
-      },
+      yAxis: { ...baseOption.yAxis, axisLabel: { formatter: "{value} MiB" } },
+      legend: { ...baseOption.legend, data: ["Used Memory", "Free Memory"] },
       series: [
         {
           name: "Used Memory",
@@ -420,86 +416,39 @@ export class RealtimeComponent implements OnInit, OnDestroy {
     };
     this.diskReadChartOption = {
       ...baseOption,
-      /* title: { text: "Disk Read Rate (KB/s)"}, */ yAxis: {
-        ...baseOption.yAxis,
-        axisLabel: { formatter: "{value} KB/s" },
-      },
-      legend: { ...baseOption.legend, data: [] },
-      series: [],
+      yAxis: { ...baseOption.yAxis, axisLabel: { formatter: "{value} KB/s" } },
+      legend: { ...baseOption.legend, data: [] }, // Dynamic
+      series: [], // Dynamic
     };
     this.diskWriteChartOption = {
       ...baseOption,
-      /* title: { text: "Disk Write Rate (KB/s)"}, */ yAxis: {
-        ...baseOption.yAxis,
-        axisLabel: { formatter: "{value} KB/s" },
-      },
-      legend: { ...baseOption.legend, data: [] },
-      series: [],
+      yAxis: { ...baseOption.yAxis, axisLabel: { formatter: "{value} KB/s" } },
+      legend: { ...baseOption.legend, data: [] }, // Dynamic
+      series: [], // Dynamic
     };
     this.networkPacketsChartOption = {
       ...baseOption,
-      /* title: { text: "Network Packet Rate (packets/s)"}, */ yAxis: {
-        ...baseOption.yAxis,
-        axisLabel: { formatter: "{value} pps" },
-      },
-      legend: { ...baseOption.legend, data: ["Input Rate", "Output Rate"] },
-      series: [
-        {
-          name: "Input Rate",
-          type: "line",
-          data: [],
-          smooth: true,
-          itemStyle: { color: "#8061ef" },
-        },
-        {
-          name: "Output Rate",
-          type: "line",
-          data: [],
-          smooth: true,
-          itemStyle: { color: "#42aaff" },
-        },
-      ],
+      yAxis: { ...baseOption.yAxis, axisLabel: { formatter: "{value} pps" } },
+      legend: { ...baseOption.legend, data: [] }, // Dynamic
+      series: [], // Dynamic
     };
     this.networkErrorsChartOption = {
       ...baseOption,
-      /* title: { text: "Network Error Rate (errors/s)"}, */ yAxis: {
-        ...baseOption.yAxis,
-        axisLabel: { formatter: "{value} eps" },
-      },
-      legend: {
-        ...baseOption.legend,
-        data: ["Input Error Rate", "Output Error Rate"],
-      },
-      series: [
-        {
-          name: "Input Error Rate",
-          type: "line",
-          data: [],
-          smooth: true,
-          itemStyle: { color: "#ff3d71" },
-        },
-        {
-          name: "Output Error Rate",
-          type: "line",
-          data: [],
-          smooth: true,
-          itemStyle: { color: "#ff6b6b" },
-        },
-      ],
+      yAxis: { ...baseOption.yAxis, axisLabel: { formatter: "{value} eps" } },
+      legend: { ...baseOption.legend, data: [] }, // Dynamic
+      series: [], // Dynamic
     };
   }
 
-  // --- MISE A JOUR DES GRAPHIQUES (utilise les taux pré-calculés) ---
   private updateCharts() {
     if (!this.echartTheme) return;
 
     const now = new Date();
-    const oneMinuteAgo = new Date(
-      now.getTime() - this.timeWindowSeconds * 1000
-    );
-    const xAxisRange = { min: oneMinuteAgo.getTime(), max: now.getTime() };
+    const startTime = now.getTime() - this.timeWindowSeconds * 1000;
+    const endTime = now.getTime();
+    const xAxisRange = { min: startTime, max: endTime };
 
-    // --- CPU Chart (utilise les données brutes) ---
+    // --- CPU Chart ---
     this.cpuChartOption = {
       ...this.cpuChartOption,
       xAxis: { ...this.cpuChartOption.xAxis, ...xAxisRange },
@@ -521,7 +470,7 @@ export class RealtimeComponent implements OnInit, OnDestroy {
       ],
     };
 
-    // --- Memory Chart (utilise les données brutes) ---
+    // --- Memory Chart ---
     this.memoryChartOption = {
       ...this.memoryChartOption,
       xAxis: { ...this.memoryChartOption.xAxis, ...xAxisRange },
@@ -530,88 +479,90 @@ export class RealtimeComponent implements OnInit, OnDestroy {
           ...this.memoryChartOption.series[0],
           data: this.memoryData.map((item) => [
             new Date(item.timestamp).getTime(),
-            Math.round((item.avm / 1024 / 1024) * 100) / 100, // Convertir en Mo
+            Math.round((item.avm / 1024 / 1024) * 100) / 100, // Convert KiB to MiB
           ]),
         },
         {
           ...this.memoryChartOption.series[1],
           data: this.memoryData.map((item) => [
             new Date(item.timestamp).getTime(),
-            Math.round((item.fre / 1024 / 1024) * 100) / 100, // Convertir en Mo
+            Math.round((item.fre / 1024 / 1024) * 100) / 100, // Convert KiB to MiB
           ]),
         },
       ],
     };
 
-    // --- Disk Charts (utilise les points de taux reçus) ---
-    const allDisks = [
-      ...new Set(
-        [...this.diskReadRatePoints, ...this.diskWriteRatePoints].map(
-          (p) => p.id
-        )
-      ),
-    ];
-
-    // Helper function to create series data with padding
-    const createDiskSeriesData = (
+    // --- Helper function to create series data with padding ---
+    const createSeriesDataWithPadding = (
       points: RatePoint[],
-      diskId: string,
+      entityId: string, // disk or interface ID
       startTime: number,
       endTime: number
     ): [number, number][] => {
-      // Filter points for the specific disk AND ensure they are within the time window
-      // Note: trimAndSortDataArrays already filters, but double-checking here is safe
-      const currentDiskPoints = points
+      const currentEntityPoints = points
         .filter(
           (p) =>
-            p.id === diskId &&
+            p.id === entityId &&
             p.timestamp >= startTime &&
             p.timestamp <= endTime
         )
         .sort((a, b) => a.timestamp - b.timestamp); // Ensure sorted by time
 
       let echartsData: [number, number][] = [];
-      const startPoint: [number, number] = [startTime, 0];
-      const endPoint: [number, number] = [endTime, 0];
+      const startPoint: [number, number] = [startTime, 0]; // Use 0 for padding
+      const endPoint: [number, number] = [endTime, 0]; // Use 0 for padding
 
-      if (currentDiskPoints.length > 0) {
-        const firstPointTime = currentDiskPoints[0].timestamp;
+      if (currentEntityPoints.length > 0) {
+        const firstPointTime = currentEntityPoints[0].timestamp;
         const lastPointTime =
-          currentDiskPoints[currentDiskPoints.length - 1].timestamp;
+          currentEntityPoints[currentEntityPoints.length - 1].timestamp;
 
-        // Add start point if the first actual point is after the window start
+        // Add start padding point if the first actual point is after the window start
         if (firstPointTime > startTime) {
           echartsData.push(startPoint);
         }
 
         // Add actual points
         echartsData.push(
-          ...currentDiskPoints.map((p): [number, number] => [
+          ...currentEntityPoints.map((p): [number, number] => [
             p.timestamp,
             p.rate,
           ])
         );
 
-        // Add end point if the last actual point is before the window end
+        // Add end padding point if the last actual point is before the window end
         if (lastPointTime < endTime) {
-          echartsData.push(endPoint);
+          // Add a point with the last known rate at the end time for better visualization
+          const lastRate =
+            currentEntityPoints[currentEntityPoints.length - 1].rate;
+          echartsData.push([endTime, lastRate]);
+          // Or use 0 padding: echartsData.push(endPoint);
         }
       } else {
-        // No data for this disk in the window, draw flat line at 0 across the whole window
+        // No data for this entity in the window, draw flat line at 0
         echartsData.push(startPoint);
         echartsData.push(endPoint);
       }
       return echartsData;
     };
 
+    // --- Disk Charts ---
+    const allDisks = [
+      ...new Set(
+        [...this.diskReadRatePoints, ...this.diskWriteRatePoints].map(
+          (p) => p.id || "default" // Handle potential missing IDs
+        )
+      ),
+    ];
+
     const diskReadSeries = allDisks.map((disk) => ({
-      name: disk,
+      name: `${disk} Read`,
       type: "line",
-      data: createDiskSeriesData(
+      data: createSeriesDataWithPadding(
         this.diskReadRatePoints,
         disk,
-        oneMinuteAgo.getTime(),
-        now.getTime()
+        startTime,
+        endTime
       ),
       smooth: true,
       itemStyle: { color: this.getRandomColor(disk + "_read") },
@@ -620,18 +571,21 @@ export class RealtimeComponent implements OnInit, OnDestroy {
     this.diskReadChartOption = {
       ...this.diskReadChartOption,
       xAxis: { ...this.diskReadChartOption.xAxis, ...xAxisRange },
-      legend: { ...this.diskReadChartOption.legend, data: allDisks },
+      legend: {
+        ...this.diskReadChartOption.legend,
+        data: diskReadSeries.map((s) => s.name),
+      },
       series: diskReadSeries,
     };
 
     const diskWriteSeries = allDisks.map((disk) => ({
-      name: disk,
+      name: `${disk} Write`,
       type: "line",
-      data: createDiskSeriesData(
+      data: createSeriesDataWithPadding(
         this.diskWriteRatePoints,
         disk,
-        oneMinuteAgo.getTime(),
-        now.getTime()
+        startTime,
+        endTime
       ),
       smooth: true,
       itemStyle: { color: this.getRandomColor(disk + "_write") },
@@ -640,52 +594,125 @@ export class RealtimeComponent implements OnInit, OnDestroy {
     this.diskWriteChartOption = {
       ...this.diskWriteChartOption,
       xAxis: { ...this.diskWriteChartOption.xAxis, ...xAxisRange },
-      legend: { ...this.diskWriteChartOption.legend, data: allDisks },
+      legend: {
+        ...this.diskWriteChartOption.legend,
+        data: diskWriteSeries.map((s) => s.name),
+      },
       series: diskWriteSeries,
     };
 
-    // --- Network Charts (utilise les points de taux reçus) ---
-    // Pas besoin de padding ici car les données réseau sont généralement continues
+    // --- Network Charts (CORRECTED DYNAMIC LOGIC using reduce + concat) ---
+    const allInterface = [
+      ...new Set(
+        [
+          ...this.networkInputRatePoints,
+          ...this.networkOutputRatePoints,
+          ...this.networkInputErrorRatePoints,
+          ...this.networkOutputErrorRatePoints,
+        ].map((p) => p.id || "default") // Handle potential missing IDs
+      ),
+    ];
+
+    // Network Packets Chart - Replace flatMap with reduce + concat
+    const networkPacketSeries = allInterface.reduce((acc, iface) => {
+      return acc.concat([
+        {
+          name: `${iface} Input`,
+          type: "line",
+          data: createSeriesDataWithPadding(
+            this.networkInputRatePoints,
+            iface,
+            startTime,
+            endTime
+          ),
+          smooth: true,
+          itemStyle: { color: this.getRandomColor(iface + "_in_pkt") },
+        },
+        {
+          name: `${iface} Output`,
+          type: "line",
+          data: createSeriesDataWithPadding(
+            this.networkOutputRatePoints,
+            iface,
+            startTime,
+            endTime
+          ),
+          smooth: true,
+          itemStyle: { color: this.getRandomColor(iface + "_out_pkt") },
+        },
+      ]);
+    }, [] as any[]); // Initialize accumulator as an empty array of the correct type
+
     this.networkPacketsChartOption = {
       ...this.networkPacketsChartOption,
       xAxis: { ...this.networkPacketsChartOption.xAxis, ...xAxisRange },
-      series: [
-        {
-          ...this.networkPacketsChartOption.series[0],
-          data: this.networkInputRatePoints.map((p) => [p.timestamp, p.rate]),
-        },
-        {
-          ...this.networkPacketsChartOption.series[1],
-          data: this.networkOutputRatePoints.map((p) => [p.timestamp, p.rate]),
-        },
-      ],
+      legend: {
+        ...this.networkPacketsChartOption.legend,
+        data: networkPacketSeries.map((s) => s.name),
+      },
+      series: networkPacketSeries,
     };
+
+    // Network Errors Chart - Replace flatMap with reduce + concat
+    const networkErrorSeries = allInterface.reduce((acc, iface) => {
+      return acc.concat([
+        {
+          name: `${iface} Input Error`,
+          type: "line",
+          data: createSeriesDataWithPadding(
+            this.networkInputErrorRatePoints,
+            iface,
+            startTime,
+            endTime
+          ),
+          smooth: true,
+          itemStyle: { color: this.getRandomColor(iface + "_in_err") },
+        },
+        {
+          name: `${iface} Output Error`,
+          type: "line",
+          data: createSeriesDataWithPadding(
+            this.networkOutputErrorRatePoints,
+            iface,
+            startTime,
+            endTime
+          ),
+          smooth: true,
+          itemStyle: { color: this.getRandomColor(iface + "_out_err") },
+        },
+      ]);
+    }, [] as any[]); // Initialize accumulator as an empty array of the correct type
 
     this.networkErrorsChartOption = {
       ...this.networkErrorsChartOption,
       xAxis: { ...this.networkErrorsChartOption.xAxis, ...xAxisRange },
-      series: [
-        {
-          ...this.networkErrorsChartOption.series[0],
-          data: this.networkInputErrorRatePoints.map((p) => [
-            p.timestamp,
-            p.rate,
-          ]),
-        },
-        {
-          ...this.networkErrorsChartOption.series[1],
-          data: this.networkOutputErrorRatePoints.map((p) => [
-            p.timestamp,
-            p.rate,
-          ]),
-        },
-      ],
+      legend: {
+        ...this.networkErrorsChartOption.legend,
+        data: networkErrorSeries.map((s) => s.name),
+      },
+      series: networkErrorSeries,
     };
   }
-  // --- Fin MISE A JOUR DES GRAPHIQUES ---
 
   private getRandomColor(seed: string): string {
+    // Simple hash function for seed -> color index
+    let hash = 0;
+    for (let i = 0; i < seed.length; i++) {
+      hash = seed.charCodeAt(i) + ((hash << 5) - hash);
+      hash = hash & hash; // Convert to 32bit integer
+    }
+    // Use a predefined list of distinct colors
     const colors = [
+      "#5470c6",
+      "#91cc75",
+      "#fac858",
+      "#ee6666",
+      "#73c0de",
+      "#3ba272",
+      "#fc8452",
+      "#9a60b4",
+      "#ea7ccc",
+      // Add more colors if needed
       "#3366ff",
       "#00d68f",
       "#ff3d71",
@@ -695,13 +722,11 @@ export class RealtimeComponent implements OnInit, OnDestroy {
       "#ff6b6b",
       "#00d9bf",
     ];
-    const hash = seed
-      .split("")
-      .reduce((sum, char) => sum + char.charCodeAt(0), 0);
-    return colors[hash % colors.length];
+    const index = Math.abs(hash) % colors.length;
+    return colors[index];
   }
 
-  // --- Getters pour les couleurs des status (inchangés) ---
+  // --- Getters for status colors (unchanged) ---
   getCpuStatusColor(): string {
     if (this.currentCpuUsage > 80) return "danger";
     if (this.currentCpuUsage > 60) return "warning";

@@ -22,5 +22,6 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('metrics.urls')),
     path('', RedirectView.as_view(url='api/metrics/realtime/')),
+    path('api/', include('models.urls')),
 ]
 

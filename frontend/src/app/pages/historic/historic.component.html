@@ -1,4 +1,4 @@
-<!-- src/app/pages/historic/historic.component.html - Updated for Loading Overlay -->
+<!-- src/app/pages/historic/historic.component.html - Updated for Split Network Charts & Loading Overlay -->
 <div class="row">
   <div class="col-12">
     <nb-card>
@@ -6,110 +6,122 @@
         <h5>Historical System Monitoring</h5>
       </nb-card-header>
       <nb-card-body>
-        
         <!-- Date Range Form -->
         <form [formGroup]="dateRangeForm" (ngSubmit)="onSubmit()" class="mb-4">
           <div class="row">
             <div class="col-md-3">
               <label class="label">Start Date:</label>
-              <input 
-                type="date" 
-                formControlName="startDate" 
-                nbInput 
+              <input
+                type="date"
+                formControlName="startDate"
+                nbInput
                 fullWidth
-                status="basic">
+                status="basic"
+              />
             </div>
             <div class="col-md-3">
               <label class="label">Start Time:</label>
-              <input 
-                type="time" 
-                formControlName="startTime" 
-                nbInput 
+              <input
+                type="time"
+                formControlName="startTime"
+                nbInput
                 fullWidth
-                status="basic">
+                status="basic"
+              />
             </div>
             <div class="col-md-3">
               <label class="label">End Date:</label>
-              <input 
-                type="date" 
-                formControlName="endDate" 
-                nbInput 
+              <input
+                type="date"
+                formControlName="endDate"
+                nbInput
                 fullWidth
-                status="basic">
+                status="basic"
+              />
             </div>
             <div class="col-md-3">
               <label class="label">End Time:</label>
-              <input 
-                type="time" 
-                formControlName="endTime" 
-                nbInput 
+              <input
+                type="time"
+                formControlName="endTime"
+                nbInput
                 fullWidth
-                status="basic">
+                status="basic"
+              />
             </div>
           </div>
-          
+
           <div class="row mt-3">
             <div class="col-12">
-              <button 
-                type="submit" 
-                nbButton 
-                status="primary" 
+              <button
+                type="submit"
+                nbButton
+                status="primary"
                 [disabled]="!dateRangeForm.valid || loading"
-                class="mr-2">
+                class="mr-2"
+              >
                 <nb-icon icon="search-outline" *ngIf="!loading"></nb-icon>
-                <nb-icon icon="loader-outline" *ngIf="loading" class="spin"></nb-icon>
+                <nb-icon
+                  icon="loader-outline"
+                  *ngIf="loading"
+                  class="spin"
+                ></nb-icon>
                 Load Data
               </button>
-              
+
               <!-- Quick Selection Buttons -->
-              <button 
-                type="button" 
-                nbButton 
-                status="info" 
-                size="small" 
+              <button
+                type="button"
+                nbButton
+                status="info"
+                size="small"
                 (click)="selectToday()"
-                class="mr-2">
+                class="mr-2"
+              >
                 Today
               </button>
-              <button 
-                type="button" 
-                nbButton 
-                status="info" 
-                size="small" 
+              <button
+                type="button"
+                nbButton
+                status="info"
+                size="small"
                 (click)="selectYesterday()"
-                class="mr-2">
+                class="mr-2"
+              >
                 Yesterday
               </button>
-              <button 
-                type="button" 
-                nbButton 
-                status="info" 
-                size="small" 
+              <button
+                type="button"
+                nbButton
+                status="info"
+                size="small"
                 (click)="selectLast24Hours()"
-                class="mr-2">
+                class="mr-2"
+              >
                 Last 24h
               </button>
-              <button 
-                type="button" 
-                nbButton 
-                status="info" 
-                size="small" 
+              <button
+                type="button"
+                nbButton
+                status="info"
+                size="small"
                 (click)="selectLastWeek()"
-                class="mr-2">
+                class="mr-2"
+              >
                 Last Week
               </button>
-              <button 
-                type="button" 
-                nbButton 
-                status="info" 
-                size="small" 
-                (click)="selectLastMonth()">
+              <button
+                type="button"
+                nbButton
+                status="info"
+                size="small"
+                (click)="selectLastMonth()"
+              >
                 Last Month
               </button>
             </div>
           </div>
         </form>
-
       </nb-card-body>
     </nb-card>
   </div>
@@ -117,40 +129,38 @@
 
 <!-- Main Content Area (Charts + Loading Overlay) -->
 <div class="content-area">
-
   <!-- Charts Section (Dimmed during loading) -->
   <div class="charts-section" [class.loading-active]="loading">
-    
-    <!-- CPU Usage Chart (User & System) -->
+    <!-- CPU Usage Chart -->
     <div class="row">
       <div class="col-12">
         <nb-card class="chart-card">
-          <nb-card-header>
-            <h6 class="chart-title">
-              <nb-icon icon="cpu-outline" class="mr-2"></nb-icon>
-              CPU Usage (User & System)
-            </h6>
-          </nb-card-header>
-          <nb-card-body>
-            <div echarts [options]="cpuChartOption" class="echart"></div>
-          </nb-card-body>
+          <nb-card-header
+            ><h6 class="chart-title">
+              <nb-icon icon="cpu-outline" class="mr-2"></nb-icon>CPU Usage (User
+              & System)
+            </h6></nb-card-header
+          >
+          <nb-card-body
+            ><div echarts [options]="cpuChartOption" class="echart"></div
+          ></nb-card-body>
         </nb-card>
       </div>
     </div>
 
-    <!-- Memory Usage Chart (Used Only) -->
+    <!-- Memory Usage Chart -->
     <div class="row">
       <div class="col-12">
         <nb-card class="chart-card">
-          <nb-card-header>
-            <h6 class="chart-title">
-              <nb-icon icon="hard-drive-outline" class="mr-2"></nb-icon>
-              Used Memory Over Time
-            </h6>
-          </nb-card-header>
-          <nb-card-body>
-            <div echarts [options]="memoryChartOption" class="echart"></div>
-          </nb-card-body>
+          <nb-card-header
+            ><h6 class="chart-title">
+              <nb-icon icon="hard-drive-outline" class="mr-2"></nb-icon>Used
+              Memory Over Time
+            </h6></nb-card-header
+          >
+          <nb-card-body
+            ><div echarts [options]="memoryChartOption" class="echart"></div
+          ></nb-card-body>
         </nb-card>
       </div>
     </div>
@@ -159,28 +169,32 @@
     <div class="row">
       <div class="col-md-6">
         <nb-card class="chart-card">
-          <nb-card-header>
-            <h6 class="chart-title">
-              <nb-icon icon="download-outline" class="mr-2"></nb-icon>
-              Disk Read Rate (KB/s)
-            </h6>
-          </nb-card-header>
-          <nb-card-body>
-            <div echarts [options]="diskReadRateChartOption" class="echart"></div>
-          </nb-card-body>
+          <nb-card-header
+            ><h6 class="chart-title">
+              <nb-icon icon="download-outline" class="mr-2"></nb-icon>Disk Read
+              Rate (KB/s)
+            </h6></nb-card-header
+          >
+          <nb-card-body
+            ><div
+              echarts
+              [options]="diskReadRateChartOption"
+              class="echart"
+            ></div
+          ></nb-card-body>
         </nb-card>
       </div>
       <div class="col-md-6">
         <nb-card class="chart-card">
-          <nb-card-header>
-            <h6 class="chart-title">
-              <nb-icon icon="activity-outline" class="mr-2"></nb-icon>
-              Disk Read Operations
-            </h6>
-          </nb-card-header>
-          <nb-card-body>
-            <div echarts [options]="diskReadOpsChartOption" class="echart"></div>
-          </nb-card-body>
+          <nb-card-header
+            ><h6 class="chart-title">
+              <nb-icon icon="activity-outline" class="mr-2"></nb-icon>Disk
+              Operations (TPS)
+            </h6></nb-card-header
+          >
+          <nb-card-body
+            ><div echarts [options]="diskOpsChartOption" class="echart"></div
+          ></nb-card-body>
         </nb-card>
       </div>
     </div>
@@ -189,119 +203,150 @@
     <div class="row">
       <div class="col-md-6">
         <nb-card class="chart-card">
-          <nb-card-header>
-            <h6 class="chart-title">
-              <nb-icon icon="upload-outline" class="mr-2"></nb-icon>
-              Disk Write Rate (KB/s)
-            </h6>
-          </nb-card-header>
-          <nb-card-body>
-            <div echarts [options]="diskWriteRateChartOption" class="echart"></div>
-          </nb-card-body>
+          <nb-card-header
+            ><h6 class="chart-title">
+              <nb-icon icon="upload-outline" class="mr-2"></nb-icon>Disk Write
+              Rate (KB/s)
+            </h6></nb-card-header
+          >
+          <nb-card-body
+            ><div
+              echarts
+              [options]="diskWriteRateChartOption"
+              class="echart"
+            ></div
+          ></nb-card-body>
         </nb-card>
       </div>
       <div class="col-md-6">
         <nb-card class="chart-card">
-          <nb-card-header>
-            <h6 class="chart-title">
-              <nb-icon icon="activity-outline" class="mr-2"></nb-icon>
-              Disk Write Operations
-            </h6>
-          </nb-card-header>
-          <nb-card-body>
-            <div echarts [options]="diskWriteOpsChartOption" class="echart"></div>
-          </nb-card-body>
-        </nb-card>
-      </div>
-    </div>
-    
-    <!-- Network Packets Charts Row -->
-    <div class="row">
-      <div class="col-md-6">
-        <nb-card class="chart-card">
-          <nb-card-header>
-            <h6 class="chart-title">
-              <nb-icon icon="arrow-downward-outline" class="mr-2"></nb-icon>
-              Network Packets In
-            </h6>
-          </nb-card-header>
-          <nb-card-body>
-            <div echarts [options]="networkPacketsInChartOption" class="echart"></div>
-          </nb-card-body>
-        </nb-card>
-      </div>
-      <div class="col-md-6">
-        <nb-card class="chart-card">
-          <nb-card-header>
-            <h6 class="chart-title">
-              <nb-icon icon="arrow-upward-outline" class="mr-2"></nb-icon>
-              Network Packets Out
-            </h6>
-          </nb-card-header>
-          <nb-card-body>
-            <div echarts [options]="networkPacketsOutChartOption" class="echart"></div>
-          </nb-card-body>
+          <nb-card-header
+            ><h6 class="chart-title">
+              <nb-icon icon="activity-outline" class="mr-2"></nb-icon>Disk
+              Operations (TPS)
+            </h6></nb-card-header
+          >
+          <nb-card-body
+            ><div echarts [options]="diskOpsChartOption" class="echart"></div
+          ></nb-card-body>
         </nb-card>
       </div>
     </div>
 
-    <!-- Network Errors Charts Row -->
+    <!-- === Network Packets Charts Row (Split In/Out) === -->
     <div class="row">
       <div class="col-md-6">
         <nb-card class="chart-card">
-          <nb-card-header>
-            <h6 class="chart-title">
-              <nb-icon icon="alert-triangle-outline" class="mr-2"></nb-icon>
-              Network Errors In
-            </h6>
-          </nb-card-header>
-          <nb-card-body>
-            <div echarts [options]="networkErrorsInChartOption" class="echart"></div>
-          </nb-card-body>
+          <nb-card-header
+            ><h6 class="chart-title">
+              <nb-icon icon="arrow-downward-outline" class="mr-2"></nb-icon
+              >Network Packets In Rate (pps)
+            </h6></nb-card-header
+          >
+          <!-- Bind to networkPacketsInChartOption -->
+          <nb-card-body
+            ><div
+              echarts
+              [options]="networkPacketsInChartOption"
+              class="echart"
+            ></div
+          ></nb-card-body>
         </nb-card>
       </div>
       <div class="col-md-6">
         <nb-card class="chart-card">
-          <nb-card-header>
-            <h6 class="chart-title">
-              <nb-icon icon="alert-triangle-outline" class="mr-2"></nb-icon>
-              Network Errors Out
-            </h6>
-          </nb-card-header>
-          <nb-card-body>
-            <div echarts [options]="networkErrorsOutChartOption" class="echart"></div>
-          </nb-card-body>
+          <nb-card-header
+            ><h6 class="chart-title">
+              <nb-icon icon="arrow-upward-outline" class="mr-2"></nb-icon
+              >Network Packets Out Rate (pps)
+            </h6></nb-card-header
+          >
+          <!-- Bind to networkPacketsOutChartOption -->
+          <nb-card-body
+            ><div
+              echarts
+              [options]="networkPacketsOutChartOption"
+              class="echart"
+            ></div
+          ></nb-card-body>
         </nb-card>
       </div>
     </div>
 
-  </div> <!-- End charts-section -->
+    <!-- === Network Errors Charts Row (Split In/Out) === -->
+    <div class="row">
+      <div class="col-md-6">
+        <nb-card class="chart-card">
+          <nb-card-header
+            ><h6 class="chart-title">
+              <nb-icon icon="alert-triangle-outline" class="mr-2"></nb-icon
+              >Network Errors In Rate (eps)
+            </h6></nb-card-header
+          >
+          <!-- Bind to networkErrorsInChartOption -->
+          <nb-card-body
+            ><div
+              echarts
+              [options]="networkErrorsInChartOption"
+              class="echart"
+            ></div
+          ></nb-card-body>
+        </nb-card>
+      </div>
+      <div class="col-md-6">
+        <nb-card class="chart-card">
+          <nb-card-header
+            ><h6 class="chart-title">
+              <nb-icon icon="alert-triangle-outline" class="mr-2"></nb-icon
+              >Network Errors Out Rate (eps)
+            </h6></nb-card-header
+          >
+          <!-- Bind to networkErrorsOutChartOption -->
+          <nb-card-body
+            ><div
+              echarts
+              [options]="networkErrorsOutChartOption"
+              class="echart"
+            ></div
+          ></nb-card-body>
+        </nb-card>
+      </div>
+    </div>
+  </div>
+  <!-- End charts-section -->
 
   <!-- Loading Overlay -->
   <div class="loading-overlay" *ngIf="loading">
     <nb-spinner size="large"></nb-spinner>
-    <!-- <h6 class="mt-3">Loading historical data...</h6> -->
     <p>Please wait while we fetch your system metrics.</p>
   </div>
 
-  <!-- No Data State (Shown when not loading and no data) -->
-  <div class="no-data-container-wrapper" *ngIf="!loading && vmstatData.length === 0 && netstatData.length === 0 && iostatData.length === 0">
+  <!-- No Data State -->
+  <div
+    class="no-data-container-wrapper"
+    *ngIf="
+      !loading &&
+      vmstatData.length === 0 &&
+      netstatData.length === 0 &&
+      iostatData.length === 0
+    "
+  >
     <nb-card>
       <nb-card-body class="no-data-container">
-        <nb-icon 
-          icon="bar-chart-outline" 
-          status="info" 
-          [options]="{width: '64px', height: '64px'}"
-          class="no-data-icon">
-        </nb-icon>
+        <nb-icon
+          icon="bar-chart-outline"
+          status="info"
+          [options]="{ width: '64px', height: '64px' }"
+          class="no-data-icon"
+        ></nb-icon>
         <h6 class="no-data-title">No Data Available</h6>
         <p class="no-data-message">
-          No monitoring data found for the selected time range.<br>
-          Please try selecting a different date range or check if monitoring is active.
+          No monitoring data found for the selected time range.<br />
+          Please try selecting a different date range or check if monitoring is
+          active.
         </p>
       </nb-card-body>
     </nb-card>
   </div>
-
-</div> <!-- End content-area -->
-
+</div>
+<!-- End content-area -->

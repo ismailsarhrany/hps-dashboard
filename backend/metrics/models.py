@@ -40,8 +40,12 @@ class NetstatMetric(models.Model):
     interface = models.CharField(max_length=50)
     ipkts = models.IntegerField()
     ierrs = models.IntegerField()
+    ipkts_rate = models.FloatField(null=True, blank=True)
+    ierrs_rate = models.FloatField(null=True, blank=True)
     opkts = models.IntegerField()
+    opkts_rate = models.FloatField(null=True, blank=True)
     oerrs = models.IntegerField()
+    oerrs_rate = models.FloatField(null=True, blank=True)
     time = models.IntegerField()
 
     class Meta:

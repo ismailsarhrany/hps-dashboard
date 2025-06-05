@@ -1,156 +1,181 @@
-// src/app/pages/historic/historic.component.ts
-import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { Subscription } from 'rxjs';
-import { NbThemeService } from '@nebular/theme';
-import { EChartsOption } from 'echarts';
-import { 
-  ApiService, 
-  VmstatData, 
-  NetstatData, 
-  IostatData,
-  DateTimeRange
-} from '../../services/monitoring.service';
+// src/app/pages/historic/historic.component.ts (Refactored for In/Out Chart Separation & Scale Issue Diagnosis)
+import {
+  Component,
+  OnInit,
+  OnDestroy,
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+} from "@angular/core";
+import { FormBuilder, FormGroup, Validators } from "@angular/forms";
+import { Subscription, forkJoin } from "rxjs";
+import { NbThemeService } from "@nebular/theme";
+import { EChartsOption } from "echarts";
+import {
+  ApiService, // Keep for Vmstat
+  VmstatData,
+  DateTimeRange,
+} from "../../services/monitoring.service"; // Adjust path as needed
+import { DiskDataService, HistoricalIostatPoint } from "../../services/disk-data.service";
+import {
+  NetworkDataService,
+  HistoricalNetstatPoint,
+} from "../../services/network-data.service";
 
 @Component({
-  selector: 'ngx-historic',
-  templateUrl: './historic.component.html',
-  styleUrls: ['./historic.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush // Optimize change detection
+  selector: "ngx-historic",
+  templateUrl: "./historic.component.html",
+  styleUrls: ["./historic.component.scss"],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  providers: [DiskDataService, NetworkDataService], // Provide services locally if not root
 })
 export class HistoricComponent implements OnInit, OnDestroy {
   dateRangeForm: FormGroup;
   loading = false;
-  
-  // Updated Chart Options for split charts
+
+  // Chart Options (Split Network Charts)
   cpuChartOption: EChartsOption = {};
-  memoryChartOption: EChartsOption = {}; // Will only show Used Memory
+  memoryChartOption: EChartsOption = {};
   diskReadRateChartOption: EChartsOption = {};
-  diskReadOpsChartOption: EChartsOption = {};
   diskWriteRateChartOption: EChartsOption = {};
-  diskWriteOpsChartOption: EChartsOption = {};
+  diskOpsChartOption: EChartsOption = {};
+  // --- Split Network Charts ---
   networkPacketsInChartOption: EChartsOption = {};
   networkPacketsOutChartOption: EChartsOption = {};
   networkErrorsInChartOption: EChartsOption = {};
   networkErrorsOutChartOption: EChartsOption = {};
-  
-  // Original Data Arrays
+
+  // Data Arrays
   vmstatData: VmstatData[] = [];
-  netstatData: NetstatData[] = [];
-  iostatData: IostatData[] = [];
-  
+  netstatData: HistoricalNetstatPoint[] = [];
+  iostatData: HistoricalIostatPoint[] = [];
+
   private themeSubscription: Subscription;
+  private dataSubscription: Subscription;
   private theme: any;
-  private readonly MAX_DATA_POINTS = 1500; // Max points per series after downsampling
+  private readonly MAX_DATA_POINTS = 1500;
 
   constructor(
     private fb: FormBuilder,
-    private apiService: ApiService,
+    private apiService: ApiService, // Still needed for Vmstat
+    private diskDataService: DiskDataService,
+    private networkDataService: NetworkDataService,
     private themeService: NbThemeService,
-    private cdr: ChangeDetectorRef // Inject ChangeDetectorRef
+    private cdr: ChangeDetectorRef
   ) {
     this.initializeDateForm();
   }
 
   ngOnInit(): void {
-    this.themeSubscription = this.themeService.getJsTheme().subscribe(theme => {
-      this.theme = theme;
-      this.initializeChartOptions(); // Re-initialize options with new theme colors
-      // Update charts with new theme if data exists
-      if (this.vmstatData.length > 0 || this.netstatData.length > 0 || this.iostatData.length > 0) {
-        this.updateAllCharts();
-      }
-      this.cdr.markForCheck(); // Trigger change detection
-    });
-    
+    this.themeSubscription = this.themeService
+      .getJsTheme()
+      .subscribe((theme) => {
+        this.theme = theme;
+        this.initializeChartOptions(); // Initialize all charts including split network ones
+        // Update charts only if data already exists
+        if (
+          this.vmstatData.length > 0 ||
+          this.netstatData.length > 0 ||
+          this.iostatData.length > 0
+        ) {
+          this.updateAllCharts();
+        }
+        this.cdr.markForCheck();
+      });
+
     this.loadDefaultData();
   }
 
   ngOnDestroy(): void {
-    if (this.themeSubscription) {
-      this.themeSubscription.unsubscribe();
-    }
+    this.themeSubscription?.unsubscribe();
+    this.dataSubscription?.unsubscribe();
   }
 
+  // initializeDateForm, formatDateForInput, getDateTimeRange remain the same
   private initializeDateForm(): void {
     const now = new Date();
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
-    
     this.dateRangeForm = this.fb.group({
       startDate: [this.formatDateForInput(yesterday), Validators.required],
-      startTime: ['00:00', Validators.required],
+      startTime: ["00:00", Validators.required],
       endDate: [this.formatDateForInput(now), Validators.required],
-      endTime: ['23:59', Validators.required]
+      endTime: ["23:59", Validators.required],
     });
   }
 
   private formatDateForInput(date: Date): string {
     const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
     return `${year}-${month}-${day}`;
   }
 
   private getDateTimeRange(): DateTimeRange {
     const form = this.dateRangeForm.value;
     const startDateTime = `${form.startDate}T${form.startTime}:00`;
-    const endDateTime = `${form.endDate}T${form.endTime}:00`;
-    
-    return {
-      start: startDateTime,
-      end: endDateTime
-    };
+    const endDateTime = `${form.endDate}T${form.endTime}:59`;
+    return { start: startDateTime, end: endDateTime };
   }
 
   loadDefaultData(): void {
     const now = new Date();
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
-    
     this.dateRangeForm.patchValue({
-        startDate: this.formatDateForInput(yesterday),
-        startTime: now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0'),
-        endDate: this.formatDateForInput(now),
-        endTime: now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0')
+      startDate: this.formatDateForInput(yesterday),
+      startTime:
+        now.getHours().toString().padStart(2, "0") +
+        ":" +
+        now.getMinutes().toString().padStart(2, "0"),
+      endDate: this.formatDateForInput(now),
+      endTime:
+        now.getHours().toString().padStart(2, "0") +
+        ":" +
+        now.getMinutes().toString().padStart(2, "0"),
     });
-
-    const dateRange = this.getDateTimeRange();
-    this.loadHistoricalData(dateRange);
+    this.loadHistoricalData();
   }
 
   loadHistoricalData(dateRange?: DateTimeRange): void {
     this.loading = true;
     this.cdr.markForCheck();
-    
     const range = dateRange || this.getDateTimeRange();
-    
+
     this.vmstatData = [];
     this.netstatData = [];
     this.iostatData = [];
+    this.updateAllCharts(); // Clear charts
 
-    Promise.all([
-      this.apiService.getHistoricalVmstat(range).toPromise(),
-      this.apiService.getHistoricalNetstat(range).toPromise(),
-      this.apiService.getHistoricalIostat(range).toPromise()
-    ]).then(([vmstatResponse, netstatResponse, iostatResponse]) => {
-      this.vmstatData = vmstatResponse?.data || [];
-      this.netstatData = netstatResponse?.data || [];
-      this.iostatData = iostatResponse?.data || [];
-      
-      console.log(`Fetched Data Points: vmstat=${this.vmstatData.length}, netstat=${this.netstatData.length}, iostat=${this.iostatData.length}`);
+    this.dataSubscription?.unsubscribe();
 
-      this.updateAllCharts();
-      this.loading = false;
-      this.cdr.markForCheck();
-    }).catch(error => {
-      console.error('Error loading historical data:', error);
-      this.vmstatData = [];
-      this.netstatData = [];
-      this.iostatData = [];
-      this.updateAllCharts(); 
-      this.loading = false;
-      this.cdr.markForCheck();
+    this.dataSubscription = forkJoin({
+      vmstat: this.apiService.getHistoricalVmstat(range),
+      netstat: this.networkDataService.getHistoricalNetworkData(range),
+      iostat: this.diskDataService.getHistoricalDiskData(range),
+    }).subscribe({
+      next: ({ vmstat, netstat, iostat }) => {
+        this.vmstatData = vmstat?.data || [];
+        this.netstatData = netstat;
+        this.iostatData = iostat;
+        console.log(
+          `HistoricComponent: Received Data - vmstat=${this.vmstatData.length}, netstat=${this.netstatData.length}, iostat=${this.iostatData.length}`
+        );
+        this.updateAllCharts();
+        this.loading = false;
+        this.cdr.markForCheck();
+      },
+      error: (error) => {
+        console.error(
+          "HistoricComponent: Error loading combined historical data:",
+          error
+        );
+        this.vmstatData = [];
+        this.netstatData = [];
+        this.iostatData = [];
+        this.updateAllCharts();
+        this.loading = false;
+        this.cdr.markForCheck();
+      },
     });
   }
 
@@ -160,410 +185,603 @@ export class HistoricComponent implements OnInit, OnDestroy {
     }
   }
 
-  private downsample<T>(data: T[], timestampField: keyof T, valueField: keyof T, maxPoints: number): [number, number][] {
-    if (!data || data.length <= maxPoints) {
-        return data.map(item => [
-            new Date(item[timestampField] as any).getTime(),
-            (item[valueField] as number) || 0
-        ]);
+  // downsamplePerEntity remains the same
+  private downsamplePerEntity<
+    T extends
+      | { timestamp: string; id?: string }
+      | VmstatData
+      | HistoricalIostatPoint
+      | HistoricalNetstatPoint
+  >(
+    data: T[],
+    entityId: string | null,
+    idField: keyof T | null,
+    timestampField: keyof T,
+    valueField: keyof T,
+    maxPoints: number
+  ): [number, number][] {
+    const entityData =
+      entityId && idField
+        ? data.filter((item) => (item as any)[idField] === entityId)
+        : data;
+    const sortedData = entityData.sort(
+      (a, b) =>
+        new Date(a[timestampField] as string).getTime() -
+        new Date(b[timestampField] as string).getTime()
+    );
+    const totalPoints = sortedData.length;
+    if (!sortedData || totalPoints === 0) return [];
+    if (totalPoints <= maxPoints) {
+      return sortedData.map((item) => [
+        new Date(item[timestampField] as string).getTime(),
+        (item[valueField] as number) || 0,
+      ]);
     }
-
     const sampledData: [number, number][] = [];
-    const totalPoints = data.length;
     const bucketSize = Math.ceil(totalPoints / maxPoints);
-
     for (let i = 0; i < totalPoints; i += bucketSize) {
-        const bucket = data.slice(i, i + bucketSize);
-        if (bucket.length === 0) continue;
-
-        const firstPoint = bucket[0];
-        const timestamp = new Date(firstPoint[timestampField] as any).getTime();
-        const sum = bucket.reduce((acc, curr) => acc + ((curr[valueField] as number) || 0), 0);
-        const value = sum / bucket.length;
-
-        sampledData.push([timestamp, value]);
+      const bucket = sortedData.slice(i, i + bucketSize);
+      if (bucket.length === 0) continue;
+      const timestamp = new Date(bucket[0][timestampField] as string).getTime();
+      const sum = bucket.reduce(
+        (acc, curr) => acc + ((curr[valueField] as number) || 0),
+        0
+      );
+      const value = sum / bucket.length;
+      sampledData.push([timestamp, value]);
     }
-
-    if (totalPoints > 0 && (sampledData.length === 0 || sampledData[sampledData.length - 1][0] !== new Date(data[totalPoints - 1][timestampField] as any).getTime())) {
-        const lastPoint = data[totalPoints - 1];
-        sampledData.push([
-            new Date(lastPoint[timestampField] as any).getTime(),
-            (lastPoint[valueField] as number) || 0
-        ]);
+    const lastOriginalPoint = sortedData[totalPoints - 1];
+    const lastOriginalTimestamp = new Date(
+      lastOriginalPoint[timestampField] as string
+    ).getTime();
+    if (
+      sampledData.length === 0 ||
+      sampledData[sampledData.length - 1][0] < lastOriginalTimestamp
+    ) {
+      sampledData.push([
+        lastOriginalTimestamp,
+        (lastOriginalPoint[valueField] as number) || 0,
+      ]);
     }
-
-    console.log(`Downsampled ${String(valueField)} from ${totalPoints} to ${sampledData.length} points`);
     return sampledData;
-}
+  }
 
-
+  // getThemeColors remains the same
   private getThemeColors(): any {
     if (!this.theme) {
       return {
-        primary: '#3366ff',
-        success: '#00d68f',
-        info: '#0095ff',
-        warning: '#ffaa00',
-        danger: '#ff3d71',
-        textColor: '#8f9bb3',
-        backgroundColor: '#ffffff',
-        borderColor: '#edf1f7'
+        primary: "#3366ff",
+        success: "#00d68f",
+        info: "#0095ff",
+        warning: "#ffaa00",
+        danger: "#ff3d71",
+        textColor: "#2a2a2a",
+        backgroundColor: "#ffffff",
+        borderColor: "#e0e0e0",
       };
     }
     const colors = this.theme.variables;
     return {
-      primary: colors.colorPrimary || colors.primary,
-      success: colors.colorSuccess || colors.success,
-      info: colors.colorInfo || colors.info,
-      warning: colors.colorWarning || colors.warning,
-      danger: colors.colorDanger || colors.danger,
-      textColor: colors.textBasicColor || colors.fgText,
-      backgroundColor: colors.cardBackgroundColor || colors.bg,
-      borderColor: colors.borderBasicColor || colors.separator
+      primary: colors.colorPrimary || colors.primary || "#3366ff",
+      success: colors.colorSuccess || colors.success || "#00d68f",
+      info: colors.colorInfo || colors.info || "#0095ff",
+      warning: colors.colorWarning || colors.warning || "#ffaa00",
+      danger: colors.colorDanger || colors.danger || "#ff3d71",
+      textColor: colors.textBasicColor || colors.fgText || "#2a2a2a",
+      backgroundColor: colors.cardBackgroundColor || colors.bg || "#ffffff",
+      borderColor: colors.borderBasicColor || colors.separator || "#e0e0e0",
     };
   }
 
+  // Initialize all chart options, including the split network ones
   private initializeChartOptions(): void {
     const colors = this.getThemeColors();
-    
     const baseConfig: EChartsOption = {
-      backgroundColor: 'transparent',
+      backgroundColor: "transparent",
       tooltip: {
-        trigger: 'axis',
+        trigger: "axis",
         backgroundColor: colors.backgroundColor,
         borderColor: colors.borderColor,
+        borderWidth: 1,
         textStyle: { color: colors.textColor, fontSize: 12 },
-        axisPointer: { type: 'cross', label: { backgroundColor: colors.primary } }
+        axisPointer: {
+          type: "cross",
+          label: { backgroundColor: colors.primary },
+        },
+        formatter: (params: any) => {
+          if (!params || params.length === 0) return "";
+          const time = new Date(params[0].axisValue).toLocaleString();
+          let tooltip = `${time}<br/>`;
+          // Sort tooltip entries by value, descending
+          params.sort(
+            (a: any, b: any) => (b.value?.[1] ?? 0) - (a.value?.[1] ?? 0)
+          );
+          params.forEach((param: any) => {
+            const value =
+              param.value && typeof param.value[1] === "number"
+                ? param.value[1].toFixed(2)
+                : "N/A";
+            // Check for extremely large values potentially indicating API issues
+            const displayValue =
+              Math.abs(param.value?.[1] ?? 0) > 1e9
+                ? `${value} (potential API scale issue)`
+                : value;
+            tooltip += `${param.marker} ${param.seriesName}: ${displayValue}<br/>`;
+          });
+          return tooltip;
+        },
       },
-      grid: { left: '3%', right: '4%', bottom: '3%', top: '10%', containLabel: true },
+      grid: {
+        left: "3%",
+        right: "4%",
+        bottom: "15%",
+        top: "10%",
+        containLabel: true,
+      },
       xAxis: {
-        type: 'time',
+        type: "time",
         axisLine: { lineStyle: { color: colors.borderColor } },
         axisLabel: { color: colors.textColor, fontSize: 11 },
-        splitLine: { show: true, lineStyle: { color: colors.borderColor, opacity: 0.3 } }
+        splitLine: {
+          show: true,
+          lineStyle: {
+            color: colors.borderColor,
+            type: "dashed",
+            opacity: 0.3,
+          },
+        },
+      },
+      yAxis: {
+        type: "value",
+        axisLine: { show: true, lineStyle: { color: colors.borderColor } },
+        axisLabel: { color: colors.textColor, fontSize: 11 }, // Formatter added per chart type
+        splitLine: {
+          lineStyle: {
+            color: colors.borderColor,
+            type: "dashed",
+            opacity: 0.3,
+          },
+        },
+        // --- Add scale: true to allow ECharts internal scaling ---
+        scale: true,
+      },
+      legend: {
+        data: [],
+        type: "scroll",
+        orient: "horizontal",
+        top: "top",
+        textStyle: { color: colors.textColor, fontSize: 11 },
       },
       dataZoom: [
-        { type: 'inside', start: 0, end: 100 },
-        { start: 0, end: 100, handleIcon: 'M10.7,11.9v-1.3H9.3v1.3c-4.9,0.3-8.8,4.4-8.8,9.4c0,5,3.9,9.1,8.8,9.4v1.3h1.3v-1.3c4.9-0.3,8.8-4.4,8.8-9.4C19.5,16.3,15.6,12.2,10.7,11.9z M13.3,24.4H6.7V23h6.6V24.4z M13.3,19.6H6.7v-1.4h6.6V19.6z', handleSize: '80%', handleStyle: { color: '#fff', shadowBlur: 3, shadowColor: 'rgba(0, 0, 0, 0.6)', shadowOffsetX: 2, shadowOffsetY: 2 }, textStyle: { color: colors.textColor }, borderColor: colors.borderColor }
+        { type: "inside", start: 0, end: 100 },
+        {
+          type: "slider",
+          start: 0,
+          end: 100,
+          bottom: "8%",
+          height: 20,
+          textStyle: { color: colors.textColor },
+          borderColor: colors.borderColor,
+        },
       ],
       animation: false,
     };
 
-    // --- Define Series --- 
-    const cpuUserSeries = { name: 'User CPU', type: 'line', smooth: true, symbol: 'none', lineStyle: { width: 2 }, data: [] };
-    const cpuSystemSeries = { name: 'System CPU', type: 'line', smooth: true, symbol: 'none', lineStyle: { width: 2 }, data: [] };
-    const memoryUsedSeries = { name: 'Used Memory', type: 'line', smooth: true, symbol: 'none', lineStyle: { width: 2 }, areaStyle: { opacity: 0.3 }, data: [] };
-    const diskReadRateSeries = { name: 'Read Rate (KB/s)', type: 'line', smooth: true, symbol: 'none', lineStyle: { width: 2 }, data: [] };
-    const diskReadOpsSeries = { name: 'Read Operations', type: 'line', smooth: true, symbol: 'none', lineStyle: { width: 2 }, data: [] };
-    const diskWriteRateSeries = { name: 'Write Rate (KB/s)', type: 'line', smooth: true, symbol: 'none', lineStyle: { width: 2 }, data: [] };
-    const diskWriteOpsSeries = { name: 'Write Operations', type: 'line', smooth: true, symbol: 'none', lineStyle: { width: 2 }, data: [] };
-    const netPacketsInSeries = { name: 'Packets In', type: 'line', smooth: true, symbol: 'none', lineStyle: { width: 2 }, data: [] };
-    const netPacketsOutSeries = { name: 'Packets Out', type: 'line', smooth: true, symbol: 'none', lineStyle: { width: 2 }, data: [] };
-    const netErrorsInSeries = { name: 'Errors In', type: 'line', smooth: true, symbol: 'none', lineStyle: { width: 2 }, data: [] };
-    const netErrorsOutSeries = { name: 'Errors Out', type: 'line', smooth: true, symbol: 'none', lineStyle: { width: 2 }, data: [] };
-
-    // --- Initialize Chart Options --- 
-
-    // CPU Chart (User & System only)
+    // --- CPU Chart ---
     this.cpuChartOption = {
       ...baseConfig,
       color: [colors.primary, colors.success],
-      legend: { data: [cpuUserSeries.name, cpuSystemSeries.name], textStyle: { color: colors.textColor }, top: 0 },
-      yAxis: {
-        type: 'value',
-        max: 100,
-        axisLine: { lineStyle: { color: colors.borderColor } },
-        axisLabel: { color: colors.textColor, formatter: '{value}%', fontSize: 11 },
-        splitLine: { lineStyle: { color: colors.borderColor, opacity: 0.3 } }
+      legend: {
+        ...baseConfig.legend,
+        data: ["User CPU", "System CPU"],
+        bottom: "3%",
       },
-      series: [cpuUserSeries, cpuSystemSeries]
+      yAxis: {
+        ...baseConfig.yAxis,
+        max: 100,
+        axisLabel: { ...baseConfig.yAxis.axisLabel, formatter: "{value}%" },
+      },
+      series: [
+        {
+          name: "User CPU",
+          type: "line",
+          smooth: true,
+          symbol: "none",
+          lineStyle: { width: 2 },
+          data: [],
+        },
+        {
+          name: "System CPU",
+          type: "line",
+          smooth: true,
+          symbol: "none",
+          lineStyle: { width: 2 },
+          data: [],
+        },
+      ],
     };
 
-    // Memory Chart (Used only)
+    // --- Memory Chart ---
     this.memoryChartOption = {
       ...baseConfig,
       color: [colors.success],
-      legend: { data: [memoryUsedSeries.name], textStyle: { color: colors.textColor }, top: 0 },
+      legend: { ...baseConfig.legend, data: ["Used Memory"], bottom: "3%" },
       yAxis: {
-        type: 'value',
-        axisLine: { lineStyle: { color: colors.borderColor } },
-        axisLabel: { color: colors.textColor, formatter: '{value} MB', fontSize: 11 },
-        splitLine: { lineStyle: { color: colors.borderColor, opacity: 0.3 } }
+        ...baseConfig.yAxis,
+        axisLabel: { ...baseConfig.yAxis.axisLabel, formatter: "{value} MB" },
       },
-      series: [memoryUsedSeries]
+      series: [
+        {
+          name: "Used Memory",
+          type: "line",
+          smooth: true,
+          symbol: "none",
+          lineStyle: { width: 2 },
+          areaStyle: { opacity: 0.3 },
+          data: [],
+        },
+      ],
     };
 
-    // Disk Read Rate Chart
+    // --- Disk Charts ---
     this.diskReadRateChartOption = {
       ...baseConfig,
-      color: [colors.info],
-      legend: { data: [diskReadRateSeries.name], textStyle: { color: colors.textColor }, top: 0 },
-      yAxis: { 
-          type: 'value', 
-          name: 'KB/s', 
-          axisLine: { lineStyle: { color: colors.borderColor } }, 
-          axisLabel: { color: colors.textColor, formatter: '{value}', fontSize: 11 }, 
-          splitLine: { lineStyle: { color: colors.borderColor, opacity: 0.3 } } 
+      yAxis: {
+        ...baseConfig.yAxis,
+        axisLabel: { ...baseConfig.yAxis.axisLabel, formatter: "{value} KB/s" },
       },
-      series: [diskReadRateSeries]
+      legend: { ...baseConfig.legend, data: [] },
+      series: [],
     };
-
-    // Disk Read Ops Chart
-    this.diskReadOpsChartOption = {
-        ...baseConfig,
-        color: [colors.primary],
-        legend: { data: [diskReadOpsSeries.name], textStyle: { color: colors.textColor }, top: 0 },
-        yAxis: { 
-            type: 'value', 
-            name: 'Ops', 
-            axisLine: { lineStyle: { color: colors.borderColor } }, 
-            axisLabel: { color: colors.textColor, formatter: '{value}', fontSize: 11 }, 
-            splitLine: { lineStyle: { color: colors.borderColor, opacity: 0.3 } } 
-        },
-        series: [diskReadOpsSeries]
-    };
-
-    // Disk Write Rate Chart
     this.diskWriteRateChartOption = {
-        ...baseConfig,
-        color: [colors.warning],
-        legend: { data: [diskWriteRateSeries.name], textStyle: { color: colors.textColor }, top: 0 },
-        yAxis: { 
-            type: 'value', 
-            name: 'KB/s', 
-            axisLine: { lineStyle: { color: colors.borderColor } }, 
-            axisLabel: { color: colors.textColor, formatter: '{value}', fontSize: 11 }, 
-            splitLine: { lineStyle: { color: colors.borderColor, opacity: 0.3 } } 
-        },
-        series: [diskWriteRateSeries]
+      ...baseConfig,
+      yAxis: {
+        ...baseConfig.yAxis,
+        axisLabel: { ...baseConfig.yAxis.axisLabel, formatter: "{value} KB/s" },
+      },
+      legend: { ...baseConfig.legend, data: [] },
+      series: [],
+    };
+    this.diskOpsChartOption = {
+      ...baseConfig,
+      yAxis: {
+        ...baseConfig.yAxis,
+        axisLabel: { ...baseConfig.yAxis.axisLabel, formatter: "{value} tps" },
+      },
+      legend: { ...baseConfig.legend, data: [] },
+      series: [],
     };
 
-    // Disk Write Ops Chart
-    this.diskWriteOpsChartOption = {
-        ...baseConfig,
-        color: [colors.danger],
-        legend: { data: [diskWriteOpsSeries.name], textStyle: { color: colors.textColor }, top: 0 },
-        yAxis: { 
-            type: 'value', 
-            name: 'Ops', 
-            axisLine: { lineStyle: { color: colors.borderColor } }, 
-            axisLabel: { color: colors.textColor, formatter: '{value}', fontSize: 11 }, 
-            splitLine: { lineStyle: { color: colors.borderColor, opacity: 0.3 } } 
-        },
-        series: [diskWriteOpsSeries]
+    // --- Network Charts (Split) ---
+    const networkYAxisPps = {
+      ...baseConfig.yAxis,
+      axisLabel: { ...baseConfig.yAxis.axisLabel, formatter: "{value} pps" },
+    };
+    const networkYAxisEps = {
+      ...baseConfig.yAxis,
+      axisLabel: { ...baseConfig.yAxis.axisLabel, formatter: "{value} eps" },
     };
 
-    // Network Packets In Chart
     this.networkPacketsInChartOption = {
-        ...baseConfig,
-        color: [colors.primary],
-        legend: { data: [netPacketsInSeries.name], textStyle: { color: colors.textColor }, top: 0 },
-        yAxis: { 
-            type: 'value', 
-            name: 'Packets', 
-            axisLine: { lineStyle: { color: colors.borderColor } }, 
-            axisLabel: { color: colors.textColor, formatter: '{value}', fontSize: 11 }, 
-            splitLine: { lineStyle: { color: colors.borderColor, opacity: 0.3 } } 
-        },
-        series: [netPacketsInSeries]
+      ...baseConfig,
+      yAxis: networkYAxisPps,
+      legend: { ...baseConfig.legend, data: [] },
+      series: [],
     };
-
-    // Network Packets Out Chart
     this.networkPacketsOutChartOption = {
-        ...baseConfig,
-        color: [colors.success],
-        legend: { data: [netPacketsOutSeries.name], textStyle: { color: colors.textColor }, top: 0 },
-        yAxis: { 
-            type: 'value', 
-            name: 'Packets', 
-            axisLine: { lineStyle: { color: colors.borderColor } }, 
-            axisLabel: { color: colors.textColor, formatter: '{value}', fontSize: 11 }, 
-            splitLine: { lineStyle: { color: colors.borderColor, opacity: 0.3 } } 
-        },
-        series: [netPacketsOutSeries]
+      ...baseConfig,
+      yAxis: networkYAxisPps,
+      legend: { ...baseConfig.legend, data: [] },
+      series: [],
     };
-
-    // Network Errors In Chart
     this.networkErrorsInChartOption = {
-        ...baseConfig,
-        color: [colors.danger],
-        legend: { data: [netErrorsInSeries.name], textStyle: { color: colors.textColor }, top: 0 },
-        yAxis: { 
-            type: 'value', 
-            name: 'Errors', 
-            axisLine: { lineStyle: { color: colors.borderColor } }, 
-            axisLabel: { color: colors.textColor, formatter: '{value}', fontSize: 11 }, 
-            splitLine: { lineStyle: { color: colors.borderColor, opacity: 0.3 } } 
-        },
-        series: [netErrorsInSeries]
+      ...baseConfig,
+      yAxis: networkYAxisEps,
+      legend: { ...baseConfig.legend, data: [] },
+      series: [],
     };
-
-    // Network Errors Out Chart
     this.networkErrorsOutChartOption = {
-        ...baseConfig,
-        color: [colors.warning],
-        legend: { data: [netErrorsOutSeries.name], textStyle: { color: colors.textColor }, top: 0 },
-        yAxis: { 
-            type: 'value', 
-            name: 'Errors', 
-            axisLine: { lineStyle: { color: colors.borderColor } }, 
-            axisLabel: { color: colors.textColor, formatter: '{value}', fontSize: 11 }, 
-            splitLine: { lineStyle: { color: colors.borderColor, opacity: 0.3 } } 
-        },
-        series: [netErrorsOutSeries]
+      ...baseConfig,
+      yAxis: networkYAxisEps,
+      legend: { ...baseConfig.legend, data: [] },
+      series: [],
     };
   }
 
+  // Update all charts, separating network data into In/Out charts
   private updateAllCharts(): void {
+    if (!this.theme) return;
+
+    // Update non-dynamic charts
     this.cpuChartOption = this.getUpdatedCpuChartOption();
     this.memoryChartOption = this.getUpdatedMemoryChartOption();
-    this.diskReadRateChartOption = this.getUpdatedDiskReadRateChartOption();
-    this.diskReadOpsChartOption = this.getUpdatedDiskReadOpsChartOption();
-    this.diskWriteRateChartOption = this.getUpdatedDiskWriteRateChartOption();
-    this.diskWriteOpsChartOption = this.getUpdatedDiskWriteOpsChartOption();
-    this.networkPacketsInChartOption = this.getUpdatedNetworkPacketsInChartOption();
-    this.networkPacketsOutChartOption = this.getUpdatedNetworkPacketsOutChartOption();
-    this.networkErrorsInChartOption = this.getUpdatedNetworkErrorsInChartOption();
-    this.networkErrorsOutChartOption = this.getUpdatedNetworkErrorsOutChartOption();
+
+    // --- Update Disk Charts ---
+    const allDisks = [
+      ...new Set(this.iostatData.map((p) => p.disk || "default")),
+    ];
+    const diskReadSeries = this.createDynamicSeries(
+      this.iostatData,
+      allDisks,
+      "disk",
+      "kb_read_rate",
+      "Read Rate",
+      "KB/s"
+    );
+    const diskWriteSeries = this.createDynamicSeries(
+      this.iostatData,
+      allDisks,
+      "disk",
+      "kb_wrtn_rate",
+      "Write Rate",
+      "KB/s"
+    );
+    const diskOpsSeries = this.createDynamicSeries(
+      this.iostatData,
+      allDisks,
+      "disk",
+      "tps",
+      "TPS",
+      "tps"
+    );
+
+    this.diskReadRateChartOption = {
+      ...this.diskReadRateChartOption,
+      legend: {
+        ...this.diskReadRateChartOption.legend,
+        data: diskReadSeries.map((s) => s.name),
+      },
+      series: diskReadSeries,
+    };
+    this.diskWriteRateChartOption = {
+      ...this.diskWriteRateChartOption,
+      legend: {
+        ...this.diskWriteRateChartOption.legend,
+        data: diskWriteSeries.map((s) => s.name),
+      },
+      series: diskWriteSeries,
+    };
+    this.diskOpsChartOption = {
+      ...this.diskOpsChartOption,
+      legend: {
+        ...this.diskOpsChartOption.legend,
+        data: diskOpsSeries.map((s) => s.name),
+      },
+      series: diskOpsSeries,
+    };
+
+    // --- Update Network Charts (Separated In/Out) ---
+    const allInterfaces = [
+      ...new Set(this.netstatData.map((p) => p.interface || "default")),
+    ];
+
+    // Create series for each network metric type
+    const packetsInSeries = this.createDynamicSeries(
+      this.netstatData,
+      allInterfaces,
+      "interface",
+      "ipkts_rate",
+      "Packets In",
+      "pps"
+    );
+    const packetsOutSeries = this.createDynamicSeries(
+      this.netstatData,
+      allInterfaces,
+      "interface",
+      "opkts_rate",
+      "Packets Out",
+      "pps"
+    );
+    const errorsInSeries = this.createDynamicSeries(
+      this.netstatData,
+      allInterfaces,
+      "interface",
+      "ierrs_rate",
+      "Errors In",
+      "eps"
+    );
+    const errorsOutSeries = this.createDynamicSeries(
+      this.netstatData,
+      allInterfaces,
+      "interface",
+      "oerrs_rate",
+      "Errors Out",
+      "eps"
+    );
+
+    // Update the specific chart options
+    this.networkPacketsInChartOption = {
+      ...this.networkPacketsInChartOption,
+      legend: {
+        ...this.networkPacketsInChartOption.legend,
+        data: packetsInSeries.map((s) => s.name),
+      },
+      series: packetsInSeries,
+    };
+    this.networkPacketsOutChartOption = {
+      ...this.networkPacketsOutChartOption,
+      legend: {
+        ...this.networkPacketsOutChartOption.legend,
+        data: packetsOutSeries.map((s) => s.name),
+      },
+      series: packetsOutSeries,
+    };
+    this.networkErrorsInChartOption = {
+      ...this.networkErrorsInChartOption,
+      legend: {
+        ...this.networkErrorsInChartOption.legend,
+        data: errorsInSeries.map((s) => s.name),
+      },
+      series: errorsInSeries,
+    };
+    this.networkErrorsOutChartOption = {
+      ...this.networkErrorsOutChartOption,
+      legend: {
+        ...this.networkErrorsOutChartOption.legend,
+        data: errorsOutSeries.map((s) => s.name),
+      },
+      series: errorsOutSeries,
+    };
+
+    this.cdr.markForCheck();
   }
 
-  // --- Update individual chart options immutably --- 
+  // Helper function to create dynamic series for disk/network charts
+  private createDynamicSeries(
+    data: HistoricalIostatPoint[] | HistoricalNetstatPoint[],
+    entities: string[],
+    entityField: keyof HistoricalIostatPoint | keyof HistoricalNetstatPoint,
+    valueField: keyof HistoricalIostatPoint | keyof HistoricalNetstatPoint,
+    seriesNameSuffix: string,
+    unit: string // Unit not directly used here, but good for context
+  ): any[] {
+    return entities.reduce((acc, entity) => {
+      const seriesData = this.downsamplePerEntity(
+        data as any, // Type assertion needed due to union type
+        entity,
+        entityField as any,
+        "timestamp",
+        valueField as any,
+        this.MAX_DATA_POINTS
+      );
+      if (seriesData.length > 0) {
+        acc.push({
+          name: `${entity} ${seriesNameSuffix}`,
+          type: "line",
+          smooth: true,
+          symbol: "none",
+          lineStyle: { width: 1.5 },
+          data: seriesData,
+          color: this.getRandomColor(`${entity}_${valueField}`),
+        });
+      }
+      return acc;
+    }, [] as any[]);
+  }
 
+  // getUpdatedCpuChartOption and getUpdatedMemoryChartOption remain the same
   private getUpdatedCpuChartOption(): EChartsOption {
-    const cpuUserData = this.downsample(this.vmstatData, 'timestamp', 'us', this.MAX_DATA_POINTS);
-    const cpuSysData = this.downsample(this.vmstatData, 'timestamp', 'sy', this.MAX_DATA_POINTS);
-
+    const cpuUserData = this.downsamplePerEntity(
+      this.vmstatData,
+      null,
+      null,
+      "timestamp",
+      "us",
+      this.MAX_DATA_POINTS
+    );
+    const cpuSysData = this.downsamplePerEntity(
+      this.vmstatData,
+      null,
+      null,
+      "timestamp",
+      "sy",
+      this.MAX_DATA_POINTS
+    );
     return {
       ...this.cpuChartOption,
       series: [
-        { ...this.cpuChartOption.series[0], data: cpuUserData },
-        { ...this.cpuChartOption.series[1], data: cpuSysData }
-      ]
+        { ...(this.cpuChartOption.series as any[])[0], data: cpuUserData },
+        { ...(this.cpuChartOption.series as any[])[1], data: cpuSysData },
+      ],
     };
   }
 
   private getUpdatedMemoryChartOption(): EChartsOption {
-    const memUsedData = this.downsample(this.vmstatData, 'timestamp', 'avm', this.MAX_DATA_POINTS).map(p => [p[0], p[1] / 1024]); // Convert to MB
-
+    const memUsedData = this.downsamplePerEntity(
+      this.vmstatData,
+      null,
+      null,
+      "timestamp",
+      "avm",
+      this.MAX_DATA_POINTS
+    ).map((p) => [p[0], Math.round(p[1] / 1024)]); // Convert KB to MB
     return {
       ...this.memoryChartOption,
       series: [
-        { ...this.memoryChartOption.series[0], data: memUsedData }
-      ]
+        { ...(this.memoryChartOption.series as any[])[0], data: memUsedData },
+      ],
     };
   }
 
-  private getUpdatedDiskReadRateChartOption(): EChartsOption {
-    const readRateData = this.downsample(this.iostatData, 'timestamp', 'kb_read', this.MAX_DATA_POINTS);
-    return { ...this.diskReadRateChartOption, series: [{ ...this.diskReadRateChartOption.series[0], data: readRateData }] };
+  // getRandomColor remains the same
+  private getRandomColor(seed: string): string {
+    let hash = 0;
+    for (let i = 0; i < seed.length; i++) {
+      hash = seed.charCodeAt(i) + ((hash << 5) - hash);
+      hash = hash & hash;
+    }
+    const colors = [
+      "#5470c6",
+      "#91cc75",
+      "#fac858",
+      "#ee6666",
+      "#73c0de",
+      "#3ba272",
+      "#fc8452",
+      "#9a60b4",
+      "#ea7ccc",
+      "#ffc93c",
+      "#a2d5f2",
+      "#ff7f51",
+      "#8a4f7d",
+      "#4caf50",
+      "#ff9800",
+      "#2196f3",
+      "#e91e63",
+    ];
+    return colors[Math.abs(hash) % colors.length];
   }
 
-  private getUpdatedDiskReadOpsChartOption(): EChartsOption {
-    const readOpsData = this.downsample(this.iostatData, 'timestamp', 'tps', this.MAX_DATA_POINTS); // Assuming tps represents read ops
-    return { ...this.diskReadOpsChartOption, series: [{ ...this.diskReadOpsChartOption.series[0], data: readOpsData }] };
-  }
-
-  private getUpdatedDiskWriteRateChartOption(): EChartsOption {
-    const writeRateData = this.downsample(this.iostatData, 'timestamp', 'kb_wrtn', this.MAX_DATA_POINTS);
-    return { ...this.diskWriteRateChartOption, series: [{ ...this.diskWriteRateChartOption.series[0], data: writeRateData }] };
-  }
-
-  private getUpdatedDiskWriteOpsChartOption(): EChartsOption {
-    const writeOpsData = this.downsample(this.iostatData, 'timestamp', 'tps', this.MAX_DATA_POINTS); // Assuming tps represents write ops
-    return { ...this.diskWriteOpsChartOption, series: [{ ...this.diskWriteOpsChartOption.series[0], data: writeOpsData }] };
-  }
-
-  private getUpdatedNetworkPacketsInChartOption(): EChartsOption {
-    const packetsInData = this.downsample(this.netstatData, 'timestamp', 'ipkts', this.MAX_DATA_POINTS);
-    return { ...this.networkPacketsInChartOption, series: [{ ...this.networkPacketsInChartOption.series[0], data: packetsInData }] };
-  }
-
-  private getUpdatedNetworkPacketsOutChartOption(): EChartsOption {
-    const packetsOutData = this.downsample(this.netstatData, 'timestamp', 'opkts', this.MAX_DATA_POINTS);
-    return { ...this.networkPacketsOutChartOption, series: [{ ...this.networkPacketsOutChartOption.series[0], data: packetsOutData }] };
-  }
-
-  private getUpdatedNetworkErrorsInChartOption(): EChartsOption {
-    const errorsInData = this.downsample(this.netstatData, 'timestamp', 'ierrs', this.MAX_DATA_POINTS);
-    return { ...this.networkErrorsInChartOption, series: [{ ...this.networkErrorsInChartOption.series[0], data: errorsInData }] };
-  }
-
-  private getUpdatedNetworkErrorsOutChartOption(): EChartsOption {
-    const errorsOutData = this.downsample(this.netstatData, 'timestamp', 'oerrs', this.MAX_DATA_POINTS);
-    return { ...this.networkErrorsOutChartOption, series: [{ ...this.networkErrorsOutChartOption.series[0], data: errorsOutData }] };
-  }
-
-  // --- Quick Date Range Selection Methods --- 
+  // Quick Date Range Selection Methods remain the same
   selectLast24Hours(): void {
-    const now = new Date();
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    
-    this.dateRangeForm.patchValue({
-      startDate: this.formatDateForInput(yesterday),
-      startTime: now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0'),
-      endDate: this.formatDateForInput(now),
-      endTime: now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0')
-    });
-    
-    this.loadHistoricalData();
+    this.quickSelectRange(1);
   }
-
   selectLastWeek(): void {
-    const now = new Date();
-    const lastWeek = new Date();
-    lastWeek.setDate(lastWeek.getDate() - 7);
-    
-    this.dateRangeForm.patchValue({
-      startDate: this.formatDateForInput(lastWeek),
-      startTime: '00:00',
-      endDate: this.formatDateForInput(now),
-      endTime: '23:59'
-    });
-    
-    this.loadHistoricalData();
+    this.quickSelectRange(7);
   }
-
   selectLastMonth(): void {
-    const now = new Date();
-    const lastMonth = new Date();
-    lastMonth.setMonth(lastMonth.getMonth() - 1);
-    
-    this.dateRangeForm.patchValue({
-      startDate: this.formatDateForInput(lastMonth),
-      startTime: '00:00',
-      endDate: this.formatDateForInput(now),
-      endTime: '23:59'
-    });
-    
-    this.loadHistoricalData();
-  }
-
+    this.quickSelectRange(30);
+  } // Approx
   selectToday(): void {
     const today = new Date();
-    
     this.dateRangeForm.patchValue({
       startDate: this.formatDateForInput(today),
-      startTime: '00:00',
+      startTime: "00:00",
       endDate: this.formatDateForInput(today),
-      endTime: '23:59'
+      endTime: "23:59",
     });
-    
     this.loadHistoricalData();
   }
-
   selectYesterday(): void {
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
-    
     this.dateRangeForm.patchValue({
       startDate: this.formatDateForInput(yesterday),
-      startTime: '00:00',
+      startTime: "00:00",
       endDate: this.formatDateForInput(yesterday),
-      endTime: '23:59'
+      endTime: "23:59",
     });
-    
+    this.loadHistoricalData();
+  }
+
+  private quickSelectRange(days: number): void {
+    const now = new Date();
+    const pastDate = new Date();
+    pastDate.setDate(pastDate.getDate() - days);
+    const startTime =
+      days === 1
+        ? now.getHours().toString().padStart(2, "0") +
+          ":" +
+          now.getMinutes().toString().padStart(2, "0")
+        : "00:00";
+    const endTime = days === 1 ? startTime : "23:59";
+
+    this.dateRangeForm.patchValue({
+      startDate: this.formatDateForInput(pastDate),
+      startTime: startTime,
+      endDate: this.formatDateForInput(now),
+      endTime: endTime,
+    });
     this.loadHistoricalData();
   }
 }
-
