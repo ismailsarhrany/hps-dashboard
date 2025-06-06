@@ -1,200 +1,229 @@
 // src/app/pages/realtime/realtime.component.scss
 @import '@nebular/theme/styles/theming';
+@import '@nebular/theme/styles/themes/default';
+@import '@nebular/theme/styles/themes/dark';
 
 :host {
   display: block;
+  padding: 1.5rem;
+  background-color: nb-theme(background-basic-color-1);
+}
+
+// Header styling
+nb-card-header {
+  padding: 1.25rem 1.5rem !important;
+  background-color: nb-theme(background-basic-color-2) !important;
+  border-bottom: 1px solid nb-theme(divider-color);
   
-  // Header section styling
+  h1 {
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+    font-size: 1.75rem;
+    color: nb-theme(text-basic-color);
+  }
+  
   .monitoring-status {
     display: flex;
     align-items: center;
-    flex-direction: column;
-    text-align: right;
-    
-    @media (max-width: 768px) {
-      flex-direction: row;
-      text-align: left;
-      margin-top: 1rem;
-    }
     
     nb-badge {
-      margin-bottom: 0.25rem;
-      
-      @media (max-width: 768px) {
-        margin-bottom: 0;
-        margin-right: 0.5rem;
-      }
-    }
-  }
-  
-  // Summary cards styling
-  .summary-card {
-    height: 180px;
-    margin-bottom: 1.5rem;
-    transition: transform 0.2s ease-in-out;
-    
-    &:hover {
-      transform: translateY(-2px);
-    }
-    
-    nb-card-header {
-      padding: 1rem 1.25rem 0.5rem;
-      border-bottom: none;
-      
-      .d-flex {
-        align-items: center;
-        
-        .widget-icon {
-          font-size: 1.5rem;
-          margin-right: 0.75rem;
-          opacity: 0.8;
-        }
-        
-        span {
-          font-weight: 600;
-          font-size: 0.9rem;
-        }
-      }
-    }
-    
-    nb-card-body {
-      padding: 0.5rem 1.25rem 1rem;
-      
-      .summary-value {
-        position: relative;
-        
-        .value {
-          font-size: 2.2rem;
-          font-weight: 700;
-          display: block;
-          margin-bottom: 0.75rem;
-          line-height: 1;
-        }
-        
-        nb-progress-bar {
-          margin-bottom: 0.5rem;
-        }
-        
-        .metric-details {
-          margin-top: 0.5rem;
-        }
-        
-        .disk-stats,
-        .network-stats {
-          margin-bottom: 0.75rem;
-          
-          .stat {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 0.25rem;
-            
-            .label {
-              font-size: 0.8rem;
-              color: var(--text-hint-color);
-              font-weight: 500;
-            }
-            
-            .value {
-              font-weight: 600;
-              font-size: 0.85rem;
-            }
-          }
-        }
-        
-        .status-badge {
-          position: absolute;
-          bottom: 0;
-          right: 0;
-        }
-      }
-    }
-  }
-  
-  // System overview styling
-  .system-overview {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1.5rem;
-    padding: 1rem 0;
-    
-    @media (max-width: 768px) {
-      grid-template-columns: repeat(2, 1fr);
-      gap: 1rem;
-    }
-    
-    .overview-item {
-      display: flex;
-      align-items: center;
-      padding: 1rem;
-      background: var(--background-basic-color-2);
-      border-radius: var(--card-border-radius);
-      transition: background-color 0.2s ease-in-out;
+      box-shadow: 0 0 0 2px nb-theme(background-basic-color-1);
+      transition: all 0.3s ease;
       
       &:hover {
-        background: var(--background-basic-color-3);
+        transform: scale(1.05);
+        box-shadow: 0 0 0 3px nb-theme(background-basic-color-1), 0 0 10px rgba(0, 216, 93, 0.5);
+      }
+    }
+    
+    small {
+      font-size: 0.85rem;
+      opacity: 0.8;
+    }
+  }
+}
+
+// Summary cards
+.summary-card {
+  border-radius: 12px !important;
+  overflow: hidden;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  height: 180px;
+  margin-bottom: 1.5rem;
+  
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+  }
+  
+  nb-card-header {
+    padding: 0.75rem 1.25rem !important;
+    border-bottom: none !important;
+    background: transparent !important;
+    
+    .d-flex {
+      align-items: center;
+      
+      .widget-icon {
+        font-size: 1.75rem;
+        margin-right: 0.75rem;
+        opacity: 0.85;
+        transition: transform 0.3s ease;
       }
       
-      .overview-icon {
-        font-size: 2rem;
-        margin-right: 1rem;
-        color: var(--text-hint-color);
-        opacity: 0.8;
-      }
-      
-      .overview-content {
-        flex: 1;
-        
-        .overview-label {
-          font-size: 0.8rem;
-          color: var(--text-hint-color);
-          margin-bottom: 0.25rem;
-          font-weight: 500;
-        }
-        
-        .overview-value {
-          font-size: 1.1rem;
-          font-weight: 600;
-        }
+      span {
+        font-weight: 600;
+        font-size: 1rem;
+        color: nb-theme(text-basic-color);
       }
     }
   }
   
-  // Chart styling
-  .chart {
-    height: 320px;
-    width: 100%;
+  nb-card-body {
+    padding: 0.75rem 1.25rem 1.25rem;
+    
+    .summary-value {
+      .value {
+        font-size: 2.25rem;
+        font-weight: 700;
+        display: block;
+        margin-bottom: 0.75rem;
+        line-height: 1;
+      }
+      
+      nb-progress-bar {
+        margin-bottom: 0.5rem;
+        height: 8px;
+        border-radius: 4px;
+      }
+      
+      .metric-details {
+        margin-top: 0.75rem;
+        font-size: 0.85rem;
+      }
+      
+      .disk-stats,
+      .network-stats {
+        .stat {
+          display: flex;
+          justify-content: space-between;
+          margin-bottom: 0.5rem;
+          
+          .label {
+            font-size: 0.85rem;
+            color: nb-theme(text-hint-color);
+          }
+          
+          .value {
+            font-weight: 600;
+            font-size: 0.95rem;
+          }
+        }
+      }
+      
+      .status-badge {
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        font-weight: 600;
+      }
+    }
+  }
+}
+
+// System overview
+.system-overview {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.5rem;
+  padding: 1rem 0;
+  
+  .overview-item {
+    display: flex;
+    align-items: center;
+    padding: 1.25rem;
+    background: nb-theme(background-basic-color-2);
+    border-radius: 10px;
+    transition: all 0.3s ease;
+    border-left: 3px solid nb-theme(color-primary-500);
+    
+    &:hover {
+      background: nb-theme(background-basic-color-3);
+      transform: translateX(3px);
+      
+      .overview-icon {
+        transform: scale(1.1);
+      }
+    }
+    
+    .overview-icon {
+      font-size: 2rem;
+      margin-right: 1.25rem;
+      color: nb-theme(color-primary-500);
+      transition: transform 0.3s ease;
+    }
+    
+    .overview-content {
+      .overview-label {
+        font-size: 0.85rem;
+        color: nb-theme(text-hint-color);
+        margin-bottom: 0.25rem;
+        font-weight: 500;
+      }
+      
+      .overview-value {
+        font-size: 1.25rem;
+        font-weight: 600;
+      }
+    }
+  }
+}
+
+// Chart cards
+nb-card {
+  border-radius: 12px !important;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  transition: transform 0.3s ease;
+  margin-bottom: 1.75rem;
+  
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
   }
   
-  nb-card {
-    margin-bottom: 1.5rem;
-    box-shadow: var(--card-shadow);
-    border: var(--card-border-width) var(--card-border-style) var(--card-border-color);
-    
-    nb-card-header {
-      border-bottom: 1px solid var(--separator);
-      
+  nb-card-header {
+    .d-flex {
       .chart-title {
         font-weight: 600;
-        font-size: 1.1rem;
-        color: var(--text-basic-color);
+        font-size: 1.25rem;
       }
       
       .realtime-badge {
         display: flex;
         align-items: center;
+        padding: 0.35rem 0.75rem;
+        border-radius: 20px;
+        font-weight: 600;
         
         .pulse-icon {
-          margin-right: 0.25rem;
-          animation: pulse 2s infinite;
+          margin-right: 0.5rem;
+          animation: pulse 1.5s infinite;
         }
       }
     }
-    
-    nb-card-body {
-      padding: 1.5rem;
-    }
   }
+  
+  nb-card-body {
+    padding: 1.25rem;
+  }
+}
+
+// Chart containers
+.chart {
+  height: 320px;
+  width: 100%;
 }
 
 // Animations
@@ -203,7 +232,7 @@
     opacity: 1;
   }
   50% {
-    opacity: 0.5;
+    opacity: 0.4;
   }
   100% {
     opacity: 1;
@@ -212,82 +241,97 @@
 
 // Status colors
 .text-success {
-  color: var(--color-success-500) !important;
+  color: nb-theme(color-success-500) !important;
 }
 
 .text-warning {
-  color: var(--color-warning-500) !important;
+  color: nb-theme(color-warning-500) !important;
 }
 
 .text-danger {
-  color: var(--color-danger-500) !important;
+  color: nb-theme(color-danger-500) !important;
 }
 
 .text-info {
-  color: var(--color-info-500) !important;
+  color: nb-theme(color-info-500) !important;
 }
 
 .text-primary {
-  color: var(--color-primary-500) !important;
+  color: nb-theme(color-primary-500) !important;
 }
 
 // Responsive design
 @media (max-width: 1200px) {
-  :host {
-    .summary-card {
-      height: auto;
-      min-height: 160px;
-    }
-    
-    .chart {
-      height: 280px;
-    }
+  .summary-card {
+    height: auto;
+    min-height: 160px;
+  }
+  
+  .chart {
+    height: 280px;
   }
 }
 
 @media (max-width: 768px) {
   :host {
-    .summary-card {
-      height: auto;
-      min-height: 140px;
-      margin-bottom: 1rem;
+    padding: 1rem;
+  }
+  
+  .summary-card {
+    height: auto;
+    min-height: 140px;
+    margin-bottom: 1rem;
+    
+    nb-card-body {
+      .summary-value {
+        .value {
+          font-size: 1.9rem;
+        }
+      }
+    }
+  }
+  
+  .chart {
+    height: 250px;
+  }
+  
+  .system-overview {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    
+    .overview-item {
+      padding: 1rem;
       
-      nb-card-body {
-        .summary-value {
-          .value {
-            font-size: 1.8rem;
-          }
+      .overview-icon {
+        font-size: 1.75rem;
+        margin-right: 1rem;
+      }
+      
+      .overview-content {
+        .overview-value {
+          font-size: 1.1rem;
         }
       }
     }
+  }
+  
+  nb-card-header {
+    flex-direction: column;
+    align-items: flex-start !important;
     
-    .chart {
-      height: 250px;
-    }
-    
-    .system-overview {
-      .overview-item {
-        padding: 0.75rem;
-        
-        .overview-icon {
-          font-size: 1.5rem;
-          margin-right: 0.75rem;
-        }
-        
-        .overview-content {
-          .overview-value {
-            font-size: 1rem;
-          }
-        }
-      }
+    .monitoring-status {
+      margin-top: 0.75rem;
+      align-self: flex-end;
     }
   }
 }
 
 @media (max-width: 576px) {
-  :host {
-    .system-overview {
-      grid-template-columns: 1fr;
-    }
+  .system-overview {
+    grid-template-columns: 1fr;
+  }
+  
+  .chart {
+    height: 220px;
   }
 }
