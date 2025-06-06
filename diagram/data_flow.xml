@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net" modified="2024-01-01T00:00:00.000Z" agent="draw.io" etag="xxx" version="22.1.16" type="device">
+  <diagram name="Data Flow" id="data-flow">
+    <mxGraphModel dx="1422" dy="794" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        
+        <!-- Title -->
+        <mxCell id="title" value="PowerCARD AIX Monitoring System - Data Flow Architecture" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="350" y="20" width="500" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Data Sources -->
+        <mxCell id="aix-servers" value="AIX Servers&#xa;(PowerCARD V3.5)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="80" y="80" width="120" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- Raw Metrics List -->
+        <mxCell id="metrics-list" value="• CPU Usage (user/sys/idle/wait)&#xa;• Memory (free/pinned/paging)&#xa;• Disk I/O (reads/writes/IOPS)&#xa;• Network (packets/errors)&#xa;• Process Statistics&#xa;• System Load" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;align=left;" vertex="1" parent="1">
+          <mxGeometry x="240" y="80" width="200" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- Collection Process -->
+        <mxCell id="ssh-collection" value="SSH Collection&#xa;Process" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="80" y="200" width="120" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Collection Details -->
+        <mxCell id="collection-details" value="Commands Executed:&#xa;• vmstat -Itw 1 2&#xa;• iostat -DAlTd 1 2&#xa;• lsps -a&#xa;• netstat -in&#xa;• ps aux -o ..." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;align=left;" vertex="1" parent="1">
+          <mxGeometry x="240" y="200" width="160" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Data Processing -->
+        <mxCell id="data-parsing" value="Data Parsing &amp;&#xa;Normalization" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="80" y="300" width="120" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- JSON Structure -->
+        <mxCell id="json-structure" value="JSON Structure:&#xa;{&#xa;  &quot;timestamp&quot;: &quot;2024-01-01T10:00:00Z&quot;,&#xa;  &quot;server_id&quot;: &quot;aix01&quot;,&#xa;  &quot;metrics&quot;: {&#xa;    &quot;cpu_user&quot;: 25.5,&#xa;    &quot;memory_free&quot;: 2048,&#xa;    &quot;disk_read_kb&quot;: 1024&#xa;  }&#xa;}" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f0f0f0;strokeColor=#666666;align=left;fontFamily=Courier New;" vertex="1" parent="1">
+          <mxGeometry x="240" y="300" width="200" height="120" as="geometry" />
+        </mxCell>
+
+        <!-- Kafka Streaming -->
+        <mxCell id="kafka-stream" value="Apache Kafka&#xa;Message Queue" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="500" y="200" width="120" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Topic Structure -->
+        <mxCell id="kafka-topics" value="Topics:&#xa;• aix_metrics (main)&#xa;• alerts&#xa;• processed_metrics&#xa;&#xa;Partitioning: by server_id&#xa;Retention: 7 days" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;align=left;" vertex="1" parent="1">
+          <mxGeometry x="650" y="180" width="160" height="100" as="geometry" />
+        </mxCell>
+
+        <!-- Three Processing Paths -->
+        <!-- Path 1: Storage -->
+        <mxCell id="storage-consumer" value="Storage Consumer" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="380" y="340" width="120" height="40" as="geometry" />
+        </mxCell>
+
+        <mxCell id="postgresql" value="PostgreSQL&#xa;+ TimescaleDB" style="cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="400" y="400" width="80" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- Path 2: Real-time Analytics -->
+        <mxCell id="analytics-consumer" value="Analytics Consumer" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffd966;strokeColor=#d6b656;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="540" y="340" width="120" height="40" as="geometry" />
+        </mxCell>
+
+        <mxCell id="anomaly-engine" value="Anomaly Detection&#xa;Engine" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffd966;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="520" y="400" width="80" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="forecasting-engine" value="Forecasting&#xa;Engine" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffd966;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="620" y="400" width="80" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Path 3: Real-time Push -->
+        <mxCell id="realtime-consumer" value="Real-time Consumer" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="720" y="340" width="120" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- Redis Pub/Sub -->
+        <mxCell id="redis" value="Redis&#xa;Pub/Sub" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="740" y="400" width="80" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Real-time Channels -->
+        <mxCell id="redis-channels" value="Channels:&#xa;• server:aix01:metrics&#xa;• server:aix02:metrics&#xa;• alerts&#xa;• system_status" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;align=left;" vertex="1" parent="1">
+          <mxGeometry x="860" y="380" width="150" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- WebSocket Layer -->
+        <mxCell id="websocket-server" value="WebSocket Server&#xa;(Django Channels)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="720" y="500" width="120" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- API Layer -->
+        <mxCell id="rest-api" value="Django REST API" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="400" y="500" width="120" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Frontend -->
+        <mxCell id="angular-frontend" value="Angular Frontend&#xa;Dashboard" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f0f0f0;strokeColor=#666666;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="560" y="600" width="120" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Data Types -->
+        <mxCell id="realtime-data" value="Real-time Data:&#xa;• Live metrics stream&#xa;• Instant alerts&#xa;• System status updates" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffcccc;strokeColor=#ff6666;align=left;" vertex="1" parent="1">
+          <mxGeometry x="760" y="600" width="160" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="historical-data" value="Historical Data:&#xa;• Time-series queries&#xa;• Trend analysis&#xa;• Reporting data" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ccffcc;strokeColor=#66ff66;align=left;" vertex="1" parent="1">
+          <mxGeometry x="320" y="600" width="160" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Flow Arrows -->
+        <!-- Main data collection flow -->
+        <mxCell id="flow1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=3;strokeColor=#b85450;" edge="1" parent="1" source="aix-servers" target="ssh-collection">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="flow2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#82b366;" edge="1" parent="1" source="ssh-collection" target="data-parsing">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="flow3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=3;strokeColor=#9673a6;" edge="1" parent="1" source="data-parsing" target="kafka-stream">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="140" y="280" />
+              <mxPoint x="560" y="280" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Three consumer paths -->
+        <mxCell id="flow4a" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#6c8ebf;" edge="1" parent="1" source="kafka-stream" target="storage-consumer">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="flow4b" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#d6b656;" edge="1" parent="1" source="kafka-stream" target="analytics-consumer">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="flow4c" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#d79b00;" edge="1" parent="1" source="kafka-stream" target="realtime-consumer">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Storage path -->
+        <mxCell id="flow5a" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#6c8ebf;" edge="1" parent="1" source="storage-consumer" target="postgresql">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
