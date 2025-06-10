@@ -3,11 +3,11 @@
 @import '@nebular/theme/styles/themes/default';
 @import '@nebular/theme/styles/themes/dark';
 
-:host {
-  display: block;
-  padding: 1.5rem;
-  background-color: nb-theme(background-basic-color-1);
-}
+// :host {
+//   display: block;
+//   padding: 1.5rem;
+//   background-color: nb-theme(background-basic-color-1);
+// }
 
 // Header styling
 nb-card-header {
