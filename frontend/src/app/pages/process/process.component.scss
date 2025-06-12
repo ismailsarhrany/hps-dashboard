@@ -223,6 +223,7 @@
     
     nb-card-header {
       border-bottom: 1px solid var(--separator);
+      padding: 1rem 1.25rem;
       
       .chart-title {
         font-weight: 600;
@@ -246,11 +247,29 @@
     }
   }
   
-  // Gap utility
-  .gap-2 {
-    gap: 0.5rem;
+  // Form buttons
+  .form-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    align-items: center;
+    
+    .primary-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .quick-select-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-left: auto;
+    }
   }
 }
+
+
 
 // Animations
 @keyframes spin {
@@ -321,5 +340,17 @@
         }
       }
     }
+  }
+}
+
+// Responsive
+@media (max-width: 768px) {
+  .charts-section .chart-card nb-card-body .echart {
+    height: 300px;
+  }
+  
+  .form-buttons .quick-select-buttons {
+    margin-left: 0;
+    width: 100%;
   }
 }

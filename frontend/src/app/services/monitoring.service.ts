@@ -2,7 +2,7 @@
 import { Injectable } from "@angular/core";
 import { HttpClient, HttpParams } from "@angular/common/http";
 import { Observable, interval, BehaviorSubject } from "rxjs";
-import { map, catchError } from "rxjs/operators";
+import { map, catchError, tap } from "rxjs/operators";
 import { of } from "rxjs";
 
 // Data Interfaces
@@ -46,6 +46,7 @@ export interface IostatData {
 }
 
 export interface ProcessData {
+  id?: number;
   timestamp: string;
   pid: number;
   user: string;
@@ -86,7 +87,7 @@ export class ApiService {
   private realtimeSubject = new BehaviorSubject<any>(null);
   private isMonitoring = false;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   // Realtime Data Methods
   startRealtimeMonitoring(): Observable<any> {
@@ -257,25 +258,64 @@ export class ApiService {
       params = params.set("pid", pid.toString());
     }
 
+    console.log(
+      "Historical API call:",
+      `${this.baseUrl}/historical/`,
+      params.toString()
+    );
+
     return this.http
       .get<ApiResponse<ProcessData>>(`${this.baseUrl}/historical/`, { params })
       .pipe(
+        tap((response: ApiResponse<ProcessData>) => {
+          console.log("Historical API response:", response);
+          console.log("Data count:", response.data?.length || 0);
+        }),
+        map((response: ApiResponse<ProcessData>) => {
+          // Ensure response has the expected structure
+          return {
+            data: response.data || [],
+            status: response.status || "success",
+            timestamp: response.timestamp || new Date().toISOString(),
+            count: response.data?.length || 0,
+          } as ApiResponse<ProcessData>;
+        }),
         catchError((error) => {
           console.error("Error fetching historical process:", error);
+          console.error("Error details:", {
+            status: error.status,
+            message: error.message,
+            url: error.url,
+            params: params.toString(),
+          });
           return of({
             status: "error",
             data: [],
             timestamp: new Date().toISOString(),
-          });
+            count: 0,
+          } as ApiResponse<ProcessData>);
         })
       );
   }
 
-  // Utility Methods
+  // FIXED: Properly extract data array from ApiResponse
   getProcessList(): Observable<ProcessData[]> {
     return this.getRealtimeProcess().pipe(
-      map((response) => response.data || []),
-      map((process) => process.filter((p) => p.cpu > 0 || p.mem > 0))
+      map((response: ApiResponse<ProcessData>) => {
+        // Extract the data array from the API response
+        const processes = response.data || [];
+
+        // Filter valid processes
+        return processes.filter((p) => {
+          const hasValidPid = p && (p.pid !== undefined && p.pid !== null && p.pid !== 0);
+          const hasValidCommand = p && p.command && typeof p.command === 'string' && p.command.trim() !== '';
+          return hasValidPid && hasValidCommand;
+        });
+      }),
+      catchError((error) => {
+        console.error("Error getting process list:", error);
+        return of([]);
+      })
     );
   }
 
