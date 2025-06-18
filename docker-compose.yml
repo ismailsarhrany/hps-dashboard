@@ -4,6 +4,7 @@ services:
     image: postgres:16-alpine
     volumes:
       - ./postgres_data:/var/lib/postgresql/data
+      - ./exports:/exports
     env_file:
       - ./.env
     ports:

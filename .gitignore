@@ -64,3 +64,4 @@ Thumbs.db
 *.7z
 *.zip
 *.log
+venv

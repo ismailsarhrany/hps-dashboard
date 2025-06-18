@@ -1,7 +1,7 @@
 // src/app/services/monitoring.service.ts
 import { Injectable } from "@angular/core";
 import { HttpClient, HttpParams } from "@angular/common/http";
-import { Observable, interval, BehaviorSubject } from "rxjs";
+import { Observable } from "rxjs";
 import { map, catchError, tap } from "rxjs/operators";
 import { of } from "rxjs";
 
@@ -79,209 +79,49 @@ export interface DateTimeRange {
   end: string;
 }
 
+export type MetricType = 'vmstat' | 'netstat' | 'iostat' | 'process';
+
 @Injectable({
   providedIn: "root",
 })
 export class ApiService {
   private readonly baseUrl = "http://localhost:8000/api/metrics";
-  private realtimeSubject = new BehaviorSubject<any>(null);
-  private isMonitoring = false;
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient) {}
 
-  // Realtime Data Methods
-  startRealtimeMonitoring(): Observable<any> {
-    if (!this.isMonitoring) {
-      this.isMonitoring = true;
-      interval(5000).subscribe(() => {
-        this.fetchRealtimeData().subscribe((data) => {
-          this.realtimeSubject.next(data);
-        });
-      });
-      // Initial fetch
-      this.fetchRealtimeData().subscribe((data) => {
-        this.realtimeSubject.next(data);
-      });
-    }
-    return this.realtimeSubject.asObservable();
-  }
-
-  stopRealtimeMonitoring(): void {
-    this.isMonitoring = false;
-  }
-
-  private fetchRealtimeData(): Observable<ApiResponse<VmstatData>> {
-    const params = new HttpParams().set("metric", "vmstat");
-    return this.http
-      .get<ApiResponse<VmstatData>>(`${this.baseUrl}/realtime/`, { params })
-      .pipe(
-        catchError((error) => {
-          console.error("Error fetching realtime data:", error);
-          return of({
-            status: "error",
-            data: [],
-            timestamp: new Date().toISOString(),
-          });
-        })
-      );
-  }
-
-  getRealtimeVmstat(): Observable<ApiResponse<VmstatData>> {
-    return this.fetchRealtimeData();
-  }
-
-  getRealtimeNetstat(): Observable<ApiResponse<NetstatData>> {
-    const params = new HttpParams().set("metric", "netstat");
-    return this.http
-      .get<ApiResponse<NetstatData>>(`${this.baseUrl}/realtime/`, { params })
-      .pipe(
-        catchError((error) => {
-          console.error("Error fetching realtime netstat:", error);
-          return of({
-            status: "error",
-            data: [],
-            timestamp: new Date().toISOString(),
-          });
-        })
-      );
-  }
-
-  getRealtimeIostat(): Observable<ApiResponse<IostatData>> {
-    const params = new HttpParams().set("metric", "iostat");
-    return this.http
-      .get<ApiResponse<IostatData>>(`${this.baseUrl}/realtime/`, { params })
-      .pipe(
-        catchError((error) => {
-          console.error("Error fetching realtime iostat:", error);
-          return of({
-            status: "error",
-            data: [],
-            timestamp: new Date().toISOString(),
-          });
-        })
-      );
-  }
-
-  getRealtimeProcess(): Observable<ApiResponse<ProcessData>> {
-    const params = new HttpParams().set("metric", "process");
-    return this.http
-      .get<ApiResponse<ProcessData>>(`${this.baseUrl}/realtime/`, { params })
-      .pipe(
-        catchError((error) => {
-          console.error("Error fetching realtime process:", error);
-          return of({
-            status: "error",
-            data: [],
-            timestamp: new Date().toISOString(),
-          });
-        })
-      );
-  }
-
-  // Historical Data Methods
-  getHistoricalVmstat(
-    dateRange: DateTimeRange
-  ): Observable<ApiResponse<VmstatData>> {
-    const params = new HttpParams()
-      .set("metric", "vmstat")
-      .set("start", dateRange.start)
-      .set("end", dateRange.end);
-
-    return this.http
-      .get<ApiResponse<VmstatData>>(`${this.baseUrl}/historical/`, { params })
-      .pipe(
-        catchError((error) => {
-          console.error("Error fetching historical vmstat:", error);
-          return of({
-            status: "error",
-            data: [],
-            timestamp: new Date().toISOString(),
-          });
-        })
-      );
-  }
-
-  getHistoricalNetstat(
-    dateRange: DateTimeRange
-  ): Observable<ApiResponse<NetstatData>> {
-    const params = new HttpParams()
-      .set("metric", "netstat")
-      .set("start", dateRange.start)
-      .set("end", dateRange.end);
-
-    return this.http
-      .get<ApiResponse<NetstatData>>(`${this.baseUrl}/historical/`, { params })
-      .pipe(
-        catchError((error) => {
-          console.error("Error fetching historical netstat:", error);
-          return of({
-            status: "error",
-            data: [],
-            timestamp: new Date().toISOString(),
-          });
-        })
-      );
-  }
-
-  getHistoricalIostat(
-    dateRange: DateTimeRange
-  ): Observable<ApiResponse<IostatData>> {
-    const params = new HttpParams()
-      .set("metric", "iostat")
-      .set("start", dateRange.start)
-      .set("end", dateRange.end);
-
-    return this.http
-      .get<ApiResponse<IostatData>>(`${this.baseUrl}/historical/`, { params })
-      .pipe(
-        catchError((error) => {
-          console.error("Error fetching historical iostat:", error);
-          return of({
-            status: "error",
-            data: [],
-            timestamp: new Date().toISOString(),
-          });
-        })
-      );
-  }
-
-  getHistoricalProcesses(
+  // Generic method to fetch historical data
+  private getHistoricalData<T>(
+    metric: MetricType,
     dateRange: DateTimeRange,
-    pid?: number
-  ): Observable<ApiResponse<ProcessData>> {
+    additionalParams?: { [key: string]: string }
+  ): Observable<ApiResponse<T>> {
     let params = new HttpParams()
-      .set("metric", "process")
+      .set("metric", metric)
       .set("start", dateRange.start)
       .set("end", dateRange.end);
 
-    if (pid) {
-      params = params.set("pid", pid.toString());
+    // Add any additional parameters
+    if (additionalParams) {
+      Object.keys(additionalParams).forEach(key => {
+        params = params.set(key, additionalParams[key]);
+      });
     }
 
-    console.log(
-      "Historical API call:",
-      `${this.baseUrl}/historical/`,
-      params.toString()
-    );
-
     return this.http
-      .get<ApiResponse<ProcessData>>(`${this.baseUrl}/historical/`, { params })
+      .get<ApiResponse<T>>(`${this.baseUrl}/historical/`, { params })
       .pipe(
-        tap((response: ApiResponse<ProcessData>) => {
-          console.log("Historical API response:", response);
-          console.log("Data count:", response.data?.length || 0);
+        tap((response: ApiResponse<T>) => {
+          console.log(`Historical ${metric} API response:`, response);
+          console.log(`Data count: ${response.data?.length || 0}`);
         }),
-        map((response: ApiResponse<ProcessData>) => {
-          // Ensure response has the expected structure
-          return {
-            data: response.data || [],
-            status: response.status || "success",
-            timestamp: response.timestamp || new Date().toISOString(),
-            count: response.data?.length || 0,
-          } as ApiResponse<ProcessData>;
-        }),
+        map((response: ApiResponse<T>) => ({
+          data: response.data || [],
+          status: response.status || "success",
+          timestamp: response.timestamp || new Date().toISOString(),
+          count: response.data?.length || 0,
+        } as ApiResponse<T>)),
         catchError((error) => {
-          console.error("Error fetching historical process:", error);
+          console.error(`Error fetching historical ${metric}:`, error);
           console.error("Error details:", {
             status: error.status,
             message: error.message,
@@ -293,65 +133,79 @@ export class ApiService {
             data: [],
             timestamp: new Date().toISOString(),
             count: 0,
-          } as ApiResponse<ProcessData>);
+          } as ApiResponse<T>);
         })
       );
   }
 
-  // FIXED: Properly extract data array from ApiResponse
-  getProcessList(): Observable<ProcessData[]> {
-    return this.getRealtimeProcess().pipe(
-      map((response: ApiResponse<ProcessData>) => {
-        // Extract the data array from the API response
-        const processes = response.data || [];
-
-        // Filter valid processes
-        return processes.filter((p) => {
-          const hasValidPid = p && (p.pid !== undefined && p.pid !== null && p.pid !== 0);
-          const hasValidCommand = p && p.command && typeof p.command === 'string' && p.command.trim() !== '';
-          return hasValidPid && hasValidCommand;
-        });
-      }),
-      catchError((error) => {
-        console.error("Error getting process list:", error);
-        return of([]);
-      })
-    );
+  // Historical Data Methods
+  getHistoricalVmstat(dateRange: DateTimeRange): Observable<ApiResponse<VmstatData>> {
+    return this.getHistoricalData<VmstatData>('vmstat', dateRange);
   }
 
+  getHistoricalNetstat(dateRange: DateTimeRange): Observable<ApiResponse<NetstatData>> {
+    return this.getHistoricalData<NetstatData>('netstat', dateRange);
+  }
+
+  getHistoricalIostat(dateRange: DateTimeRange): Observable<ApiResponse<IostatData>> {
+    return this.getHistoricalData<IostatData>('iostat', dateRange);
+  }
+
+  getHistoricalProcesses(
+    dateRange: DateTimeRange,
+    pid?: number
+  ): Observable<ApiResponse<ProcessData>> {
+    const additionalParams = pid ? { pid: pid.toString() } : undefined;
+    return this.getHistoricalData<ProcessData>('process', dateRange, additionalParams);
+  }
+
+  // Get historical data for multiple metrics at once
+  getHistoricalMetrics(
+    dateRange: DateTimeRange,
+    metrics: MetricType[] = ['vmstat', 'netstat', 'iostat', 'process']
+  ): Observable<{
+    vmstat?: ApiResponse<VmstatData>;
+    netstat?: ApiResponse<NetstatData>;
+    iostat?: ApiResponse<IostatData>;
+    process?: ApiResponse<ProcessData>;
+  }> {
+    const requests: { [key: string]: Observable<ApiResponse<any>> } = {};
+
+    if (metrics.includes('vmstat')) {
+      requests['vmstat'] = this.getHistoricalVmstat(dateRange);
+    }
+    if (metrics.includes('netstat')) {
+      requests['netstat'] = this.getHistoricalNetstat(dateRange);
+    }
+    if (metrics.includes('iostat')) {
+      requests['iostat'] = this.getHistoricalIostat(dateRange);
+    }
+    if (metrics.includes('process')) {
+      requests['process'] = this.getHistoricalProcesses(dateRange);
+    }
+
+    // Use forkJoin to make parallel requests
+    const { forkJoin } = require('rxjs');
+    return forkJoin(requests);
+  }
+
+  // System Analysis Methods
   calculateSystemSummary(
     vmstatData: VmstatData[],
     netstatData: NetstatData[],
     iostatData: IostatData[]
   ): SystemSummary {
     if (!vmstatData.length) {
-      return {
-        cpu_usage: 0,
-        memory_usage: 0,
-        disk_read: 0,
-        disk_write: 0,
-        network_packets: 0,
-        network_errors: 0,
-        system_load: 0,
-        process_count: 0,
-        uptime: 0,
-      };
+      return this.getEmptySystemSummary();
     }
 
     const latestVmstat = vmstatData[vmstatData.length - 1];
     const cpuUsage = 100 - latestVmstat.idle;
     const totalMemory = latestVmstat.avm + latestVmstat.fre;
-    const memoryUsage =
-      totalMemory > 0 ? (latestVmstat.avm / totalMemory) * 100 : 0;
+    const memoryUsage = totalMemory > 0 ? (latestVmstat.avm / totalMemory) * 100 : 0;
 
-    const totalDiskRead = iostatData.reduce(
-      (sum, data) => sum + data.kb_read,
-      0
-    );
-    const totalDiskWrite = iostatData.reduce(
-      (sum, data) => sum + data.kb_wrtn,
-      0
-    );
+    const totalDiskRead = iostatData.reduce((sum, data) => sum + data.kb_read, 0);
+    const totalDiskWrite = iostatData.reduce((sum, data) => sum + data.kb_wrtn, 0);
 
     const totalNetworkPackets = netstatData.reduce(
       (sum, data) => sum + data.ipkts_rate + data.opkts_rate,
@@ -361,6 +215,7 @@ export class ApiService {
       (sum, data) => sum + data.ierrs + data.oerrs,
       0
     );
+
     return {
       cpu_usage: Math.round(cpuUsage * 100) / 100,
       memory_usage: Math.round(memoryUsage * 100) / 100,
@@ -371,6 +226,61 @@ export class ApiService {
       system_load: latestVmstat.r,
       process_count: 0, // Will be updated by process data
       uptime: 0,
+    };
+  }
+
+  private getEmptySystemSummary(): SystemSummary {
+    return {
+      cpu_usage: 0,
+      memory_usage: 0,
+      disk_read: 0,
+      disk_write: 0,
+      network_packets: 0,
+      network_errors: 0,
+      system_load: 0,
+      process_count: 0,
+      uptime: 0,
+    };
+  }
+
+  // Data Analysis Helpers
+  getMetricTrends(data: VmstatData[]): {
+    cpuTrend: 'increasing' | 'decreasing' | 'stable';
+    memoryTrend: 'increasing' | 'decreasing' | 'stable';
+    loadTrend: 'increasing' | 'decreasing' | 'stable';
+  } {
+    if (data.length < 2) {
+      return { cpuTrend: 'stable', memoryTrend: 'stable', loadTrend: 'stable' };
+    }
+
+    const recent = data.slice(-5); // Last 5 data points
+    const older = data.slice(-10, -5); // Previous 5 data points
+
+    const getAverage = (arr: VmstatData[], field: keyof VmstatData): number => {
+      return arr.reduce((sum, item) => sum + (item[field] as number), 0) / arr.length;
+    };
+
+    const getTrend = (recentAvg: number, olderAvg: number): 'increasing' | 'decreasing' | 'stable' => {
+      const diff = Math.abs(recentAvg - olderAvg);
+      const threshold = olderAvg * 0.1; // 10% threshold
+      
+      if (diff < threshold) return 'stable';
+      return recentAvg > olderAvg ? 'increasing' : 'decreasing';
+    };
+
+    const recentCpu = 100 - getAverage(recent, 'idle');
+    const olderCpu = 100 - getAverage(older, 'idle');
+    
+    const recentMemory = getAverage(recent, 'avm');
+    const olderMemory = getAverage(older, 'avm');
+    
+    const recentLoad = getAverage(recent, 'r');
+    const olderLoad = getAverage(older, 'r');
+
+    return {
+      cpuTrend: getTrend(recentCpu, olderCpu),
+      memoryTrend: getTrend(recentMemory, olderMemory),
+      loadTrend: getTrend(recentLoad, olderLoad),
     };
   }
 
@@ -395,5 +305,29 @@ export class ApiService {
       start: start.toISOString(),
       end: end.toISOString(),
     };
+  }
+
+  // Predefined date ranges for common use cases
+  getCommonDateRanges(): { [key: string]: DateTimeRange } {
+    const now = new Date();
+    const ranges: { [key: string]: DateTimeRange } = {};
+
+    // Last hour
+    const lastHour = new Date(now.getTime() - 60 * 60 * 1000);
+    ranges['lastHour'] = {
+      start: lastHour.toISOString(),
+      end: now.toISOString(),
+    };
+
+    // Last 24 hours
+    ranges['last24Hours'] = this.getDateRange(1);
+
+    // Last week
+    ranges['lastWeek'] = this.getDateRange(7);
+
+    // Last month
+    ranges['lastMonth'] = this.getDateRange(30);
+
+    return ranges;
   }
 }

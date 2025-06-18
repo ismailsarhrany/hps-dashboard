@@ -3,20 +3,19 @@
   <div class="col-12">
     <nb-card>
       <nb-card-header>
-        <div class="d-flex justify-content-between align-items-center">
-          <div>
+        <div class="d-flex justify-content-between align-items-center flex-wrap">
+          <div class="header-content">
             <h1>Process Monitoring</h1>
-            <p class="text-hint mb-0">
-              Track individual process resource consumption
-            </p>
+            <p class="text-hint mb-0">Track individual process resource consumption</p>
           </div>
-          <div class="monitoring-status">
-            <nb-badge status="success" size="medium">
+          
+          <div class="monitoring-status d-flex align-items-center">
+            <nb-badge status="success" size="medium" class="mr-2">
               <nb-icon icon="activity-outline"></nb-icon>
               Live
             </nb-badge>
-            <small class="text-hint ml-2"
-              >Updated: {{ lastUpdateTime | date : "HH:mm:ss" }}
+            <small class="text-hint">
+              Updated: {{ lastUpdateTime | date : "HH:mm:ss" }}
             </small>
           </div>
         </div>
@@ -26,16 +25,14 @@
 </div>
 
 <!-- Process Table Section -->
-<div class="row">
+<div class="row mt-3">
   <div class="col-12">
     <nb-card>
       <nb-card-header>
-        <div class="d-flex justify-content-between align-items-center">
+        <div class="d-flex justify-content-between align-items-center flex-wrap">
           <div>
             <span class="chart-title">Active Processes</span>
-            <small class="text-hint d-block"
-              >Real-time process resource usage</small
-            >
+            <small class="text-hint d-block">Real-time process resource usage</small>
           </div>
           <nb-badge status="info" size="small" class="realtime-badge">
             <nb-icon icon="radio-outline" class="pulse-icon"></nb-icon>
@@ -43,6 +40,7 @@
           </nb-badge>
         </div>
       </nb-card-header>
+      
       <nb-card-body>
         <div class="table-responsive">
           <table class="table process-table">
@@ -53,63 +51,59 @@
                 <th>CPU %</th>
                 <th>Memory %</th>
                 <th>Command</th>
-                <th>Actions</th>
+                <th class="text-center">Actions</th>
               </tr>
             </thead>
             <tbody>
-              <tr
-                *ngFor="let process of activeProcesses"
-                [class.high-usage]="process.cpu > 50 || process.mem > 50"
-              >
-                <td>{{ process.pid }}</td>
-                <td>{{ process.user }}</td>
-                <td>
-                  <div class="usage-cell">
-                    <span [ngClass]="getCpuStatusClass(process.cpu)"
-                      >{{ process.cpu }}%</span
-                    >
-                    <nb-progress-bar
-                      [value]="process.cpu"
-                      [status]="getCpuStatus(process.cpu)"
-                      size="tiny"
-                    ></nb-progress-bar>
-                  </div>
-                </td>
-                <td>
-                  <div class="usage-cell">
-                    <span [ngClass]="getMemStatusClass(process.mem)"
-                      >{{ process.mem }}%</span
-                    >
-                    <nb-progress-bar
-                      [value]="process.mem"
-                      [status]="getMemStatus(process.mem)"
-                      size="tiny"
-                    ></nb-progress-bar>
-                  </div>
-                </td>
-                <td class="command-cell">{{ process.command }}</td>
-                <td>
-                  <button
-                    nbButton
-                    ghost
-                    size="small"
-                    status="primary"
-                    (click)="selectProcess(process)"
-                  >
-                    <nb-icon icon="bar-chart-outline"></nb-icon>
-                    Analyze
-                  </button>
-                </td>
-              </tr>
-              <tr *ngIf="activeProcesses.length === 0">
-                <td colspan="6" class="text-center py-4">
-                  <nb-icon
-                    icon="alert-circle-outline"
-                    status="warning"
-                  ></nb-icon>
-                  <span class="ml-2">No active processes data available</span>
-                </td>
-              </tr>
+              <ng-container *ngIf="activeProcesses.length > 0; else noProcesses">
+                <tr *ngFor="let process of activeProcesses" 
+                    [class.high-usage]="process.cpu > 50 || process.mem > 50">
+                  <td>{{ process.pid }}</td>
+                  <td>{{ process.user }}</td>
+                  <td>
+                    <div class="usage-cell">
+                      <span [ngClass]="getCpuStatusClass(process.cpu)">
+                        {{ process.cpu }}%
+                      </span>
+                      <nb-progress-bar [value]="process.cpu" 
+                                       [status]="getCpuStatus(process.cpu)"
+                                       size="tiny">
+                      </nb-progress-bar>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="usage-cell">
+                      <span [ngClass]="getMemStatusClass(process.mem)">
+                        {{ process.mem }}%
+                      </span>
+                      <nb-progress-bar [value]="process.mem" 
+                                       [status]="getMemStatus(process.mem)"
+                                       size="tiny">
+                      </nb-progress-bar>
+                    </div>
+                  </td>
+                  <td class="command-cell">{{ process.command }}</td>
+                  <td class="text-center">
+                    <button nbButton 
+                            ghost 
+                            size="small" 
+                            status="primary"
+                            (click)="selectProcess(process)">
+                      <nb-icon icon="bar-chart-outline"></nb-icon>
+                      Analyze
+                    </button>
+                  </td>
+                </tr>
+              </ng-container>
+              
+              <ng-template #noProcesses>
+                <tr>
+                  <td colspan="6" class="text-center py-4">
+                    <nb-icon icon="alert-circle-outline" status="warning"></nb-icon>
+                    <span class="ml-2">No active processes data available</span>
+                  </td>
+                </tr>
+              </ng-template>
             </tbody>
           </table>
         </div>
@@ -118,17 +112,15 @@
   </div>
 </div>
 
-<!-- Top Processes Charts Row -->
-<div class="row">
-  <div class="col-lg-6 col-md-12">
+<!-- Top Processes Charts -->
+<div class="row mt-3">
+  <div class="col-lg-6 col-md-12 mb-3">
     <nb-card>
       <nb-card-header>
-        <div class="d-flex justify-content-between align-items-center">
+        <div class="d-flex justify-content-between align-items-center flex-wrap">
           <div>
             <span class="chart-title">Top CPU Consumers</span>
-            <small class="text-hint d-block"
-              >Processes using most CPU resources</small
-            >
+            <small class="text-hint d-block">Processes using most CPU resources</small>
           </div>
           <nb-badge status="danger" size="small" class="realtime-badge">
             <nb-icon icon="radio-outline" class="pulse-icon"></nb-icon>
@@ -142,15 +134,13 @@
     </nb-card>
   </div>
 
-  <div class="col-lg-6 col-md-12">
+  <div class="col-lg-6 col-md-12 mb-3">
     <nb-card>
       <nb-card-header>
-        <div class="d-flex justify-content-between align-items-center">
+        <div class="d-flex justify-content-between align-items-center flex-wrap">
           <div>
             <span class="chart-title">Top Memory Consumers</span>
-            <small class="text-hint d-block"
-              >Processes using most memory resources</small
-            >
+            <small class="text-hint d-block">Processes using most memory resources</small>
           </div>
           <nb-badge status="warning" size="small" class="realtime-badge">
             <nb-icon icon="radio-outline" class="pulse-icon"></nb-icon>
@@ -166,154 +156,121 @@
 </div>
 
 <!-- Process Analysis Section -->
-<div class="row">
+<div class="row mt-3">
   <div class="col-12">
     <nb-card>
       <nb-card-header>
         <div class="d-flex justify-content-between align-items-center">
           <div>
             <span class="chart-title">Process Analysis</span>
-            <small class="text-hint d-block"
-              >Historical and detailed process metrics</small
-            >
+            <small class="text-hint d-block">Historical and detailed process metrics</small>
           </div>
         </div>
       </nb-card-header>
+      
       <nb-card-body>
-        <form
-          [formGroup]="filterForm"
-          (ngSubmit)="loadHistoricalProcessData()"
-          class="date-range-form"
-        >
+        <form [formGroup]="filterForm" 
+              (ngSubmit)="loadHistoricalProcessData()" 
+              class="date-range-form">
           <div class="row">
-            <!-- Updated Process Dropdown Section - Replace existing col-md-4 block with this -->
-            <div class="col-md-4">
+            <!-- Process Selection -->
+            <div class="col-md-4 mb-3">
               <label class="label">Select Process:</label>
-              <nb-select
-                placeholder="Select Process"
-                formControlName="selectedProcess"
-                [status]="processListLoading ? 'info' : 'basic'"
-              >
-                <nb-option
-                  *ngFor="let p of processes"
-                  [value]="p.pid.toString()"
-                >
+              <nb-select placeholder="Select Process"
+                         formControlName="selectedProcess"
+                         [status]="processListLoading ? 'info' : 'basic'">
+                <nb-option *ngFor="let p of processes" [value]="p.pid.toString()">
                   {{ p.pid }} - {{ p.command }}
                 </nb-option>
               </nb-select>
 
-              <!-- Loading indicator -->
               <div *ngIf="processListLoading" class="text-hint small mt-1">
                 <nb-icon icon="loader-outline" class="spin"></nb-icon>
                 Loading processes...
               </div>
 
-              <!-- Validation message -->
-              <div
-                *ngIf="
-                  filterForm.get('selectedProcess').invalid &&
-                  filterForm.get('selectedProcess').touched
-                "
-                class="text-danger small mt-1"
-              >
+              <div *ngIf="filterForm.get('selectedProcess').invalid && 
+                          filterForm.get('selectedProcess').touched" 
+                   class="text-danger small mt-1">
                 <nb-icon icon="alert-circle-outline"></nb-icon>
                 Please select a process
               </div>
             </div>
-            <div class="col-md-2">
-              <label class="label">Start Date:</label>
-              <input
-                type="date"
-                formControlName="startDate"
-                nbInput
-                fullWidth
-              />
-            </div>
-            <div class="col-md-2">
-              <label class="label">Start Time:</label>
-              <input
-                type="time"
-                formControlName="startTime"
-                nbInput
-                fullWidth
-              />
-            </div>
-            <div class="col-md-2">
-              <label class="label">End Date:</label>
-              <input type="date" formControlName="endDate" nbInput fullWidth />
-            </div>
-            <div class="col-md-2">
-              <label class="label">End Time:</label>
-              <input type="time" formControlName="endTime" nbInput fullWidth />
+            
+            <!-- Date/Time Picker Group -->
+            <div class="col-md-8">
+              <div class="row">
+                <div class="col-md-3 mb-3">
+                  <label class="label">Start Date:</label>
+                  <input type="date" formControlName="startDate" nbInput fullWidth>
+                </div>
+                <div class="col-md-3 mb-3">
+                  <label class="label">Start Time:</label>
+                  <input type="time" formControlName="startTime" nbInput fullWidth>
+                </div>
+                <div class="col-md-3 mb-3">
+                  <label class="label">End Date:</label>
+                  <input type="date" formControlName="endDate" nbInput fullWidth>
+                </div>
+                <div class="col-md-3 mb-3">
+                  <label class="label">End Time:</label>
+                  <input type="time" formControlName="endTime" nbInput fullWidth>
+                </div>
+              </div>
             </div>
           </div>
 
           <div class="row mt-3">
-            <div class="col-12 form-buttons">
-              <button
-                type="submit"
-                nbButton
-                status="primary"
-                [disabled]="!filterForm.valid || processListLoading || loading"
-                class="primary-btn"
-              >
+            <div class="col-12 form-buttons d-flex flex-wrap">
+              <button type="submit"
+                      nbButton
+                      status="primary"
+                      [disabled]="!filterForm.valid || processListLoading || loading"
+                      class="primary-btn mr-2 mb-2">
                 <nb-icon icon="search-outline" *ngIf="!loading"></nb-icon>
-                <nb-icon
-                  icon="loader-outline"
-                  *ngIf="loading"
-                  class="spin"
-                ></nb-icon>
+                <nb-icon icon="loader-outline" *ngIf="loading" class="spin"></nb-icon>
                 Load Data
               </button>
 
-              <div class="quick-select-buttons">
-                <button
-                  type="button"
-                  nbButton
-                  status="info"
-                  size="small"
-                  (click)="selectToday()"
-                  class="mr-2"
-                >
+              <div class="quick-select-buttons d-flex flex-wrap">
+                <button type="button" 
+                        nbButton 
+                        status="info" 
+                        size="small"
+                        (click)="selectToday()"
+                        class="mr-2 mb-2">
                   Today
                 </button>
-                <button
-                  type="button"
-                  nbButton
-                  status="info"
-                  size="small"
-                  (click)="selectYesterday()"
-                  class="mr-2"
-                >
+                <button type="button" 
+                        nbButton 
+                        status="info" 
+                        size="small"
+                        (click)="selectYesterday()"
+                        class="mr-2 mb-2">
                   Yesterday
                 </button>
-                <button
-                  type="button"
-                  nbButton
-                  status="info"
-                  size="small"
-                  (click)="selectLast24Hours()"
-                  class="mr-2"
-                >
+                <button type="button" 
+                        nbButton 
+                        status="info" 
+                        size="small"
+                        (click)="selectLast24Hours()"
+                        class="mr-2 mb-2">
                   Last 24h
                 </button>
-                <button
-                  type="button"
-                  nbButton
-                  status="info"
-                  size="small"
-                  (click)="selectLastWeek()"
-                  class="mr-2"
-                >
+                <button type="button" 
+                        nbButton 
+                        status="info" 
+                        size="small"
+                        (click)="selectLastWeek()"
+                        class="mr-2 mb-2">
                   Last Week
                 </button>
-                <button
-                  type="button"
-                  nbButton
-                  status="info"
-                  size="small"
-                  (click)="selectLastMonth()"
-                >
+                <button type="button" 
+                        nbButton 
+                        status="info" 
+                        size="small"
+                        (click)="selectLastMonth()"
+                        class="mb-2">
                   Last Month
                 </button>
               </div>
@@ -327,59 +284,58 @@
 
 <!-- Selected Process Charts -->
 <div class="charts-section" [class.loading-active]="loading">
-  <div class="row" *ngIf="selectedProcessData">
-    <div class="col-lg-6 col-md-12">
-      <nb-card class="chart-card">
-        <nb-card-header>
-          <h6 class="chart-title">
-            <nb-icon icon="cpu-outline" class="mr-2"></nb-icon>
-            CPU Usage History
-          </h6>
-        </nb-card-header>
-        <nb-card-body>
-          <div echarts [options]="processCpuChartOption" class="echart"></div>
-        </nb-card-body>
-      </nb-card>
-    </div>
+  <ng-container *ngIf="selectedProcessData; else noProcessSelected">
+    <div class="row mt-3">
+      <div class="col-lg-6 col-md-12 mb-3">
+        <nb-card>
+          <nb-card-header>
+            <h6 class="chart-title d-flex align-items-center">
+              <nb-icon icon="cpu-outline" class="mr-2"></nb-icon>
+              CPU Usage History
+            </h6>
+          </nb-card-header>
+          <nb-card-body>
+            <div echarts [options]="processCpuChartOption" class="echart"></div>
+          </nb-card-body>
+        </nb-card>
+      </div>
 
-    <div class="col-lg-6 col-md-12">
-      <nb-card class="chart-card">
-        <nb-card-header>
-          <h6 class="chart-title">
-            <nb-icon icon="hard-drive-outline" class="mr-2"></nb-icon>
-            Memory Usage History
-          </h6>
-        </nb-card-header>
-        <nb-card-body>
-          <div echarts [options]="processMemChartOption" class="echart"></div>
+      <div class="col-lg-6 col-md-12 mb-3">
+        <nb-card>
+          <nb-card-header>
+            <h6 class="chart-title d-flex align-items-center">
+              <nb-icon icon="hard-drive-outline" class="mr-2"></nb-icon>
+              Memory Usage History
+            </h6>
+          </nb-card-header>
+          <nb-card-body>
+            <div echarts [options]="processMemChartOption" class="echart"></div>
+          </nb-card-body>
+        </nb-card>
+      </div>
+    </div>
+  </ng-container>
+</div>
+
+<!-- Empty States -->
+<ng-template #noProcessSelected>
+  <div class="row mt-3" *ngIf="!loading">
+    <div class="col-12">
+      <nb-card>
+        <nb-card-body class="empty-state">
+          <nb-icon icon="options-2-outline" status="info" class="empty-icon"></nb-icon>
+          <h3>No Process Selected</h3>
+          <p class="text-hint">
+            Select a process from the table above or use the filter to analyze historical data.
+          </p>
         </nb-card-body>
       </nb-card>
     </div>
   </div>
-</div>
+</ng-template>
 
-<!-- No Process Selected State -->
-<div class="row" *ngIf="!selectedProcessData && !loading">
-  <div class="col-12">
-    <nb-card>
-      <nb-card-body class="empty-state">
-        <nb-icon
-          icon="options-2-outline"
-          status="info"
-          class="empty-icon"
-        ></nb-icon>
-        <h3>No Process Selected</h3>
-        <p class="text-hint">
-          Select a process from the table above or use the filter to analyze
-          historical data.
-        </p>
-      </nb-card-body>
-    </nb-card>
-  </div>
-</div>
-
-Loading State
-<div class="row" *ngIf="loading">
+<!-- Loading State -->
+<div class="row mt-3" *ngIf="loading">
   <div class="col-12">
     <nb-card>
       <nb-card-body class="loading-state">
@@ -389,4 +345,3 @@ Loading State
     </nb-card>
   </div>
 </div>
-

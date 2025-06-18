@@ -4178,3 +4178,189 @@
 2025-06-12 15:58:29,541 INFO waiting for collect_iostat, collect_metrics, collect_netstat, collect_process to die
 2025-06-12 15:58:32,530 INFO stopped: collect_process (exit status 0)
 2025-06-12 15:58:33,533 INFO waiting for collect_iostat, collect_metrics, collect_netstat to die
+2025-06-12 15:59:27,267 INFO Set uid to user 0 succeeded
+2025-06-12 15:59:27,278 INFO supervisord started with pid 1
+2025-06-12 15:59:28,279 INFO spawned: 'collect_iostat' with pid 7
+2025-06-12 15:59:28,281 INFO spawned: 'collect_metrics' with pid 8
+2025-06-12 15:59:28,284 INFO spawned: 'collect_netstat' with pid 9
+2025-06-12 15:59:28,287 INFO spawned: 'collect_process' with pid 10
+2025-06-12 15:59:28,292 INFO spawned: 'collect_vmstat' with pid 11
+2025-06-12 15:59:28,296 INFO spawned: 'gunicorn' with pid 12
+2025-06-12 15:59:28,304 INFO spawned: 'start_consumer' with pid 13
+2025-06-12 15:59:29,311 INFO success: collect_iostat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-06-12 15:59:29,313 INFO success: collect_metrics entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-06-12 15:59:29,313 INFO success: collect_netstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-06-12 15:59:29,315 INFO success: collect_process entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-06-12 15:59:29,318 INFO success: collect_vmstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-06-12 15:59:29,320 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-06-12 15:59:29,321 INFO success: start_consumer entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-06-13 08:22:25,798 WARN received SIGTERM indicating exit request
+2025-06-13 08:22:25,862 INFO waiting for collect_iostat, collect_metrics, collect_netstat, collect_process, collect_vmstat, gunicorn, start_consumer to die
+2025-06-13 08:22:26,743 INFO stopped: start_consumer (exit status 0)
+2025-06-13 08:22:27,964 INFO stopped: gunicorn (exit status 0)
+2025-06-13 08:22:28,970 INFO waiting for collect_iostat, collect_metrics, collect_netstat, collect_process, collect_vmstat to die
+2025-06-13 08:22:32,385 INFO waiting for collect_iostat, collect_metrics, collect_netstat, collect_process, collect_vmstat to die
+2025-06-13 08:22:33,297 INFO stopped: collect_vmstat (exit status 0)
+2025-06-13 08:35:40,579 INFO Set uid to user 0 succeeded
+2025-06-13 08:35:40,594 INFO supervisord started with pid 1
+2025-06-13 08:35:41,599 INFO spawned: 'collect_iostat' with pid 7
+2025-06-13 08:35:41,603 INFO spawned: 'collect_metrics' with pid 8
+2025-06-13 08:35:41,611 INFO spawned: 'collect_netstat' with pid 9
+2025-06-13 08:35:41,616 INFO spawned: 'collect_process' with pid 10
+2025-06-13 08:35:41,621 INFO spawned: 'collect_vmstat' with pid 11
+2025-06-13 08:35:41,628 INFO spawned: 'gunicorn' with pid 12
+2025-06-13 08:35:41,634 INFO spawned: 'start_consumer' with pid 13
+2025-06-13 08:35:42,646 INFO success: collect_iostat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-06-13 08:35:42,647 INFO success: collect_metrics entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-06-13 08:35:42,647 INFO success: collect_netstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-06-13 08:35:42,647 INFO success: collect_process entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-06-13 08:35:42,648 INFO success: collect_vmstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-06-13 08:35:42,650 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-06-13 08:35:42,651 INFO success: start_consumer entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-06-13 12:05:34,496 WARN received SIGTERM indicating exit request
+2025-06-13 12:05:34,529 INFO waiting for collect_iostat, collect_metrics, collect_netstat, collect_process, collect_vmstat, gunicorn, start_consumer to die
+2025-06-13 12:05:36,151 INFO stopped: start_consumer (exit status 0)
+2025-06-13 12:05:37,091 INFO stopped: gunicorn (exit status 0)
+2025-06-13 12:05:38,096 INFO waiting for collect_iostat, collect_metrics, collect_netstat, collect_process, collect_vmstat to die
+2025-06-13 12:05:40,938 INFO stopped: collect_vmstat (exit status 0)
+2025-06-13 12:05:41,943 INFO waiting for collect_iostat, collect_metrics, collect_netstat, collect_process to die
+2025-06-13 12:05:44,231 INFO stopped: collect_process (exit status 0)
+2025-06-13 14:11:05,205 INFO Set uid to user 0 succeeded
+2025-06-13 14:11:05,219 INFO supervisord started with pid 1
+2025-06-13 14:11:06,280 INFO spawned: 'collect_iostat' with pid 7
+2025-06-13 14:11:06,289 INFO spawned: 'collect_metrics' with pid 8
+2025-06-13 14:11:06,297 INFO spawned: 'collect_netstat' with pid 9
+2025-06-13 14:11:06,304 INFO spawned: 'collect_process' with pid 10
+2025-06-13 14:11:06,318 INFO spawned: 'collect_vmstat' with pid 11
+2025-06-13 14:11:06,353 INFO spawned: 'gunicorn' with pid 12
+2025-06-13 14:11:06,359 INFO spawned: 'start_consumer' with pid 13
+2025-06-13 14:11:07,366 INFO success: collect_iostat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-06-13 14:11:07,367 INFO success: collect_metrics entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-06-13 14:11:07,368 INFO success: collect_netstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-06-13 14:11:07,369 INFO success: collect_process entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-06-13 14:11:07,383 INFO success: collect_vmstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-06-13 14:11:07,385 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-06-13 14:11:07,390 INFO success: start_consumer entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-06-16 08:04:47,903 WARN received SIGTERM indicating exit request
+2025-06-16 08:04:47,942 INFO waiting for collect_iostat, collect_metrics, collect_netstat, collect_process, collect_vmstat, gunicorn, start_consumer to die
+2025-06-16 08:04:49,020 INFO stopped: start_consumer (exit status 0)
+2025-06-16 08:04:49,802 INFO stopped: gunicorn (exit status 0)
+2025-06-16 08:04:51,220 INFO waiting for collect_iostat, collect_metrics, collect_netstat, collect_process, collect_vmstat to die
+2025-06-16 08:04:55,152 INFO waiting for collect_iostat, collect_metrics, collect_netstat, collect_process, collect_vmstat to die
+2025-06-16 08:04:55,571 INFO stopped: collect_vmstat (exit status 0)
+2025-06-16 10:49:50,123 INFO Set uid to user 0 succeeded
+2025-06-16 10:49:50,140 INFO supervisord started with pid 1
+2025-06-16 10:49:51,145 INFO spawned: 'collect_iostat' with pid 7
+2025-06-16 10:49:51,151 INFO spawned: 'collect_metrics' with pid 8
+2025-06-16 10:49:51,156 INFO spawned: 'collect_netstat' with pid 9
+2025-06-16 10:49:51,160 INFO spawned: 'collect_process' with pid 10
+2025-06-16 10:49:51,167 INFO spawned: 'collect_vmstat' with pid 11
+2025-06-16 10:49:51,173 INFO spawned: 'gunicorn' with pid 12
+2025-06-16 10:49:51,180 INFO spawned: 'start_consumer' with pid 13
+2025-06-16 10:49:52,192 INFO success: collect_iostat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-06-16 10:49:52,193 INFO success: collect_metrics entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-06-16 10:49:52,194 INFO success: collect_netstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-06-16 10:49:52,195 INFO success: collect_process entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-06-16 10:49:52,196 INFO success: collect_vmstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-06-16 10:49:52,197 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-06-16 10:49:52,198 INFO success: start_consumer entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-06-16 14:55:30,483 WARN received SIGTERM indicating exit request
+2025-06-16 14:55:30,532 INFO waiting for collect_iostat, collect_metrics, collect_netstat, collect_process, collect_vmstat, gunicorn, start_consumer to die
+2025-06-16 14:55:32,691 INFO stopped: start_consumer (exit status 0)
+2025-06-16 14:55:34,040 INFO stopped: gunicorn (exit status 0)
+2025-06-16 14:55:34,043 INFO waiting for collect_iostat, collect_metrics, collect_netstat, collect_process, collect_vmstat to die
+2025-06-16 14:55:37,095 INFO waiting for collect_iostat, collect_metrics, collect_netstat, collect_process, collect_vmstat to die
+2025-06-18 08:46:07,357 INFO Set uid to user 0 succeeded
+2025-06-18 08:46:07,374 INFO supervisord started with pid 1
+2025-06-18 08:46:08,379 INFO spawned: 'collect_iostat' with pid 7
+2025-06-18 08:46:08,384 INFO spawned: 'collect_metrics' with pid 8
+2025-06-18 08:46:08,390 INFO spawned: 'collect_netstat' with pid 9
+2025-06-18 08:46:08,397 INFO spawned: 'collect_process' with pid 10
+2025-06-18 08:46:08,406 INFO spawned: 'collect_vmstat' with pid 11
+2025-06-18 08:46:08,413 INFO spawned: 'gunicorn' with pid 12
+2025-06-18 08:46:08,428 INFO spawned: 'start_consumer' with pid 13
+2025-06-18 08:46:09,446 INFO success: collect_iostat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-06-18 08:46:09,450 INFO success: collect_metrics entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-06-18 08:46:09,453 INFO success: collect_netstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-06-18 08:46:09,455 INFO success: collect_process entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-06-18 08:46:09,458 INFO success: collect_vmstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-06-18 08:46:09,459 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-06-18 08:46:09,460 INFO success: start_consumer entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-06-18 08:53:44,321 WARN received SIGTERM indicating exit request
+2025-06-18 08:53:44,349 INFO waiting for collect_iostat, collect_metrics, collect_netstat, collect_process, collect_vmstat, gunicorn, start_consumer to die
+2025-06-18 08:53:46,051 INFO stopped: start_consumer (exit status 0)
+2025-06-18 08:53:46,767 INFO stopped: gunicorn (exit status 0)
+2025-06-18 08:53:47,772 INFO waiting for collect_iostat, collect_metrics, collect_netstat, collect_process, collect_vmstat to die
+2025-06-18 08:53:48,995 INFO stopped: collect_vmstat (exit status 0)
+2025-06-18 08:53:51,757 INFO waiting for collect_iostat, collect_metrics, collect_netstat, collect_process to die
+2025-06-18 08:53:52,431 INFO stopped: collect_process (exit status 0)
+2025-06-18 08:53:59,977 INFO Set uid to user 0 succeeded
+2025-06-18 08:53:59,985 INFO supervisord started with pid 1
+2025-06-18 08:54:00,988 INFO spawned: 'collect_iostat' with pid 7
+2025-06-18 08:54:00,991 INFO spawned: 'collect_metrics' with pid 8
+2025-06-18 08:54:00,995 INFO spawned: 'collect_netstat' with pid 9
+2025-06-18 08:54:00,999 INFO spawned: 'collect_process' with pid 10
+2025-06-18 08:54:01,003 INFO spawned: 'collect_vmstat' with pid 11
+2025-06-18 08:54:01,008 INFO spawned: 'gunicorn' with pid 12
+2025-06-18 08:54:01,017 INFO spawned: 'start_consumer' with pid 13
+2025-06-18 08:54:02,021 INFO success: collect_iostat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-06-18 08:54:02,022 INFO success: collect_metrics entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-06-18 08:54:02,026 INFO success: collect_netstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-06-18 08:54:02,030 INFO success: collect_process entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-06-18 08:54:02,031 INFO success: collect_vmstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-06-18 08:54:02,032 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-06-18 08:54:02,033 INFO success: start_consumer entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-06-18 09:03:52,695 WARN received SIGTERM indicating exit request
+2025-06-18 09:03:52,698 INFO waiting for collect_iostat, collect_metrics, collect_netstat, collect_process, collect_vmstat, gunicorn, start_consumer to die
+2025-06-18 09:03:52,888 INFO stopped: start_consumer (exit status 0)
+2025-06-18 09:03:53,137 INFO stopped: gunicorn (exit status 0)
+2025-06-18 09:03:55,717 INFO waiting for collect_iostat, collect_metrics, collect_netstat, collect_process, collect_vmstat to die
+2025-06-18 09:03:56,747 INFO stopped: collect_vmstat (exit status 0)
+2025-06-18 09:03:58,842 INFO waiting for collect_iostat, collect_metrics, collect_netstat, collect_process to die
+2025-06-18 09:04:01,846 INFO waiting for collect_iostat, collect_metrics, collect_netstat, collect_process to die
+2025-06-18 09:04:45,270 INFO Set uid to user 0 succeeded
+2025-06-18 09:04:45,280 INFO supervisord started with pid 1
+2025-06-18 09:04:46,283 INFO spawned: 'collect_iostat' with pid 7
+2025-06-18 09:04:46,288 INFO spawned: 'collect_metrics' with pid 8
+2025-06-18 09:04:46,292 INFO spawned: 'collect_netstat' with pid 9
+2025-06-18 09:04:46,295 INFO spawned: 'collect_process' with pid 10
+2025-06-18 09:04:46,298 INFO spawned: 'collect_vmstat' with pid 11
+2025-06-18 09:04:46,303 INFO spawned: 'gunicorn' with pid 12
+2025-06-18 09:04:46,306 INFO spawned: 'start_consumer' with pid 13
+2025-06-18 09:04:47,313 INFO success: collect_iostat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-06-18 09:04:47,314 INFO success: collect_metrics entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-06-18 09:04:47,314 INFO success: collect_netstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-06-18 09:04:47,315 INFO success: collect_process entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-06-18 09:04:47,315 INFO success: collect_vmstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-06-18 09:04:47,316 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-06-18 09:04:47,317 INFO success: start_consumer entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-06-18 09:11:00,335 WARN received SIGTERM indicating exit request
+2025-06-18 09:11:00,339 INFO waiting for collect_iostat, collect_metrics, collect_netstat, collect_process, collect_vmstat, gunicorn, start_consumer to die
+2025-06-18 09:11:00,634 INFO stopped: start_consumer (exit status 0)
+2025-06-18 09:11:00,913 INFO stopped: gunicorn (exit status 0)
+2025-06-18 09:11:03,919 INFO waiting for collect_iostat, collect_metrics, collect_netstat, collect_process, collect_vmstat to die
+2025-06-18 09:11:05,910 INFO stopped: collect_vmstat (exit status 0)
+2025-06-18 09:11:06,977 INFO waiting for collect_iostat, collect_metrics, collect_netstat, collect_process to die
+2025-06-18 09:11:50,045 INFO Set uid to user 0 succeeded
+2025-06-18 09:11:50,051 INFO supervisord started with pid 1
+2025-06-18 09:11:51,054 INFO spawned: 'collect_iostat' with pid 7
+2025-06-18 09:11:51,058 INFO spawned: 'collect_metrics' with pid 8
+2025-06-18 09:11:51,062 INFO spawned: 'collect_netstat' with pid 9
+2025-06-18 09:11:51,066 INFO spawned: 'collect_process' with pid 10
+2025-06-18 09:11:51,070 INFO spawned: 'collect_vmstat' with pid 11
+2025-06-18 09:11:51,075 INFO spawned: 'gunicorn' with pid 12
+2025-06-18 09:11:51,081 INFO spawned: 'start_consumer' with pid 13
+2025-06-18 09:11:52,087 INFO success: collect_iostat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-06-18 09:11:52,088 INFO success: collect_metrics entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-06-18 09:11:52,088 INFO success: collect_netstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-06-18 09:11:52,089 INFO success: collect_process entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-06-18 09:11:52,089 INFO success: collect_vmstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-06-18 09:11:52,090 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-06-18 09:11:52,090 INFO success: start_consumer entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-06-18 09:21:07,723 WARN received SIGTERM indicating exit request
+2025-06-18 09:21:07,727 INFO waiting for collect_iostat, collect_metrics, collect_netstat, collect_process, collect_vmstat, gunicorn, start_consumer to die
+2025-06-18 09:21:08,058 INFO stopped: start_consumer (exit status 0)
+2025-06-18 09:21:08,627 INFO stopped: gunicorn (exit status 0)
+2025-06-18 09:21:11,633 INFO waiting for collect_iostat, collect_metrics, collect_netstat, collect_process, collect_vmstat to die
+2025-06-18 09:21:13,714 INFO stopped: collect_vmstat (exit status 0)
+2025-06-18 09:21:14,722 INFO waiting for collect_iostat, collect_metrics, collect_netstat, collect_process to die
