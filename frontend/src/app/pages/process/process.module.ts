@@ -8,7 +8,8 @@ import {
   NbButtonModule,
   NbSelectModule,
   NbInputModule,
-  NbBadgeModule
+  NbBadgeModule,
+  NbCheckboxModule
 } from '@nebular/theme';
 
 import { ThemeModule } from '../../@theme/theme.module';
@@ -28,7 +29,8 @@ import { ProcessComponent } from './process.component';
     NbButtonModule,
     NbSelectModule,
     NbInputModule,
-    NbBadgeModule
+    NbBadgeModule,
+    NbCheckboxModule
   ],
   declarations: [
     ProcessComponent

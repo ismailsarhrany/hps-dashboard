@@ -46,13 +46,19 @@ export interface IostatData {
 }
 
 export interface ProcessData {
-  id?: number;
-  timestamp: string;
   pid: number;
   user: string;
   cpu: number;
   mem: number;
   command: string;
+  timestamp: string;
+  // Add stats property
+  stats?: {
+    avgCpu: number;
+    peakCpu: number;
+    avgMem: number;
+    peakMem: number;
+  };
 }
 
 export interface SystemSummary {
