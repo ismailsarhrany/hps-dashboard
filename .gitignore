@@ -65,4 +65,4 @@ Thumbs.db
 *.zip
 *.log
 venv
-supervised.log
+supervisord.log
