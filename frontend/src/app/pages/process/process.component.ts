@@ -6,6 +6,7 @@ import { NbThemeService } from "@nebular/theme";
 import { catchError, map, tap } from "rxjs/operators";
 import {
   ApiService,
+  AggregatedProcessData,
   ProcessData,
   DateTimeRange,
 } from "../../services/monitoring.service";
@@ -14,45 +15,76 @@ import {
   RealtimeConnectionStatus,
 } from "../../services/realtime.service";
 
+interface ProcessStatistics {
+  command: string;
+  user: string;
+  pid: number;
+  totalCpu: number;
+  totalMem: number;
+  maxCpu: number;
+  maxMem: number;
+  count: number;
+  avgCpu: number;
+  avgMem: number;
+  significance: number;
+}
+
 @Component({
   selector: "ngx-process",
   templateUrl: "./process.component.html",
   styleUrls: ["./process.component.scss"],
 })
 export class ProcessComponent implements OnInit, OnDestroy {
-  // Subscriptions management
   private themeSubscription: Subscription;
   private dataSubscriptions: Subscription[] = [];
   private colors: any;
   private echartTheme: any;
 
-  // Connection status
+  private getThemeColors(): any {
+    if (!this.colors) {
+      return {
+        primary: "#3366ff",
+        success: "#00d68f",
+        info: "#0095ff",
+        warning: "#ffaa00",
+        danger: "#ff3d71",
+        textColor: "#2a2a2a",
+        backgroundColor: "#ffffff",
+        borderColor: "#e0e0e0",
+      };
+    }
+
+    return {
+      primary: this.colors.primary || "#3366ff",
+      success: this.colors.success || "#00d68f",
+      info: this.colors.info || "#0095ff",
+      warning: this.colors.warning || "#ffaa00",
+      danger: this.colors.danger || "#ff3d71",
+      textColor: this.colors.fgText || "#2a2a2a",
+      backgroundColor: this.colors.bg || "#ffffff",
+      borderColor: this.colors.separator || "#e0e0e0",
+    };
+  }
+  
   connectionStatus: RealtimeConnectionStatus = RealtimeConnectionStatus.DISCONNECTED;
   lastUpdateTime = new Date();
 
-  // Process data
   activeProcesses: ProcessData[] = [];
   processes: ProcessData[] = [];
-  historicalProcesses: ProcessData[] = [];
+  historicalProcesses: AggregatedProcessData[] = [];
   processSummary: any[] = [];
-  
-  // Track selected processes
   selectedProcesses: ProcessData[] = [];
 
-  // Charts
   topCpuChartOption: any = {};
   topMemChartOption: any = {};
-  processCpuChartOption: any = {};
-  processMemChartOption: any = {};
+  processCpuHeatmapOption: any = {};
+  processMemHeatmapOption: any = {};
 
-  // Form controls
   filterForm: FormGroup;
   loading = false;
   processListLoading = false;
-
-  // Error handling
-  errorMessage: string = '';
-  hasError: boolean = false;
+  errorMessage = '';
+  hasError = false;
 
   constructor(
     private theme: NbThemeService,
@@ -64,33 +96,23 @@ export class ProcessComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
-    // Subscribe to theme changes for chart styling
     this.themeSubscription = this.theme.getJsTheme().subscribe((config) => {
       this.colors = config.variables;
       this.echartTheme = config.name;
       this.initializeCharts();
     });
 
-    // Start realtime monitoring
     this.startRealtimeMonitoring();
-
-    // Load initial process list for the dropdown
     this.loadProcessList();
   }
 
   ngOnDestroy() {
-    // Clean up all subscriptions
     this.themeSubscription?.unsubscribe();
     this.dataSubscriptions.forEach((sub) => sub.unsubscribe());
     this.dataSubscriptions = [];
-
-    // Stop realtime monitoring
     this.stopRealtimeMonitoring();
   }
 
-  /**
-   * Initialize form with proper validation and default values
-   */
   private initializeForm(): void {
     const now = new Date();
     const yesterday = new Date();
@@ -103,19 +125,15 @@ export class ProcessComponent implements OnInit, OnDestroy {
       endTime: ['23:59', [Validators.required]],
     });
 
-    // Subscribe to form changes for validation feedback
     this.filterForm.valueChanges.subscribe(() => {
       this.hasError = false;
       this.errorMessage = '';
     });
   }
 
-  /**
-   * Initialize chart options with theme-specific settings
-   */
   private initializeCharts() {
     const baseOption = {
-      backgroundColor: this.echartTheme === "dark" ? this.colors.bg2 : this.colors.white,
+      backgroundColor: this.echartTheme === "transparent" ? this.colors.bg2 : this.colors.white,
       tooltip: {
         trigger: "axis",
         axisPointer: { type: "shadow" },
@@ -126,13 +144,11 @@ export class ProcessComponent implements OnInit, OnDestroy {
           color: this.colors.fgText,
         },
         formatter: (name) => {
-          // Truncate long process names for legend
           return name.length > 20 ? name.substring(0, 17) + '...' : name;
         }
       },
     };
 
-    // Top CPU Consumers Chart
     this.topCpuChartOption = {
       ...baseOption,
       tooltip: {
@@ -166,7 +182,6 @@ export class ProcessComponent implements OnInit, OnDestroy {
       }],
     };
 
-    // Top Memory Consumers Chart
     this.topMemChartOption = {
       ...baseOption,
       tooltip: {
@@ -200,118 +215,178 @@ export class ProcessComponent implements OnInit, OnDestroy {
       }],
     };
 
-    // Process CPU History Chart
-    this.processCpuChartOption = {
-      ...baseOption,
-      tooltip: {
-        trigger: "axis",
-        formatter: (params) => {
-          const date = new Date(params[0].value[0]);
-          let result = `<b>${date.toLocaleString()}</b><br>`;
-          params.forEach(p => {
-            result += `${p.seriesName}: <b>${p.value[1].toFixed(1)}%</b><br>`;
-          });
-          return result;
-        }
-      },
-      xAxis: {
-        type: "time",
-        axisLabel: {
-          color: this.colors.fgText,
-          formatter: "{HH}:{mm}:{ss}",
-        },
-      },
-      yAxis: {
-        type: "value",
-        name: "CPU %",
-        nameTextStyle: { color: this.colors.fgText },
-        axisLabel: { color: this.colors.fgText },
-        splitLine: { lineStyle: { color: this.colors.separator } },
-      },
-      dataZoom: [{
-        type: 'inside',
-        start: 0,
-        end: 100,
-        filterMode: 'none'
-      }, {
-        type: 'slider',
-        bottom: 10,
-        height: 20,
-        textStyle: { color: this.colors.fgText }
-      }],
-      legend: {
-        show: true,
-        type: 'scroll',
-        bottom: 0,
-        textStyle: { color: this.colors.fgText },
-        pageTextStyle: { color: this.colors.fgText }
-      }
-    };
-
-    // Process Memory History Chart
-    this.processMemChartOption = {
-      ...baseOption,
-      tooltip: {
-        trigger: "axis",
-        formatter: (params) => {
-          const date = new Date(params[0].value[0]);
-          let result = `<b>${date.toLocaleString()}</b><br>`;
-          params.forEach(p => {
-            result += `${p.seriesName}: <b>${p.value[1].toFixed(1)}%</b><br>`;
-          });
-          return result;
-        }
-      },
-      xAxis: {
-        type: "time",
-        axisLabel: {
-          color: this.colors.fgText,
-          formatter: "{HH}:{mm}:{ss}",
-        },
-      },
-      yAxis: {
-        type: "value",
-        name: "Memory %",
-        nameTextStyle: { color: this.colors.fgText },
-        axisLabel: { color: this.colors.fgText },
-        splitLine: { lineStyle: { color: this.colors.separator } },
-      },
-      dataZoom: [{
-        type: 'inside',
-        start: 0,
-        end: 100,
-        filterMode: 'none'
-      }, {
-        type: 'slider',
-        bottom: 10,
-        height: 20,
-        textStyle: { color: this.colors.fgText }
-      }],
-      legend: {
-        show: true,
-        type: 'scroll',
-        bottom: 0,
-        textStyle: { color: this.colors.fgText },
-        pageTextStyle: { color: this.colors.fgText }
-      }
-    };
+    this.initializeHeatmapOptions();
   }
 
-  /**
-   * Start realtime monitoring of processes
-   */
+
+
+
+  private initializeHeatmapOptions() {
+
+    const colors = this.getThemeColors(); // Use the method from historic or create similar
+
+    const tooltipFormatter = (params: any) => {
+      const date = new Date(params.data[0]);
+      const value = params.data[2];
+      const metric = params.seriesName.includes('CPU') ? 'CPU' : 'Memory';
+
+      // Status color logic
+      let valueColor;
+      if (value > 75) {
+        valueColor = colors.danger;
+      } else if (value > 50) {
+        valueColor = colors.warning;
+      } else {
+        valueColor = colors.success;
+      }
+
+      return `
+    <div style="
+      background: ${colors.backgroundColor};
+      border: 1px solid ${colors.borderColor};
+      border-radius: 4px;
+      padding: 10px;
+      box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+    ">
+      <strong style="
+        display: block; 
+        margin-bottom: 5px; 
+        color: ${colors.textColor};
+        font-size: 14px;
+      ">
+        ${date.toLocaleString()}
+      </strong>
+      <table>
+        <tr>
+          <td style="padding: 2px 5px; color: ${colors.textColor};">Process:</td>
+          <td style="padding: 2px 5px; color: ${colors.textColor};">${params.data[1]}</td>
+        </tr>
+        <tr>
+          <td style="padding: 2px 5px; color: ${colors.textColor};">${metric}:</td>
+          <td style="padding: 2px 5px; color: ${valueColor}; font-weight: bold;">
+            ${value.toFixed(1)}%
+          </td>
+        </tr>
+      </table>
+    </div>
+  `;
+    };
+    const baseHeatmapOption = {
+      backgroundColor: this.echartTheme === "transparent" ? this.colors.bg2 : this.colors.white,
+      tooltip: {
+        position: 'top',
+        backgroundColor: colors.backgroundColor,
+        borderColor: colors.borderColor,
+        borderWidth: 1,
+        textStyle: {
+          color: colors.textColor,
+          fontSize: 12
+        },
+        formatter: tooltipFormatter
+      },
+      grid: {
+        left: '15%',
+        right: '10%',
+        top: '10%',
+        bottom: '15%'
+      },
+      xAxis: {
+        type: 'time',
+        axisLabel: {
+          color: this.colors.fgText,
+          fontSize: 10,
+          formatter: (value) => {
+            const date = new Date(value);
+            const now = new Date();
+            const isToday = date.toDateString() === now.toDateString();
+            if (isToday) {
+              return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+            } else {
+              return date.toLocaleDateString('en-US', { month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false });
+            }
+          }
+        },
+        axisTick: { alignWithLabel: true },
+        splitLine: {
+          show: true,
+          lineStyle: { color: this.colors.separator, opacity: 0.3 }
+        }
+      },
+      yAxis: {
+        type: 'category',
+        data: [],
+        axisLabel: {
+          color: this.colors.fgText,
+          fontSize: 10,
+          interval: 0,
+          formatter: (value) => {
+            return value.length > 20 ? value.substring(0, 17) + '...' : value;
+          }
+        },
+        axisTick: { alignWithLabel: true },
+        splitLine: {
+          show: true,
+          lineStyle: { color: this.colors.separator, opacity: 0.3 }
+        }
+      }
+    };
+
+    this.processCpuHeatmapOption = {
+      ...baseHeatmapOption,
+      visualMap: {
+        min: 0,
+        max: 100,
+        calculable: true,
+        orient: 'horizontal',
+        left: 'center',
+        bottom: '5%',
+        textStyle: { color: this.colors.fgText },
+        inRange: {
+          color: ['#f7fbff', '#deebf7', '#c6dbef', '#9ecae1', '#6baed6', '#4292c6', '#2171b5', '#08519c', '#08306b']
+        }
+      },
+      series: [{
+        name: 'CPU Usage',
+        type: 'heatmap',
+        data: [],
+        emphasis: { itemStyle: { shadowBlur: 10, shadowColor: 'rgba(0, 0, 0, 0.5)' } }
+      }]
+    };
+
+    this.processMemHeatmapOption = {
+      ...baseHeatmapOption,
+      visualMap: {
+        min: 0,
+        max: 100,
+        calculable: true,
+        orient: 'horizontal',
+        left: 'center',
+        bottom: '5%',
+        textStyle: { color: this.colors.fgText },
+        inRange: {
+          color: ['#fff7fb', '#ece7f2', '#d0d1e6', '#a6bddb', '#74a9cf', '#3690c0', '#0570b0', '#045a8d', '#023858']
+        }
+      },
+      series: [{
+        name: 'Memory Usage',
+        type: 'heatmap',
+        data: [],
+        emphasis: { itemStyle: { shadowBlur: 10, shadowColor: 'rgba(0, 0, 0, 0.5)' } }
+      }]
+    };
+
+
+  }
+
   startRealtimeMonitoring() {
-    // Connect to WebSocket for process data
     this.realtimeService.connectToMetrics(["process"]);
 
-    // Subscribe to connection status
     this.dataSubscriptions.push(
       this.realtimeService.getConnectionStatus("process").subscribe((status) => {
         this.connectionStatus = status;
       })
     );
 
-    // Subscribe to realtime process data
     this.dataSubscriptions.push(
       this.realtimeService.getRealtimeProcess().subscribe((processData) => {
         if (processData) {
@@ -323,66 +398,12 @@ export class ProcessComponent implements OnInit, OnDestroy {
     );
   }
 
-  /**
-   * Stop realtime monitoring
-   */
   stopRealtimeMonitoring() {
     this.realtimeService.disconnectAll();
     this.dataSubscriptions.forEach((sub) => sub.unsubscribe());
     this.dataSubscriptions = [];
   }
 
-  /**
-   * Load process list for dropdown from active processes
-   */
-  loadProcessList() {
-    this.processListLoading = true;
-
-    // First try to get from current active processes
-    if (this.activeProcesses.length > 0) {
-      this.processes = [...this.activeProcesses]
-        .filter(p => p.pid && p.command && p.command.trim() !== '')
-        .sort((a, b) => a.pid - b.pid);
-      this.processListLoading = false;
-      return;
-    }
-
-    // Fallback: get recent historical data to populate process list
-    const recentRange = this.monitoringService.getDateRange(0.1); // Last ~2.4 hours
-
-    this.dataSubscriptions.push(
-      this.monitoringService.getHistoricalProcesses(recentRange)
-        .pipe(
-          map(response => response.data || []),
-          map(processes => {
-            // Get unique processes by PID, keeping the most recent entry for each
-            const uniqueProcesses = new Map<number, ProcessData>();
-            processes.forEach(p => {
-              if (p.pid && p.command && p.command.trim() !== '') {
-                const existing = uniqueProcesses.get(p.pid);
-                if (!existing || new Date(p.timestamp) > new Date(existing.timestamp)) {
-                  uniqueProcesses.set(p.pid, p);
-                }
-              }
-            });
-            return Array.from(uniqueProcesses.values()).sort((a, b) => a.pid - b.pid);
-          }),
-          catchError(error => {
-            console.error('Error loading process list:', error);
-            this.showError('Failed to load process list');
-            return of([]);
-          })
-        )
-        .subscribe(processes => {
-          this.processes = processes;
-          this.processListLoading = false;
-        })
-    );
-  }
-
-  /**
-   * Update active processes list and sort by CPU usage
-   */
   updateActiveProcesses(processes: ProcessData | ProcessData[]) {
     if (Array.isArray(processes)) {
       this.activeProcesses = processes
@@ -401,15 +422,61 @@ export class ProcessComponent implements OnInit, OnDestroy {
       }
     }
 
-    // Update process list if it's empty
     if (this.processes.length === 0 && this.activeProcesses.length > 0) {
       this.processes = [...this.activeProcesses].sort((a, b) => a.pid - b.pid);
     }
   }
 
-  /**
-   * Update Top CPU and Memory Consumers charts
-   */
+  private loadProcessList() {
+    this.processListLoading = true;
+
+    if (this.activeProcesses.length > 0) {
+      this.processes = [...this.activeProcesses]
+        .filter(p => p.pid && p.command && p.command.trim() !== '')
+        .sort((a, b) => a.pid - b.pid);
+      this.processListLoading = false;
+      return;
+    }
+
+    const recentRange = this.monitoringService.getDateRange(0.1);
+
+    this.dataSubscriptions.push(
+      this.monitoringService.getHistoricalProcesses(recentRange)
+        .pipe(
+          map(response => response.data || []),
+          map(processes => {
+            const uniqueProcesses = new Map<number, ProcessData>();
+            processes.forEach(p => {
+              if (p.pid && p.command && p.command.trim() !== '') {
+                const processData: ProcessData = {
+                  pid: p.pid,
+                  command: p.command,
+                  user: p.user,
+                  cpu: 0,
+                  mem: 0,
+                  timestamp: p.timestamp
+                };
+                const existing = uniqueProcesses.get(p.pid);
+                if (!existing || new Date(p.timestamp) > new Date(existing.timestamp)) {
+                  uniqueProcesses.set(p.pid, processData);
+                }
+              }
+            });
+            return Array.from(uniqueProcesses.values()).sort((a, b) => a.pid - b.pid);
+          }),
+          catchError(error => {
+            console.error('Error loading process list:', error);
+            this.showError('Failed to load process list');
+            return of([]);
+          })
+        )
+        .subscribe(processes => {
+          this.processes = processes;
+          this.processListLoading = false;
+        })
+    );
+  }
+
   updateTopProcessCharts() {
     if (this.activeProcesses.length === 0) return;
 
@@ -446,203 +513,217 @@ export class ProcessComponent implements OnInit, OnDestroy {
     };
   }
 
-  /**
-   * Update Process CPU and Memory history charts for all processes
-   */
+  public truncateCommand(command: string, maxLength: number): string {
+    const base = command.split('/').pop() || command;
+    return base.length > maxLength ? base.slice(0, maxLength - 3) + '...' : base;
+  }
+
   updateProcessCharts() {
     if (!this.historicalProcesses || this.historicalProcesses.length === 0) return;
 
-    // Clear previous data
-    this.processCpuChartOption.series = [];
-    this.processMemChartOption.series = [];
-
-    // Prepare colors for each process
-    const colorPalette = [
-      this.colors.danger,
-      this.colors.success,
-      this.colors.warning,
-      this.colors.info,
-      this.colors.primary,
-      '#5470C6',
-      '#91CC75',
-      '#FAC858',
-      '#EE6666',
-      '#73C0DE'
-    ];
-
-    // Group data by PID
-    const dataByPid = new Map<number, ProcessData[]>();
-    this.historicalProcesses.forEach(p => {
-      if (!dataByPid.has(p.pid)) {
-        dataByPid.set(p.pid, []);
-      }
-      dataByPid.get(p.pid).push(p);
-    });
-
-    // Create chart series for each process
-    let colorIndex = 0;
-    dataByPid.forEach((processData, pid) => {
-      // Sort by timestamp
-      processData.sort((a, b) =>
-        new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
-      );
-
-      // Downsample data to max 500 points
-      const cpuData = this.downsampleLTTB(
-        processData.map(p => [new Date(p.timestamp).getTime(), p.cpu]),
-        500
-      );
-
-      const memData = this.downsampleLTTB(
-        processData.map(p => [new Date(p.timestamp).getTime(), p.mem]),
-        500
-      );
-
-      const process = processData[0];
-      const truncatedCommand = this.truncateCommand(process.command, 20);
-      const color = colorPalette[colorIndex % colorPalette.length];
-      const lightColor = this.adjustColorOpacity(color, 0.3);
-
-      // Add CPU series
-      this.processCpuChartOption.series.push({
-        name: `PID ${pid} (${truncatedCommand})`,
-        type: "line",
-        symbol: 'none',
-        sampling: 'lttb',
-        data: cpuData,
-        itemStyle: { color },
-        areaStyle: {
-          color: {
-            type: "linear",
-            x: 0, y: 0, x2: 0, y2: 1,
-            colorStops: [
-              { offset: 0, color: lightColor },
-              { offset: 1, color: this.adjustColorOpacity(color, 0.05) },
-            ],
-          },
-        },
-      });
-
-      // Add Memory series
-      this.processMemChartOption.series.push({
-        name: `PID ${pid} (${truncatedCommand})`,
-        type: "line",
-        symbol: 'none',
-        sampling: 'lttb',
-        data: memData,
-        itemStyle: { color },
-        areaStyle: {
-          color: {
-            type: "linear",
-            x: 0, y: 0, x2: 0, y2: 1,
-            colorStops: [
-              { offset: 0, color: lightColor },
-              { offset: 1, color: this.adjustColorOpacity(color, 0.05) },
-            ],
-          },
-        },
-      });
-
-      colorIndex++;
-    });
+    const stats = this.calculateProcessStatistics();
+    const topProcesses = this.selectSignificantProcesses(stats, 20);
+    const grouped = this.groupDataByTimeIntervals(topProcesses, 5);
+    const { cpuHeatmapData, memHeatmapData, processNames, timeLabels } = this.buildHeatmapData(grouped);
+    this.updateHeatmapChartOptions(cpuHeatmapData, memHeatmapData, processNames, timeLabels);
   }
 
-  /**
-   * Generate process summary table data
-   */
+  private calculateProcessStatistics(): Map<string, ProcessStatistics> {
+    const statsMap = new Map<string, ProcessStatistics>();
+
+    this.historicalProcesses.forEach(p => {
+      const key = `${p.command}|${p.user}|${p.pid}`;
+      if (!statsMap.has(key)) {
+        statsMap.set(key, {
+          command: p.command,
+          user: p.user,
+          pid: p.pid,
+          totalCpu: 0,
+          totalMem: 0,
+          maxCpu: 0,
+          maxMem: 0,
+          count: 0,
+          avgCpu: 0,
+          avgMem: 0,
+          significance: 0,
+        });
+      }
+
+      const s = statsMap.get(key);
+      s.totalCpu += p.avg_cpu * p.count;
+      s.totalMem += p.avg_mem * p.count;
+      s.maxCpu = Math.max(s.maxCpu, p.max_cpu);
+      s.maxMem = Math.max(s.maxMem, p.max_mem);
+      s.count += p.count;
+    });
+
+    statsMap.forEach(s => {
+      s.avgCpu = s.count ? s.totalCpu / s.count : 0;
+      s.avgMem = s.count ? s.totalMem / s.count : 0;
+      s.significance = (
+        s.avgCpu * 0.4 +
+        s.maxCpu * 0.3 +
+        s.avgMem * 0.2 +
+        Math.log(s.count + 1) * 0.1
+      );
+    });
+
+    return statsMap;
+  }
+
+  private selectSignificantProcesses(
+    statsMap: Map<string, ProcessStatistics>,
+    limit: number
+  ): ProcessStatistics[] {
+    return Array.from(statsMap.values())
+      .filter(s => s.avgCpu > 0.1 || s.maxCpu > 1.0 || s.avgMem > 0.5)
+      .sort((a, b) => b.significance - a.significance)
+      .slice(0, limit);
+  }
+
+  private groupDataByTimeIntervals(
+    processes: ProcessStatistics[],
+    intervalMinutes: number
+  ): Map<string, Map<number, { cpu: number; mem: number; count: number }>> {
+    const grouped = new Map<string, Map<number, { cpu: number; mem: number; count: number }>>();
+    const interval = intervalMinutes * 60 * 1000;
+
+    processes.forEach(p => {
+      const key = `${p.command}|${p.user}|${p.pid}`;
+      grouped.set(key, new Map());
+    });
+
+    this.historicalProcesses.forEach(p => {
+      const key = `${p.command}|${p.user}|${p.pid}`;
+      if (!grouped.has(key)) return;
+
+      const ts = new Date(p.timestamp).getTime();
+      const bucket = Math.floor(ts / interval) * interval;
+
+      const slot = grouped.get(key);
+      if (!slot.has(bucket)) {
+        slot.set(bucket, { cpu: 0, mem: 0, count: 0 });
+      }
+
+      const data = slot.get(bucket);
+      data.cpu += p.avg_cpu * p.count;
+      data.mem += p.avg_mem * p.count;
+      data.count += p.count;
+    });
+
+    grouped.forEach(slot => {
+      slot.forEach(s => {
+        if (s.count > 0) {
+          s.cpu /= s.count;
+          s.mem /= s.count;
+        }
+      });
+    });
+
+    return grouped;
+  }
+
+  private buildHeatmapData(
+    grouped: Map<string, Map<number, { cpu: number; mem: number; count: number }>>
+  ): {
+    cpuHeatmapData: number[][];
+    memHeatmapData: number[][];
+    processNames: string[];
+    timeLabels: number[];
+  } {
+    const cpuData = [];
+    const memData = [];
+    const processNames = [];
+    const allTimestamps = new Set<number>();
+
+    grouped.forEach((dataMap, key) => {
+      const [cmd, user, pidStr] = key.split("|");
+      const name = this.formatProcessDisplayName(cmd, user, parseInt(pidStr));
+      processNames.push(name);
+
+      dataMap.forEach((metrics, timestamp) => {
+        allTimestamps.add(timestamp);
+        cpuData.push([timestamp, name, Math.round(metrics.cpu * 10) / 10]);
+        memData.push([timestamp, name, Math.round(metrics.mem * 10) / 10]);
+      });
+    });
+
+    const timeLabels = Array.from(allTimestamps).sort((a, b) => a - b);
+    return { cpuHeatmapData: cpuData, memHeatmapData: memData, processNames, timeLabels };
+  }
+
+  private formatProcessDisplayName(cmd: string, user: string, pid: number): string {
+    const exec = cmd.split('/').pop() || cmd;
+    const name = exec.length > 25 ? exec.slice(0, 22) + '...' : exec;
+    const skipUsers = ['root', 'system', 'daemon'];
+    const suffix = skipUsers.includes(user) ? '' : `(${user})`;
+    return `${name}${suffix}`;
+  }
+
+  private updateHeatmapChartOptions(
+    cpu: number[][],
+    mem: number[][],
+    names: string[],
+    labels: number[]
+  ) {
+    this.processCpuHeatmapOption = {
+      ...this.processCpuHeatmapOption,
+      yAxis: { ...this.processCpuHeatmapOption.yAxis, data: names },
+      series: [{ ...this.processCpuHeatmapOption.series[0], data: cpu }],
+    };
+
+    this.processMemHeatmapOption = {
+      ...this.processMemHeatmapOption,
+      yAxis: { ...this.processMemHeatmapOption.yAxis, data: names },
+      series: [{ ...this.processMemHeatmapOption.series[0], data: mem }],
+    };
+  }
+
   generateProcessSummary() {
     if (!this.historicalProcesses || this.historicalProcesses.length === 0) {
       this.processSummary = [];
       return;
     }
 
-    // Group data by PID
-    const dataByPid = new Map<number, ProcessData[]>();
+    const grouped = new Map<number, AggregatedProcessData[]>();
+
     this.historicalProcesses.forEach(p => {
-      if (!dataByPid.has(p.pid)) {
-        dataByPid.set(p.pid, []);
+      if (!grouped.has(p.pid)) {
+        grouped.set(p.pid, []);
       }
-      dataByPid.get(p.pid).push(p);
+      grouped.get(p.pid).push(p);
     });
 
-    // Create summary for each process
     this.processSummary = [];
-    dataByPid.forEach((processData, pid) => {
-      const process = processData[0];
-      const cpuValues = processData.map(p => p.cpu);
-      const memValues = processData.map(p => p.mem);
 
-      const avgCpu = cpuValues.reduce((sum, val) => sum + val, 0) / cpuValues.length;
-      const maxCpu = Math.max(...cpuValues);
-      const avgMem = memValues.reduce((sum, val) => sum + val, 0) / memValues.length;
-      const maxMem = Math.max(...memValues);
+    grouped.forEach((records, pid) => {
+      const ref = records[0];
+      let totalCpu = 0, totalMem = 0, count = 0;
+      let maxCpu = 0, maxMem = 0;
+
+      records.forEach(r => {
+        totalCpu += r.avg_cpu * r.count;
+        totalMem += r.avg_mem * r.count;
+        count += r.count;
+        maxCpu = Math.max(maxCpu, r.max_cpu);
+        maxMem = Math.max(maxMem, r.max_mem);
+      });
 
       this.processSummary.push({
         pid,
-        command: process.command,
-        user: process.user,
-        count: processData.length,
-        avgCpu: avgCpu.toFixed(2),
+        command: ref.command,
+        user: ref.user,
+        count,
+        avgCpu: (totalCpu / count).toFixed(2),
         maxCpu: maxCpu.toFixed(2),
-        avgMem: avgMem.toFixed(2),
+        avgMem: (totalMem / count).toFixed(2),
         maxMem: maxMem.toFixed(2),
       });
     });
 
-    // Sort by highest average CPU
     this.processSummary.sort((a, b) => parseFloat(b.avgCpu) - parseFloat(a.avgCpu));
   }
 
-  // Add helper methods
-  private downsampleLTTB(data: [number, number][], threshold: number): [number, number][] {
-    if (data.length <= threshold) return data;
-
-    const sampled = [];
-    const bucketSize = (data.length - 2) / (threshold - 2);
-    let a = 0;
-
-    sampled.push(data[a]);
-
-    for (let i = 0; i < threshold - 2; i++) {
-      const rangeStart = Math.floor((i + 1) * bucketSize) + 1;
-      const rangeEnd = Math.min(Math.floor((i + 2) * bucketSize) + 1, data.length - 1);
-
-      let maxArea = -1;
-      let nextA = rangeStart;
-
-      for (let j = rangeStart; j < rangeEnd; j++) {
-        const area = Math.abs(
-          (data[a][0] - data[data.length - 1][0]) * (data[j][1] - data[a][1]) -
-          (data[a][0] - data[j][0]) * (data[data.length - 1][1] - data[a][1])
-        ) / 2;
-
-        if (area > maxArea) {
-          maxArea = area;
-          nextA = j;
-        }
-      }
-
-      sampled.push(data[nextA]);
-      a = nextA;
-    }
-
-    sampled.push(data[data.length - 1]);
-    return sampled;
-  }
-
-  private adjustColorOpacity(color: string, opacity: number): string {
-    if (color.startsWith('#')) {
-      const r = parseInt(color.slice(1, 3), 16);
-      const g = parseInt(color.slice(3, 5), 16);
-      const b = parseInt(color.slice(5, 7), 16);
-      return `rgba(${r}, ${g}, ${b}, ${opacity})`;
-    }
-    return color;
-  }
-
-  /**
-   * Load historical data for all processes
-   */
   loadHistoricalProcessData(): void {
     if (!this.validateForm()) return;
 
@@ -652,37 +733,25 @@ export class ProcessComponent implements OnInit, OnDestroy {
 
     const range = this.getDateTimeRange();
 
-    // Validate date range
     if (new Date(range.start) >= new Date(range.end)) {
       this.showError('End date must be after start date');
       this.loading = false;
       return;
     }
 
-    console.log("Loading historical process data for range:", range);
-
-    // Fetch historical data for all processes
     this.monitoringService.getHistoricalProcesses(range)
       .pipe(
-        tap(response => {
-          console.log("Historical data response:", response);
-          this.historicalProcesses = response.data || [];
-
+        tap(res => {
+          this.historicalProcesses = res.data || [];
           if (this.historicalProcesses.length === 0) {
-            this.showError(`No historical data found in the time range`);
+            this.showError('No historical data found in the time range');
           } else {
-            console.log(`Loaded ${this.historicalProcesses.length} historical records`);
+            this.updateProcessCharts();
+            this.generateProcessSummary();
           }
-
-          // Update charts
-          this.updateProcessCharts();
-
-          // Generate summary table
-          this.generateProcessSummary();
         }),
         catchError(error => {
-          console.error("Error fetching historical process data:", error);
-          this.showError(`Failed to load historical data: ${error.message || 'Unknown error'}`);
+          this.showError(`Failed to load data: ${error.message || 'Unknown error'}`);
           this.historicalProcesses = [];
           this.processSummary = [];
           return of(null);
@@ -693,57 +762,48 @@ export class ProcessComponent implements OnInit, OnDestroy {
       });
   }
 
-  /**
-   * Validate form and show appropriate error messages
-   */
   private validateForm(): boolean {
     if (!this.filterForm.valid) {
-      this.filterForm.markAllAsTouched();
-
-      const errors: string[] = [];
-      const controls = this.filterForm.controls;
-
-      if (controls['startDate'].errors)
-        errors.push('Please select a start date');
-      if (controls['startTime'].errors)
-        errors.push('Please select a start time');
-      if (controls['endDate'].errors)
-        errors.push('Please select an end date');
-      if (controls['endTime'].errors)
-        errors.push('Please select an end time');
-
-      this.showError('Please fix the following errors: ' + errors.join(', '));
+      this.showError("Please fill all fields correctly.");
       return false;
     }
     return true;
   }
 
-  /**
-   * Show error message to user
-   */
-  private showError(message: string): void {
-    this.hasError = true;
-    this.errorMessage = message;
-    console.error('Process Component Error:', message);
-  }
-
-  // Date/Time Helper Methods
-  private formatDateForInput(date: Date): string {
-    return date.toISOString().split("T")[0];
-  }
-
   private getDateTimeRange(): DateTimeRange {
     const form = this.filterForm.value;
-    const startDateTime = new Date(`${form.startDate}T${form.startTime}:00`);
-    const endDateTime = new Date(`${form.endDate}T${form.endTime}:00`);
-
-    return {
-      start: startDateTime.toISOString(),
-      end: endDateTime.toISOString(),
-    };
+    const start = new Date(`${form.startDate}T${form.startTime}:00`);
+    const end = new Date(`${form.endDate}T${form.endTime}:59`);
+    return { start: start.toISOString(), end: end.toISOString() };
   }
 
-  // Quick Selection Methods
+  private showError(message: string): void {
+    this.errorMessage = message;
+    this.hasError = true;
+  }
+
+  private formatDateForInput(date: Date): string {
+    return date.toISOString().slice(0, 10);
+  }
+
+  // Status helper methods
+  getCpuStatusClass(value: number): string {
+    return value > 75 ? 'text-danger' : value > 50 ? 'text-warning' : 'text-success';
+  }
+
+  getMemStatusClass(value: number): string {
+    return value > 75 ? 'text-danger' : value > 50 ? 'text-warning' : 'text-success';
+  }
+
+  getCpuStatus(value: number): string {
+    return value > 75 ? 'danger' : value > 50 ? 'warning' : 'success';
+  }
+
+  getMemStatus(value: number): string {
+    return value > 75 ? 'danger' : value > 50 ? 'warning' : 'success';
+  }
+
+  // Quick selection methods
   selectToday(): void {
     const today = new Date();
     this.filterForm.patchValue({
@@ -765,9 +825,17 @@ export class ProcessComponent implements OnInit, OnDestroy {
     });
   }
 
-  selectLast24Hours(): void { this.quickSelectRange(1); }
-  selectLastWeek(): void { this.quickSelectRange(7); }
-  selectLastMonth(): void { this.quickSelectRange(30); }
+  selectLast24Hours(): void {
+    this.quickSelectRange(1);
+  }
+
+  selectLastWeek(): void {
+    this.quickSelectRange(7);
+  }
+
+  selectLastMonth(): void {
+    this.quickSelectRange(30);
+  }
 
   private quickSelectRange(days: number): void {
     const now = new Date();
@@ -783,6 +851,12 @@ export class ProcessComponent implements OnInit, OnDestroy {
   }
 
   // Process selection methods
+  selectProcess(process: ProcessData): void {
+    if (!this.selectedProcesses.some(p => p.pid === process.pid)) {
+      this.selectedProcesses.push(process);
+    }
+  }
+
   toggleProcessSelection(process: ProcessData): void {
     const index = this.selectedProcesses.findIndex(p => p.pid === process.pid);
     if (index !== -1) {
@@ -802,43 +876,5 @@ export class ProcessComponent implements OnInit, OnDestroy {
     } else {
       this.selectedProcesses = [];
     }
-  }
-
-  selectProcess(process: ProcessData): void {
-    // Add to selected processes if not already selected
-    if (!this.selectedProcesses.some(p => p.pid === process.pid)) {
-      this.selectedProcesses.push(process);
-    }
-  }
-
-  // Utility Methods
-  truncateCommand(command: string, maxLength: number): string {
-    return command.length > maxLength
-      ? command.substring(0, maxLength) + "..."
-      : command;
-  }
-
-  getCpuStatusClass(value: number): string {
-    if (value > 75) return "text-danger";
-    if (value > 50) return "text-warning";
-    return "text-success";
-  }
-
-  getMemStatusClass(value: number): string {
-    if (value > 75) return "text-danger";
-    if (value > 50) return "text-warning";
-    return "text-success";
-  }
-
-  getCpuStatus(value: number): string {
-    if (value > 75) return "danger";
-    if (value > 50) return "warning";
-    return "success";
-  }
-
-  getMemStatus(value: number): string {
-    if (value > 75) return "danger";
-    if (value > 50) return "warning";
-    return "success";
   }
 }

@@ -293,13 +293,13 @@ export class RealtimeComponent implements OnInit, OnDestroy {
 
   private initializeCharts() {
     const baseOption = {
-      backgroundColor: this.echartTheme === "dark" ? "#222b45" : "#ffffff",
+      backgroundColor: this.echartTheme === "white" ? "#222b45" : "#ffffff",
       tooltip: {
         trigger: "axis",
         axisPointer: {
           type: "cross",
           label: {
-            backgroundColor: "#6a7985",
+            backgroundColor: "#ffffff",
           },
         },
         formatter: (params: any[]) => {

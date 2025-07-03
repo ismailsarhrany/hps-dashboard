@@ -45,6 +45,7 @@ export interface IostatData {
   service_time: number;
 }
 
+// Updated ProcessData interface to handle both raw and aggregated data
 export interface ProcessData {
   pid: number;
   user: string;
@@ -52,13 +53,36 @@ export interface ProcessData {
   mem: number;
   command: string;
   timestamp: string;
-  // Add stats property
+  // For aggregated data
+  avg_cpu?: number;
+  max_cpu?: number;
+  min_cpu?: number;
+  avg_mem?: number;
+  max_mem?: number;
+  min_mem?: number;
+  count?: number;
+  // Legacy stats property for backward compatibility
   stats?: {
     avgCpu: number;
     peakCpu: number;
     avgMem: number;
     peakMem: number;
   };
+}
+
+// New interface specifically for aggregated process data
+export interface AggregatedProcessData {
+  timestamp: string;
+  pid: number;
+  command: string;
+  user: string;
+  avg_cpu: number;
+  max_cpu: number;
+  min_cpu: number;
+  avg_mem: number;
+  max_mem: number;
+  min_mem: number;
+  count: number;
 }
 
 export interface SystemSummary {
@@ -78,6 +102,15 @@ export interface ApiResponse<T> {
   data: T[];
   timestamp: string;
   count?: number;
+  total_count?: number;
+  page?: number;
+  total_pages?: number;
+  has_next?: boolean;
+  has_previous?: boolean;
+  metric?: string;
+  interval_seconds?: number;
+  pids_filtered?: number[];
+  warning?: string;
 }
 
 export interface DateTimeRange {
@@ -119,12 +152,27 @@ export class ApiService {
         tap((response: ApiResponse<T>) => {
           console.log(`Historical ${metric} API response:`, response);
           console.log(`Data count: ${response.data?.length || 0}`);
+          if (response.interval_seconds) {
+            console.log(`Aggregation interval: ${response.interval_seconds} seconds`);
+          }
+          if (response.warning) {
+            console.warn(`API Warning: ${response.warning}`);
+          }
         }),
         map((response: ApiResponse<T>) => ({
           data: response.data || [],
           status: response.status || "success",
           timestamp: response.timestamp || new Date().toISOString(),
           count: response.data?.length || 0,
+          total_count: response.total_count,
+          page: response.page,
+          total_pages: response.total_pages,
+          has_next: response.has_next,
+          has_previous: response.has_previous,
+          metric: response.metric,
+          interval_seconds: response.interval_seconds,
+          pids_filtered: response.pids_filtered,
+          warning: response.warning,
         } as ApiResponse<T>)),
         catchError((error) => {
           console.error(`Error fetching historical ${metric}:`, error);
@@ -157,12 +205,69 @@ export class ApiService {
     return this.getHistoricalData<IostatData>('iostat', dateRange);
   }
 
+  // Updated method to handle process data with aggregation support
   getHistoricalProcesses(
+    dateRange: DateTimeRange,
+    options?: {
+      pids?: number[];
+      interval?: number;
+      page?: number;
+    }
+  ): Observable<ApiResponse<AggregatedProcessData>> {
+    const additionalParams: { [key: string]: string } = {};
+    
+    if (options?.pids && options.pids.length > 0) {
+      additionalParams['pids'] = options.pids.join(',');
+    }
+    
+    if (options?.interval) {
+      additionalParams['interval'] = options.interval.toString();
+    }
+    
+    if (options?.page) {
+      additionalParams['page'] = options.page.toString();
+    }
+
+    return this.getHistoricalData<AggregatedProcessData>('process', dateRange, additionalParams);
+  }
+
+  // Backward compatibility method for legacy ProcessData
+  getHistoricalProcessesLegacy(
     dateRange: DateTimeRange,
     pid?: number
   ): Observable<ApiResponse<ProcessData>> {
-    const additionalParams = pid ? { pid: pid.toString() } : undefined;
-    return this.getHistoricalData<ProcessData>('process', dateRange, additionalParams);
+    const options = pid ? { pids: [pid] } : undefined;
+    return this.getHistoricalProcesses(dateRange, options).pipe(
+      map((response: ApiResponse<AggregatedProcessData>) => ({
+        ...response,
+        data: response.data.map(this.convertAggregatedToLegacy),
+      } as ApiResponse<ProcessData>))
+    );
+  }
+
+  // Convert aggregated process data to legacy format
+  private convertAggregatedToLegacy(aggregated: AggregatedProcessData): ProcessData {
+    return {
+      pid: aggregated.pid,
+      user: aggregated.user,
+      cpu: aggregated.avg_cpu, // Use average CPU for main cpu field
+      mem: aggregated.avg_mem, // Use average memory for main mem field
+      command: aggregated.command,
+      timestamp: aggregated.timestamp,
+      avg_cpu: aggregated.avg_cpu,
+      max_cpu: aggregated.max_cpu,
+      min_cpu: aggregated.min_cpu,
+      avg_mem: aggregated.avg_mem,
+      max_mem: aggregated.max_mem,
+      min_mem: aggregated.min_mem,
+      count: aggregated.count,
+      stats: {
+        avgCpu: aggregated.avg_cpu,
+        peakCpu: aggregated.max_cpu,
+        avgMem: aggregated.avg_mem,
+        peakMem: aggregated.max_mem,
+      },
+    };
   }
 
   // Get historical data for multiple metrics at once
@@ -173,7 +278,7 @@ export class ApiService {
     vmstat?: ApiResponse<VmstatData>;
     netstat?: ApiResponse<NetstatData>;
     iostat?: ApiResponse<IostatData>;
-    process?: ApiResponse<ProcessData>;
+    process?: ApiResponse<AggregatedProcessData>;
   }> {
     const requests: { [key: string]: Observable<ApiResponse<any>> } = {};
 
@@ -195,11 +300,72 @@ export class ApiService {
     return forkJoin(requests);
   }
 
+  // Process Data Analysis Methods
+  getTopProcessesByCpu(
+    processData: AggregatedProcessData[],
+    limit: number = 10
+  ): AggregatedProcessData[] {
+    return processData
+      .sort((a, b) => b.avg_cpu - a.avg_cpu)
+      .slice(0, limit);
+  }
+
+  getTopProcessesByMemory(
+    processData: AggregatedProcessData[],
+    limit: number = 10
+  ): AggregatedProcessData[] {
+    return processData
+      .sort((a, b) => b.avg_mem - a.avg_mem)
+      .slice(0, limit);
+  }
+
+  getProcessStats(processData: AggregatedProcessData[]): {
+    totalProcesses: number;
+    totalCpuUsage: number;
+    totalMemUsage: number;
+    avgCpuPerProcess: number;
+    avgMemPerProcess: number;
+    peakCpuProcess: AggregatedProcessData | null;
+    peakMemProcess: AggregatedProcessData | null;
+  } {
+    if (processData.length === 0) {
+      return {
+        totalProcesses: 0,
+        totalCpuUsage: 0,
+        totalMemUsage: 0,
+        avgCpuPerProcess: 0,
+        avgMemPerProcess: 0,
+        peakCpuProcess: null,
+        peakMemProcess: null,
+      };
+    }
+
+    const totalCpuUsage = processData.reduce((sum, p) => sum + p.avg_cpu, 0);
+    const totalMemUsage = processData.reduce((sum, p) => sum + p.avg_mem, 0);
+    
+    const peakCpuProcess = processData.reduce((max, p) => 
+      p.max_cpu > (max?.max_cpu || 0) ? p : max, processData[0]);
+    
+    const peakMemProcess = processData.reduce((max, p) => 
+      p.max_mem > (max?.max_mem || 0) ? p : max, processData[0]);
+
+    return {
+      totalProcesses: processData.length,
+      totalCpuUsage,
+      totalMemUsage,
+      avgCpuPerProcess: totalCpuUsage / processData.length,
+      avgMemPerProcess: totalMemUsage / processData.length,
+      peakCpuProcess,
+      peakMemProcess,
+    };
+  }
+
   // System Analysis Methods
   calculateSystemSummary(
     vmstatData: VmstatData[],
     netstatData: NetstatData[],
-    iostatData: IostatData[]
+    iostatData: IostatData[],
+    processData?: AggregatedProcessData[]
   ): SystemSummary {
     if (!vmstatData.length) {
       return this.getEmptySystemSummary();
@@ -230,7 +396,7 @@ export class ApiService {
       network_packets: totalNetworkPackets,
       network_errors: totalNetworkErrors,
       system_load: latestVmstat.r,
-      process_count: 0, // Will be updated by process data
+      process_count: processData?.length || 0,
       uptime: 0,
     };
   }
@@ -290,6 +456,70 @@ export class ApiService {
     };
   }
 
+  // Process Trend Analysis
+  getProcessTrends(processData: AggregatedProcessData[]): {
+    [pid: number]: {
+      pid: number;
+      command: string;
+      cpuTrend: 'increasing' | 'decreasing' | 'stable';
+      memTrend: 'increasing' | 'decreasing' | 'stable';
+      avgCpu: number;
+      avgMem: number;
+      peakCpu: number;
+      peakMem: number;
+    };
+  } {
+    const trends: { [pid: number]: any } = {};
+    
+    // Group by PID to analyze trends over time
+    const groupedByPid = processData.reduce((acc, process) => {
+      if (!acc[process.pid]) {
+        acc[process.pid] = [];
+      }
+      acc[process.pid].push(process);
+      return acc;
+    }, {} as { [pid: number]: AggregatedProcessData[] });
+
+    Object.keys(groupedByPid).forEach(pidStr => {
+      const pid = parseInt(pidStr);
+      const processes = groupedByPid[pid].sort((a, b) => 
+        new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+      );
+
+      if (processes.length >= 2) {
+        const recent = processes.slice(-Math.ceil(processes.length / 2));
+        const older = processes.slice(0, Math.floor(processes.length / 2));
+
+        const recentAvgCpu = recent.reduce((sum, p) => sum + p.avg_cpu, 0) / recent.length;
+        const olderAvgCpu = older.reduce((sum, p) => sum + p.avg_cpu, 0) / older.length;
+        
+        const recentAvgMem = recent.reduce((sum, p) => sum + p.avg_mem, 0) / recent.length;
+        const olderAvgMem = older.reduce((sum, p) => sum + p.avg_mem, 0) / older.length;
+
+        const getCpuTrend = (recent: number, older: number): 'increasing' | 'decreasing' | 'stable' => {
+          const diff = Math.abs(recent - older);
+          const threshold = older * 0.2; // 20% threshold
+          
+          if (diff < threshold) return 'stable';
+          return recent > older ? 'increasing' : 'decreasing';
+        };
+
+        trends[pid] = {
+          pid,
+          command: processes[0].command,
+          cpuTrend: getCpuTrend(recentAvgCpu, olderAvgCpu),
+          memTrend: getCpuTrend(recentAvgMem, olderAvgMem),
+          avgCpu: processes.reduce((sum, p) => sum + p.avg_cpu, 0) / processes.length,
+          avgMem: processes.reduce((sum, p) => sum + p.avg_mem, 0) / processes.length,
+          peakCpu: Math.max(...processes.map(p => p.max_cpu)),
+          peakMem: Math.max(...processes.map(p => p.max_mem)),
+        };
+      }
+    });
+
+    return trends;
+  }
+
   // Date/Time Utility Methods
   formatDateTimeForApi(date: Date, time: string = "00:00:00"): string {
     const year = date.getFullYear();
@@ -335,5 +565,24 @@ export class ApiService {
     ranges['lastMonth'] = this.getDateRange(30);
 
     return ranges;
+  }
+
+  // Utility method to get optimal interval based on date range
+  getOptimalInterval(dateRange: DateTimeRange): number {
+    const start = new Date(dateRange.start);
+    const end = new Date(dateRange.end);
+    const rangeSeconds = (end.getTime() - start.getTime()) / 1000;
+
+    if (rangeSeconds <= 3600) {      // 1 hour
+      return 60;                     // 1 minute
+    } else if (rangeSeconds <= 86400) { // 1 day
+      return 300;                    // 5 minutes
+    } else if (rangeSeconds <= 604800) { // 1 week
+      return 1800;                   // 30 minutes
+    } else if (rangeSeconds <= 2592000) { // 30 days
+      return 3600;                   // 1 hour
+    } else {
+      return 7200;                   // 2 hours
+    }
   }
 }

@@ -46,21 +46,15 @@
       </nb-card-header>
 
       <nb-card-body>
-        <div class="table-responsive">
+        <div class="table">
           <table class="table process-table">
             <thead>
               <tr>
-                <th>
-                  <nb-checkbox
-                    (checkedChange)="toggleAllProcesses($event)"
-                  ></nb-checkbox>
-                </th>
                 <th>PID</th>
                 <th>User</th>
                 <th>CPU %</th>
                 <th>Memory %</th>
                 <th>Command</th>
-                <th class="text-center">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -69,12 +63,6 @@
                   *ngFor="let process of activeProcesses"
                   [class.high-usage]="process.cpu > 50 || process.mem > 50"
                 >
-                  <td>
-                    <nb-checkbox
-                      [checked]="isProcessSelected(process)"
-                      (checkedChange)="toggleProcessSelection(process)"
-                    ></nb-checkbox>
-                  </td>
                   <td>{{ process.pid }}</td>
                   <td>{{ process.user }}</td>
                   <td>
@@ -105,18 +93,6 @@
                   </td>
                   <td class="command-cell">
                     {{ truncateCommand(process.command, 30) }}
-                  </td>
-                  <td class="text-center">
-                    <button
-                      nbButton
-                      ghost
-                      size="small"
-                      status="primary"
-                      (click)="selectProcess(process)"
-                    >
-                      <nb-icon icon="bar-chart-outline"></nb-icon>
-                      Analyze
-                    </button>
                   </td>
                 </tr>
               </ng-container>
@@ -362,7 +338,7 @@
                   <th>Max CPU</th>
                   <th>Avg Memory</th>
                   <th>Max Memory</th>
-                  <th>Data Points</th>
+                  <!-- <th>Data Points</th> -->
                 </tr>
               </thead>
               <tbody>
@@ -374,7 +350,7 @@
                   <td>{{ proc.maxCpu }}%</td>
                   <td>{{ proc.avgMem }}%</td>
                   <td>{{ proc.maxMem }}%</td>
-                  <td>{{ proc.count }}</td>
+                  <!-- <td>{{ proc.count }}</td> -->
                 </tr>
               </tbody>
             </table>
@@ -395,7 +371,7 @@
             <small class="text-hint">All processes during selected period</small>
           </nb-card-header>
           <nb-card-body>
-            <div echarts [options]="processCpuChartOption" class="echart"></div>
+            <div echarts [options]="processCpuHeatmapOption" class="echart"></div>
           </nb-card-body>
         </nb-card>
       </div>
@@ -410,7 +386,7 @@
             <small class="text-hint">All processes during selected period</small>
           </nb-card-header>
           <nb-card-body>
-            <div echarts [options]="processMemChartOption" class="echart"></div>
+            <div echarts [options]="processMemHeatmapOption" class="echart"></div>
           </nb-card-body>
         </nb-card>
       </div>

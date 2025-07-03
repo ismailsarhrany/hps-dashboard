@@ -11,10 +11,10 @@ import { Subscription, forkJoin } from "rxjs";
 import { NbThemeService } from "@nebular/theme";
 import { EChartsOption } from "echarts";
 import {
-  ApiService, // Keep for Vmstat
+  ApiService,
   VmstatData,
   DateTimeRange,
-} from "../../services/monitoring.service"; // Adjust path as needed
+} from "../../services/monitoring.service";
 import { DiskDataService, HistoricalIostatPoint } from "../../services/disk-data.service";
 import {
   NetworkDataService,
@@ -26,7 +26,7 @@ import {
   templateUrl: "./historic.component.html",
   styleUrls: ["./historic.component.scss"],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  providers: [DiskDataService, NetworkDataService], // Provide services locally if not root
+  providers: [DiskDataService, NetworkDataService],
 })
 export class HistoricComponent implements OnInit, OnDestroy {
   dateRangeForm: FormGroup;
@@ -52,7 +52,7 @@ export class HistoricComponent implements OnInit, OnDestroy {
   private themeSubscription: Subscription;
   private dataSubscription: Subscription;
   private theme: any;
-  private readonly MAX_DATA_POINTS = 1500;
+  private readonly MAX_DATA_POINTS = 900000;
 
   constructor(
     private fb: FormBuilder,
@@ -185,65 +185,81 @@ export class HistoricComponent implements OnInit, OnDestroy {
     }
   }
 
-  // downsamplePerEntity remains the same
-  private downsamplePerEntity<
-    T extends
-      | { timestamp: string; id?: string }
-      | VmstatData
-      | HistoricalIostatPoint
-      | HistoricalNetstatPoint
-  >(
+  // // mapToSeriesData remains the same
+  // private mapToSeriesData<
+  //   T extends
+  //     | { timestamp: string; id?: string }
+  //     | VmstatData
+  //     | HistoricalIostatPoint
+  //     | HistoricalNetstatPoint
+  // >(
+  //   data: T[],
+  //   entityId: string | null,
+  //   idField: keyof T | null,
+  //   timestampField: keyof T,
+  //   valueField: keyof T,
+  //   maxPoints: number
+  // ): [number, number][] {
+  //   const entityData =
+  //     entityId && idField
+  //       ? data.filter((item) => (item as any)[idField] === entityId)
+  //       : data;
+  //   const sortedData = entityData.sort(
+  //     (a, b) =>
+  //       new Date(a[timestampField] as string).getTime() -
+  //       new Date(b[timestampField] as string).getTime()
+  //   );
+  //   const totalPoints = sortedData.length;
+  //   if (!sortedData || totalPoints === 0) return [];
+  //   if (totalPoints <= maxPoints) {
+  //     return sortedData.map((item) => [
+  //       new Date(item[timestampField] as string).getTime(),
+  //       (item[valueField] as number) || 0,
+  //     ]);
+  //   }
+  //   const sampledData: [number, number][] = [];
+  //   const bucketSize = Math.ceil(totalPoints / maxPoints);
+  //   for (let i = 0; i < totalPoints; i += bucketSize) {
+  //     const bucket = sortedData.slice(i, i + bucketSize);
+  //     if (bucket.length === 0) continue;
+  //     const timestamp = new Date(bucket[0][timestampField] as string).getTime();
+  //     const sum = bucket.reduce(
+  //       (acc, curr) => acc + ((curr[valueField] as number) || 0),
+  //       0
+  //     );
+  //     const value = sum / bucket.length;
+  //     sampledData.push([timestamp, value]);
+  //   }
+  //   const lastOriginalPoint = sortedData[totalPoints - 1];
+  //   const lastOriginalTimestamp = new Date(
+  //     lastOriginalPoint[timestampField] as string
+  //   ).getTime();
+  //   if (
+  //     sampledData.length === 0 ||
+  //     sampledData[sampledData.length - 1][0] < lastOriginalTimestamp
+  //   ) {
+  //     sampledData.push([
+  //       lastOriginalTimestamp,
+  //       (lastOriginalPoint[valueField] as number) || 0,
+  //     ]);
+  //   }
+  //   return sampledData;
+  // }
+
+  private mapToSeriesData<T extends { timestamp: string;[key: string]: any }>(
     data: T[],
     entityId: string | null,
     idField: keyof T | null,
-    timestampField: keyof T,
-    valueField: keyof T,
-    maxPoints: number
+    valueField: keyof T
   ): [number, number][] {
-    const entityData =
-      entityId && idField
-        ? data.filter((item) => (item as any)[idField] === entityId)
-        : data;
-    const sortedData = entityData.sort(
-      (a, b) =>
-        new Date(a[timestampField] as string).getTime() -
-        new Date(b[timestampField] as string).getTime()
-    );
-    const totalPoints = sortedData.length;
-    if (!sortedData || totalPoints === 0) return [];
-    if (totalPoints <= maxPoints) {
-      return sortedData.map((item) => [
-        new Date(item[timestampField] as string).getTime(),
-        (item[valueField] as number) || 0,
-      ]);
+    let filteredData = data;
+    if (entityId && idField) {
+      filteredData = data.filter(item => item[idField] === entityId);
     }
-    const sampledData: [number, number][] = [];
-    const bucketSize = Math.ceil(totalPoints / maxPoints);
-    for (let i = 0; i < totalPoints; i += bucketSize) {
-      const bucket = sortedData.slice(i, i + bucketSize);
-      if (bucket.length === 0) continue;
-      const timestamp = new Date(bucket[0][timestampField] as string).getTime();
-      const sum = bucket.reduce(
-        (acc, curr) => acc + ((curr[valueField] as number) || 0),
-        0
-      );
-      const value = sum / bucket.length;
-      sampledData.push([timestamp, value]);
-    }
-    const lastOriginalPoint = sortedData[totalPoints - 1];
-    const lastOriginalTimestamp = new Date(
-      lastOriginalPoint[timestampField] as string
-    ).getTime();
-    if (
-      sampledData.length === 0 ||
-      sampledData[sampledData.length - 1][0] < lastOriginalTimestamp
-    ) {
-      sampledData.push([
-        lastOriginalTimestamp,
-        (lastOriginalPoint[valueField] as number) || 0,
-      ]);
-    }
-    return sampledData;
+    return filteredData.map(item => [
+      new Date(item.timestamp).getTime(),
+      item[valueField] as number
+    ]);
   }
 
   // getThemeColors remains the same
@@ -273,7 +289,7 @@ export class HistoricComponent implements OnInit, OnDestroy {
     };
   }
 
-  // Initialize all chart options, including the split network ones
+  // Initialize all chart options
   private initializeChartOptions(): void {
     const colors = this.getThemeColors();
     const baseConfig: EChartsOption = {
@@ -296,17 +312,27 @@ export class HistoricComponent implements OnInit, OnDestroy {
           params.sort(
             (a: any, b: any) => (b.value?.[1] ?? 0) - (a.value?.[1] ?? 0)
           );
+          //     params.forEach((param: any) => {
+          //       const value =
+          //         param.value && typeof param.value[1] === "number"
+          //           ? param.value[1].toFixed(2)
+          //           : "N/A";
+          //       // Check for extremely large values potentially indicating API issues
+          //       const displayValue =
+          //         Math.abs(param.value?.[1] ?? 0) > 1e9
+          //           ? `${value} (potential API scale issue)`
+          //           : value;
+          //       tooltip += `${param.marker} ${param.seriesName}: ${displayValue}<br/>`;
+          //     });
+          //     return tooltip;
+          //   },
+          // },
+
           params.forEach((param: any) => {
-            const value =
-              param.value && typeof param.value[1] === "number"
-                ? param.value[1].toFixed(2)
-                : "N/A";
-            // Check for extremely large values potentially indicating API issues
-            const displayValue =
-              Math.abs(param.value?.[1] ?? 0) > 1e9
-                ? `${value} (potential API scale issue)`
-                : value;
-            tooltip += `${param.marker} ${param.seriesName}: ${displayValue}<br/>`;
+            const value = param.value && typeof param.value[1] === "number"
+              ? param.value[1].toFixed(2)
+              : "N/A";
+            tooltip += `${param.marker} ${param.seriesName}: ${value}<br/>`;
           });
           return tooltip;
         },
@@ -636,14 +662,12 @@ export class HistoricComponent implements OnInit, OnDestroy {
     unit: string // Unit not directly used here, but good for context
   ): any[] {
     return entities.reduce((acc, entity) => {
-      const seriesData = this.downsamplePerEntity(
+      const seriesData = this.mapToSeriesData(
         data as any, // Type assertion needed due to union type
         entity,
         entityField as any,
-        "timestamp",
-        valueField as any,
-        this.MAX_DATA_POINTS
-      );
+        // "timestamp",
+        valueField as any);
       if (seriesData.length > 0) {
         acc.push({
           name: `${entity} ${seriesNameSuffix}`,
@@ -661,21 +685,20 @@ export class HistoricComponent implements OnInit, OnDestroy {
 
   // getUpdatedCpuChartOption and getUpdatedMemoryChartOption remain the same
   private getUpdatedCpuChartOption(): EChartsOption {
-    const cpuUserData = this.downsamplePerEntity(
+    const cpuUserData = this.mapToSeriesData(
       this.vmstatData,
       null,
-      null,
       "timestamp",
-      "us",
-      this.MAX_DATA_POINTS
+      "us" as keyof VmstatData
+      // this.MAX_DATA_POINTS
     );
-    const cpuSysData = this.downsamplePerEntity(
+    const cpuSysData = this.mapToSeriesData(
       this.vmstatData,
       null,
-      null,
+      // null,
       "timestamp",
-      "sy",
-      this.MAX_DATA_POINTS
+      "sy" as keyof VmstatData
+      // this.MAX_DATA_POINTS
     );
     return {
       ...this.cpuChartOption,
@@ -687,13 +710,13 @@ export class HistoricComponent implements OnInit, OnDestroy {
   }
 
   private getUpdatedMemoryChartOption(): EChartsOption {
-    const memUsedData = this.downsamplePerEntity(
+    const memUsedData = this.mapToSeriesData(
       this.vmstatData,
-      null,
+      // null,
       null,
       "timestamp",
-      "avm",
-      this.MAX_DATA_POINTS
+      "avm" as keyof VmstatData
+      // this.MAX_DATA_POINTS
     ).map((p) => [p[0], Math.round(p[1] / 1024)]); // Convert KB to MB
     return {
       ...this.memoryChartOption,
@@ -771,8 +794,8 @@ export class HistoricComponent implements OnInit, OnDestroy {
     const startTime =
       days === 1
         ? now.getHours().toString().padStart(2, "0") +
-          ":" +
-          now.getMinutes().toString().padStart(2, "0")
+        ":" +
+        now.getMinutes().toString().padStart(2, "0")
         : "00:00";
     const endTime = days === 1 ? startTime : "23:59";
 

@@ -65,6 +65,10 @@ class ProcessMetric(models.Model):
 
     class Meta:
         db_table = 'process_metrics'
+        # indexes = [
+        #     models.Index(fields=['timestamp'], name='process_timestamp_idx'),
+        # ]
         indexes = [
-            models.Index(fields=['timestamp'], name='process_timestamp_idx'),
+            models.Index(fields=['timestamp', 'pid']),
+            models.Index(fields=['pid', 'timestamp']),
         ]
