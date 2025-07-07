@@ -5742,3 +5742,1012 @@
 2025-07-03 08:17:33,103 INFO success: collect_vmstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
 2025-07-03 08:17:33,106 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
 2025-07-03 08:17:33,107 INFO success: start_consumer entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-03 15:14:52,864 INFO Set uid to user 0 succeeded
+2025-07-03 15:14:52,883 INFO supervisord started with pid 1
+2025-07-03 15:14:53,890 INFO spawned: 'collect_iostat' with pid 7
+2025-07-03 15:14:53,901 INFO spawned: 'collect_metrics' with pid 8
+2025-07-03 15:14:53,911 INFO spawned: 'collect_netstat' with pid 9
+2025-07-03 15:14:53,923 INFO spawned: 'collect_process' with pid 10
+2025-07-03 15:14:53,931 INFO spawned: 'collect_vmstat' with pid 11
+2025-07-03 15:14:53,942 INFO spawned: 'gunicorn' with pid 12
+2025-07-03 15:14:53,951 INFO spawned: 'start_consumer' with pid 13
+2025-07-03 15:14:54,961 INFO success: collect_iostat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-03 15:14:54,965 INFO success: collect_metrics entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-03 15:14:54,973 INFO success: collect_netstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-03 15:14:54,976 INFO success: collect_process entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-03 15:14:54,978 INFO success: collect_vmstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-03 15:14:54,979 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-03 15:14:54,981 INFO success: start_consumer entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-04 07:29:14,303 WARN received SIGTERM indicating exit request
+2025-07-04 07:29:14,379 INFO waiting for collect_iostat, collect_metrics, collect_netstat, collect_process, collect_vmstat, gunicorn, start_consumer to die
+2025-07-04 07:29:15,920 INFO stopped: start_consumer (exit status 0)
+2025-07-04 07:29:17,047 INFO stopped: gunicorn (exit status 0)
+2025-07-04 07:29:18,052 INFO waiting for collect_iostat, collect_metrics, collect_netstat, collect_process, collect_vmstat to die
+2025-07-04 07:29:21,775 INFO waiting for collect_iostat, collect_metrics, collect_netstat, collect_process, collect_vmstat to die
+2025-07-04 07:29:23,763 INFO stopped: collect_vmstat (exit status 0)
+2025-07-04 11:12:37,586 INFO Set uid to user 0 succeeded
+2025-07-04 11:12:37,616 INFO supervisord started with pid 1
+2025-07-04 11:12:38,628 INFO spawned: 'collect_iostat' with pid 7
+2025-07-04 11:12:38,645 INFO spawned: 'collect_netstat' with pid 8
+2025-07-04 11:12:38,655 INFO spawned: 'collect_process' with pid 9
+2025-07-04 11:12:38,665 INFO spawned: 'collect_vmstat' with pid 10
+2025-07-04 11:12:38,680 INFO spawned: 'gunicorn' with pid 11
+2025-07-04 11:12:38,690 INFO spawned: 'start_consumer' with pid 12
+2025-07-04 11:12:40,552 INFO success: collect_iostat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-04 11:12:40,553 INFO success: collect_netstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-04 11:12:40,554 INFO success: collect_process entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-04 11:12:40,554 INFO success: collect_vmstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-04 11:12:40,556 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-04 11:12:40,558 INFO success: start_consumer entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-04 15:48:10,182 INFO Set uid to user 0 succeeded
+2025-07-04 15:48:10,221 INFO supervisord started with pid 1
+2025-07-04 15:48:11,227 INFO spawned: 'collect_iostat' with pid 7
+2025-07-04 15:48:11,234 INFO spawned: 'collect_netstat' with pid 8
+2025-07-04 15:48:11,243 INFO spawned: 'collect_process' with pid 9
+2025-07-04 15:48:11,262 INFO spawned: 'collect_vmstat' with pid 10
+2025-07-04 15:48:11,278 INFO spawned: 'gunicorn' with pid 11
+2025-07-04 15:48:11,303 INFO spawned: 'start_consumer' with pid 12
+2025-07-04 15:48:13,059 INFO success: collect_iostat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-04 15:48:13,060 INFO success: collect_netstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-04 15:48:13,061 INFO success: collect_process entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-04 15:48:13,062 INFO success: collect_vmstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-04 15:48:13,064 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-04 15:48:13,065 INFO success: start_consumer entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 07:32:24,678 INFO Set uid to user 0 succeeded
+2025-07-07 07:32:24,759 INFO supervisord started with pid 1
+2025-07-07 07:32:25,767 INFO spawned: 'collect_iostat' with pid 7
+2025-07-07 07:32:25,782 INFO spawned: 'collect_netstat' with pid 8
+2025-07-07 07:32:25,794 INFO spawned: 'collect_process' with pid 9
+2025-07-07 07:32:25,814 INFO spawned: 'collect_vmstat' with pid 10
+2025-07-07 07:32:25,833 INFO spawned: 'gunicorn' with pid 11
+2025-07-07 07:32:25,872 INFO spawned: 'start_consumer' with pid 12
+2025-07-07 07:32:26,888 INFO success: collect_iostat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 07:32:26,893 INFO success: collect_netstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 07:32:26,908 INFO success: collect_process entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 07:32:26,912 INFO success: collect_vmstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 07:32:26,934 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 07:32:26,940 INFO success: start_consumer entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 08:40:26,364 WARN received SIGTERM indicating exit request
+2025-07-07 08:40:26,736 INFO waiting for collect_iostat, collect_netstat, collect_process, collect_vmstat, gunicorn, start_consumer to die
+2025-07-07 08:40:29,597 INFO stopped: start_consumer (exit status 0)
+2025-07-07 08:40:29,735 INFO waiting for collect_iostat, collect_netstat, collect_process, collect_vmstat, gunicorn to die
+2025-07-07 08:40:30,486 INFO stopped: gunicorn (exit status 0)
+2025-07-07 08:40:33,600 INFO waiting for collect_iostat, collect_netstat, collect_process, collect_vmstat to die
+2025-07-07 10:36:25,130 INFO Set uid to user 0 succeeded
+2025-07-07 10:36:25,161 INFO supervisord started with pid 1
+2025-07-07 10:36:26,168 INFO spawned: 'collect_iostat' with pid 7
+2025-07-07 10:36:26,173 INFO spawned: 'collect_netstat' with pid 8
+2025-07-07 10:36:26,179 INFO spawned: 'collect_process' with pid 9
+2025-07-07 10:36:26,183 INFO spawned: 'collect_vmstat' with pid 10
+2025-07-07 10:36:26,193 INFO spawned: 'gunicorn' with pid 11
+2025-07-07 10:36:26,199 INFO spawned: 'start_consumer' with pid 12
+2025-07-07 10:36:27,683 INFO success: collect_iostat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 10:36:27,683 INFO success: collect_netstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 10:36:27,685 INFO success: collect_process entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 10:36:27,687 INFO success: collect_vmstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 10:36:27,688 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 10:36:27,689 INFO success: start_consumer entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 12:48:13,379 INFO Set uid to user 0 succeeded
+2025-07-07 12:48:13,413 INFO supervisord started with pid 1
+2025-07-07 12:48:14,421 INFO spawned: 'gunicorn' with pid 7
+2025-07-07 12:48:15,994 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:33:00,876 WARN received SIGTERM indicating exit request
+2025-07-07 15:33:00,903 INFO waiting for gunicorn to die
+2025-07-07 15:33:01,972 INFO stopped: gunicorn (exit status 0)
+2025-07-07 15:48:06,370 INFO Set uid to user 0 succeeded
+2025-07-07 15:48:06,405 INFO supervisord started with pid 1
+2025-07-07 15:48:07,411 INFO spawned: 'collect_iostat' with pid 7
+2025-07-07 15:48:07,419 INFO spawned: 'collect_netstat' with pid 8
+2025-07-07 15:48:07,426 INFO spawned: 'collect_process' with pid 9
+2025-07-07 15:48:07,433 INFO spawned: 'collect_vmstat' with pid 10
+2025-07-07 15:48:07,445 INFO spawned: 'gunicorn' with pid 11
+2025-07-07 15:48:07,452 INFO spawned: 'start_consumer' with pid 12
+2025-07-07 15:48:08,451 INFO success: collect_iostat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:08,452 INFO success: collect_netstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:08,452 INFO success: collect_process entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:08,453 INFO success: collect_vmstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:08,455 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:08,457 INFO success: start_consumer entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:08,724 INFO exited: collect_netstat (exit status 1; not expected)
+2025-07-07 15:48:08,725 INFO exited: collect_iostat (exit status 1; not expected)
+2025-07-07 15:48:08,727 INFO exited: collect_vmstat (exit status 1; not expected)
+2025-07-07 15:48:08,728 INFO exited: start_consumer (exit status 1; not expected)
+2025-07-07 15:48:08,728 INFO exited: collect_process (exit status 1; not expected)
+2025-07-07 15:48:08,733 INFO spawned: 'collect_iostat' with pid 14
+2025-07-07 15:48:08,740 INFO spawned: 'collect_netstat' with pid 15
+2025-07-07 15:48:08,749 INFO spawned: 'collect_process' with pid 16
+2025-07-07 15:48:08,765 INFO spawned: 'collect_vmstat' with pid 17
+2025-07-07 15:48:08,776 INFO spawned: 'start_consumer' with pid 18
+2025-07-07 15:48:09,653 INFO exited: gunicorn (exit status 3; not expected)
+2025-07-07 15:48:09,805 INFO success: collect_iostat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:09,807 INFO success: collect_netstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:09,808 INFO success: collect_process entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:09,815 INFO success: collect_vmstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:09,822 INFO spawned: 'gunicorn' with pid 19
+2025-07-07 15:48:09,826 INFO success: start_consumer entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:10,081 INFO exited: collect_iostat (exit status 1; not expected)
+2025-07-07 15:48:10,090 INFO spawned: 'collect_iostat' with pid 20
+2025-07-07 15:48:10,104 INFO exited: collect_netstat (exit status 1; not expected)
+2025-07-07 15:48:10,109 INFO exited: collect_vmstat (exit status 1; not expected)
+2025-07-07 15:48:10,110 INFO exited: start_consumer (exit status 1; not expected)
+2025-07-07 15:48:10,111 INFO exited: collect_process (exit status 1; not expected)
+2025-07-07 15:48:10,116 INFO spawned: 'collect_netstat' with pid 21
+2025-07-07 15:48:10,124 INFO spawned: 'collect_process' with pid 22
+2025-07-07 15:48:10,130 INFO spawned: 'collect_vmstat' with pid 23
+2025-07-07 15:48:10,143 INFO spawned: 'start_consumer' with pid 24
+2025-07-07 15:48:11,110 INFO success: collect_iostat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:11,111 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:11,123 INFO success: collect_netstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:11,126 INFO success: collect_process entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:11,128 INFO success: collect_vmstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:11,134 INFO success: start_consumer entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:11,427 INFO exited: collect_netstat (exit status 1; not expected)
+2025-07-07 15:48:11,449 INFO spawned: 'collect_netstat' with pid 26
+2025-07-07 15:48:11,452 INFO exited: collect_iostat (exit status 1; not expected)
+2025-07-07 15:48:11,538 INFO spawned: 'collect_iostat' with pid 27
+2025-07-07 15:48:11,543 INFO exited: collect_process (exit status 1; not expected)
+2025-07-07 15:48:11,544 INFO exited: collect_vmstat (exit status 1; not expected)
+2025-07-07 15:48:11,545 INFO exited: start_consumer (exit status 1; not expected)
+2025-07-07 15:48:11,558 INFO spawned: 'collect_process' with pid 28
+2025-07-07 15:48:11,576 INFO spawned: 'collect_vmstat' with pid 29
+2025-07-07 15:48:11,592 INFO spawned: 'start_consumer' with pid 30
+2025-07-07 15:48:12,009 INFO exited: gunicorn (exit status 3; not expected)
+2025-07-07 15:48:12,569 INFO success: collect_iostat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:12,574 INFO success: collect_netstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:12,575 INFO success: collect_process entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:12,576 INFO success: collect_vmstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:12,581 INFO spawned: 'gunicorn' with pid 31
+2025-07-07 15:48:12,584 INFO success: start_consumer entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:12,868 INFO exited: collect_netstat (exit status 1; not expected)
+2025-07-07 15:48:12,907 INFO spawned: 'collect_netstat' with pid 32
+2025-07-07 15:48:12,929 INFO exited: start_consumer (exit status 1; not expected)
+2025-07-07 15:48:12,956 INFO spawned: 'start_consumer' with pid 33
+2025-07-07 15:48:13,096 INFO exited: collect_iostat (exit status 1; not expected)
+2025-07-07 15:48:13,110 INFO exited: collect_process (exit status 1; not expected)
+2025-07-07 15:48:13,120 INFO spawned: 'collect_iostat' with pid 34
+2025-07-07 15:48:13,142 INFO spawned: 'collect_process' with pid 35
+2025-07-07 15:48:13,201 INFO exited: collect_vmstat (exit status 1; not expected)
+2025-07-07 15:48:13,289 INFO spawned: 'collect_vmstat' with pid 37
+2025-07-07 15:48:14,120 INFO success: collect_iostat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:14,122 INFO success: collect_netstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:14,123 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:14,127 INFO success: start_consumer entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:14,131 INFO success: collect_process entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:14,326 INFO success: collect_vmstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:14,626 INFO exited: collect_netstat (exit status 1; not expected)
+2025-07-07 15:48:14,642 INFO spawned: 'collect_netstat' with pid 38
+2025-07-07 15:48:14,663 INFO exited: collect_iostat (exit status 1; not expected)
+2025-07-07 15:48:14,706 INFO spawned: 'collect_iostat' with pid 39
+2025-07-07 15:48:14,723 INFO exited: start_consumer (exit status 1; not expected)
+2025-07-07 15:48:14,778 INFO spawned: 'start_consumer' with pid 40
+2025-07-07 15:48:14,934 INFO exited: collect_process (exit status 1; not expected)
+2025-07-07 15:48:14,936 INFO exited: collect_vmstat (exit status 1; not expected)
+2025-07-07 15:48:14,951 INFO spawned: 'collect_process' with pid 41
+2025-07-07 15:48:14,962 INFO spawned: 'collect_vmstat' with pid 42
+2025-07-07 15:48:15,368 INFO exited: gunicorn (exit status 3; not expected)
+2025-07-07 15:48:15,869 INFO success: collect_iostat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:15,871 INFO success: collect_netstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:15,882 INFO spawned: 'gunicorn' with pid 43
+2025-07-07 15:48:15,887 INFO success: start_consumer entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:15,942 INFO success: collect_process entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:15,956 INFO success: collect_vmstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:16,141 INFO exited: collect_netstat (exit status 1; not expected)
+2025-07-07 15:48:16,162 INFO spawned: 'collect_netstat' with pid 44
+2025-07-07 15:48:16,269 INFO exited: collect_iostat (exit status 1; not expected)
+2025-07-07 15:48:16,282 INFO spawned: 'collect_iostat' with pid 45
+2025-07-07 15:48:16,348 INFO exited: start_consumer (exit status 1; not expected)
+2025-07-07 15:48:16,364 INFO spawned: 'start_consumer' with pid 46
+2025-07-07 15:48:16,449 INFO exited: collect_vmstat (exit status 1; not expected)
+2025-07-07 15:48:16,558 INFO spawned: 'collect_vmstat' with pid 47
+2025-07-07 15:48:16,563 INFO exited: collect_process (exit status 1; not expected)
+2025-07-07 15:48:16,578 INFO spawned: 'collect_process' with pid 48
+2025-07-07 15:48:17,274 INFO success: collect_netstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:17,275 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:17,280 INFO success: collect_iostat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:17,356 INFO success: start_consumer entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:17,569 INFO success: collect_process entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:17,570 INFO success: collect_vmstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:17,571 INFO exited: collect_netstat (exit status 1; not expected)
+2025-07-07 15:48:17,612 INFO spawned: 'collect_netstat' with pid 50
+2025-07-07 15:48:17,617 INFO exited: start_consumer (exit status 1; not expected)
+2025-07-07 15:48:17,634 INFO spawned: 'start_consumer' with pid 51
+2025-07-07 15:48:17,636 INFO exited: collect_iostat (exit status 1; not expected)
+2025-07-07 15:48:17,646 INFO spawned: 'collect_iostat' with pid 52
+2025-07-07 15:48:17,888 INFO exited: collect_vmstat (exit status 1; not expected)
+2025-07-07 15:48:17,905 INFO spawned: 'collect_vmstat' with pid 53
+2025-07-07 15:48:17,934 INFO exited: collect_process (exit status 1; not expected)
+2025-07-07 15:48:18,050 INFO spawned: 'collect_process' with pid 54
+2025-07-07 15:48:18,053 INFO exited: gunicorn (exit status 3; not expected)
+2025-07-07 15:48:18,588 INFO spawned: 'gunicorn' with pid 55
+2025-07-07 15:48:18,636 INFO success: collect_netstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:18,637 INFO success: start_consumer entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:18,650 INFO success: collect_iostat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:18,850 INFO exited: start_consumer (exit status 1; not expected)
+2025-07-07 15:48:18,898 INFO spawned: 'start_consumer' with pid 56
+2025-07-07 15:48:18,905 INFO success: collect_vmstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:18,927 INFO exited: collect_iostat (exit status 1; not expected)
+2025-07-07 15:48:18,945 INFO spawned: 'collect_iostat' with pid 57
+2025-07-07 15:48:18,949 INFO exited: collect_netstat (exit status 1; not expected)
+2025-07-07 15:48:19,114 INFO spawned: 'collect_netstat' with pid 58
+2025-07-07 15:48:19,118 INFO success: collect_process entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:19,124 INFO exited: collect_vmstat (exit status 1; not expected)
+2025-07-07 15:48:19,131 INFO spawned: 'collect_vmstat' with pid 59
+2025-07-07 15:48:19,373 INFO exited: collect_process (exit status 1; not expected)
+2025-07-07 15:48:19,926 INFO spawned: 'collect_process' with pid 61
+2025-07-07 15:48:19,929 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:19,929 INFO success: start_consumer entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:20,004 INFO success: collect_iostat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:20,142 INFO success: collect_netstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:20,145 INFO success: collect_vmstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:20,165 INFO exited: start_consumer (exit status 1; not expected)
+2025-07-07 15:48:20,211 INFO spawned: 'start_consumer' with pid 62
+2025-07-07 15:48:20,424 INFO exited: collect_iostat (exit status 1; not expected)
+2025-07-07 15:48:20,426 INFO exited: collect_vmstat (exit status 1; not expected)
+2025-07-07 15:48:20,456 INFO spawned: 'collect_iostat' with pid 63
+2025-07-07 15:48:20,467 INFO spawned: 'collect_vmstat' with pid 64
+2025-07-07 15:48:20,470 INFO exited: collect_netstat (exit status 1; not expected)
+2025-07-07 15:48:20,548 INFO spawned: 'collect_netstat' with pid 65
+2025-07-07 15:48:20,678 INFO exited: gunicorn (exit status 3; not expected)
+2025-07-07 15:48:20,925 INFO success: collect_process entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:20,931 INFO spawned: 'gunicorn' with pid 66
+2025-07-07 15:48:21,196 INFO success: start_consumer entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:21,199 INFO exited: collect_process (exit status 1; not expected)
+2025-07-07 15:48:21,210 INFO spawned: 'collect_process' with pid 67
+2025-07-07 15:48:21,452 INFO success: collect_iostat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:21,506 INFO success: collect_vmstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:21,508 INFO exited: start_consumer (exit status 1; not expected)
+2025-07-07 15:48:21,553 INFO success: collect_netstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:21,564 INFO spawned: 'start_consumer' with pid 68
+2025-07-07 15:48:21,685 INFO exited: collect_vmstat (exit status 1; not expected)
+2025-07-07 15:48:21,715 INFO spawned: 'collect_vmstat' with pid 70
+2025-07-07 15:48:21,719 INFO exited: collect_iostat (exit status 1; not expected)
+2025-07-07 15:48:21,864 INFO spawned: 'collect_iostat' with pid 71
+2025-07-07 15:48:21,870 INFO exited: collect_netstat (exit status 1; not expected)
+2025-07-07 15:48:22,274 INFO spawned: 'collect_netstat' with pid 72
+2025-07-07 15:48:22,278 INFO success: collect_process entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:22,279 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:22,536 INFO exited: collect_process (exit status 1; not expected)
+2025-07-07 15:48:22,610 INFO spawned: 'collect_process' with pid 73
+2025-07-07 15:48:22,612 INFO success: start_consumer entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:22,734 INFO success: collect_vmstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:22,915 INFO success: collect_iostat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:22,928 INFO exited: start_consumer (exit status 1; not expected)
+2025-07-07 15:48:22,940 INFO spawned: 'start_consumer' with pid 74
+2025-07-07 15:48:23,029 INFO exited: collect_vmstat (exit status 1; not expected)
+2025-07-07 15:48:23,140 INFO spawned: 'collect_vmstat' with pid 75
+2025-07-07 15:48:23,146 INFO exited: gunicorn (exit status 3; not expected)
+2025-07-07 15:48:23,218 INFO spawned: 'gunicorn' with pid 76
+2025-07-07 15:48:23,220 INFO exited: collect_iostat (exit status 1; not expected)
+2025-07-07 15:48:23,340 INFO spawned: 'collect_iostat' with pid 77
+2025-07-07 15:48:23,342 INFO success: collect_netstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:23,610 INFO success: collect_process entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:23,618 INFO exited: collect_netstat (exit status 1; not expected)
+2025-07-07 15:48:23,687 INFO spawned: 'collect_netstat' with pid 78
+2025-07-07 15:48:23,939 INFO success: start_consumer entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:23,939 INFO exited: collect_process (exit status 1; not expected)
+2025-07-07 15:48:23,950 INFO spawned: 'collect_process' with pid 80
+2025-07-07 15:48:24,346 INFO success: collect_iostat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:24,356 INFO success: collect_vmstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:24,360 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:24,363 INFO exited: start_consumer (exit status 1; not expected)
+2025-07-07 15:48:24,374 INFO spawned: 'start_consumer' with pid 81
+2025-07-07 15:48:24,722 INFO success: collect_netstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:24,723 INFO exited: collect_vmstat (exit status 1; not expected)
+2025-07-07 15:48:24,817 INFO spawned: 'collect_vmstat' with pid 82
+2025-07-07 15:48:24,830 INFO exited: collect_iostat (exit status 1; not expected)
+2025-07-07 15:48:24,899 INFO spawned: 'collect_iostat' with pid 83
+2025-07-07 15:48:25,165 INFO success: collect_process entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:25,170 INFO exited: collect_netstat (exit status 1; not expected)
+2025-07-07 15:48:25,184 INFO spawned: 'collect_netstat' with pid 84
+2025-07-07 15:48:25,504 INFO success: start_consumer entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:25,508 INFO exited: collect_process (exit status 1; not expected)
+2025-07-07 15:48:25,519 INFO spawned: 'collect_process' with pid 85
+2025-07-07 15:48:25,708 INFO exited: gunicorn (exit status 3; not expected)
+2025-07-07 15:48:25,733 INFO spawned: 'gunicorn' with pid 86
+2025-07-07 15:48:26,032 INFO success: collect_iostat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:26,033 INFO success: collect_vmstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:26,037 INFO exited: start_consumer (exit status 1; not expected)
+2025-07-07 15:48:26,047 INFO spawned: 'start_consumer' with pid 87
+2025-07-07 15:48:26,182 INFO success: collect_netstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:26,522 INFO success: collect_process entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:26,584 INFO exited: collect_vmstat (exit status 1; not expected)
+2025-07-07 15:48:26,587 INFO exited: collect_iostat (exit status 1; not expected)
+2025-07-07 15:48:26,732 INFO spawned: 'collect_iostat' with pid 89
+2025-07-07 15:48:26,746 INFO spawned: 'collect_vmstat' with pid 90
+2025-07-07 15:48:26,749 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:27,073 INFO success: start_consumer entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:27,076 INFO exited: collect_netstat (exit status 1; not expected)
+2025-07-07 15:48:27,176 INFO spawned: 'collect_netstat' with pid 91
+2025-07-07 15:48:27,184 INFO exited: collect_process (exit status 1; not expected)
+2025-07-07 15:48:27,395 INFO spawned: 'collect_process' with pid 92
+2025-07-07 15:48:27,728 INFO exited: start_consumer (exit status 1; not expected)
+2025-07-07 15:48:27,887 INFO success: collect_iostat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:27,888 INFO success: collect_vmstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:27,912 INFO spawned: 'start_consumer' with pid 93
+2025-07-07 15:48:28,178 INFO success: collect_netstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:28,416 INFO success: collect_process entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:28,422 INFO exited: collect_iostat (exit status 1; not expected)
+2025-07-07 15:48:28,439 INFO spawned: 'collect_iostat' with pid 94
+2025-07-07 15:48:28,450 INFO exited: gunicorn (exit status 3; not expected)
+2025-07-07 15:48:28,459 INFO spawned: 'gunicorn' with pid 95
+2025-07-07 15:48:28,571 INFO exited: collect_vmstat (exit status 1; not expected)
+2025-07-07 15:48:28,798 INFO spawned: 'collect_vmstat' with pid 96
+2025-07-07 15:48:28,804 INFO exited: collect_netstat (exit status 1; not expected)
+2025-07-07 15:48:28,825 INFO spawned: 'collect_netstat' with pid 97
+2025-07-07 15:48:29,185 INFO success: start_consumer entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:29,191 INFO exited: collect_process (exit status 1; not expected)
+2025-07-07 15:48:29,208 INFO spawned: 'collect_process' with pid 98
+2025-07-07 15:48:29,560 INFO success: collect_iostat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:29,563 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:29,566 INFO exited: start_consumer (exit status 1; not expected)
+2025-07-07 15:48:30,008 INFO success: collect_netstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:30,012 INFO success: collect_vmstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:30,020 INFO spawned: 'start_consumer' with pid 100
+2025-07-07 15:48:30,288 INFO success: collect_process entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:30,290 INFO exited: collect_iostat (exit status 1; not expected)
+2025-07-07 15:48:30,328 INFO spawned: 'collect_iostat' with pid 101
+2025-07-07 15:48:30,625 INFO exited: collect_vmstat (exit status 1; not expected)
+2025-07-07 15:48:30,627 INFO exited: collect_netstat (exit status 1; not expected)
+2025-07-07 15:48:30,649 INFO spawned: 'collect_netstat' with pid 102
+2025-07-07 15:48:30,656 INFO spawned: 'collect_vmstat' with pid 103
+2025-07-07 15:48:30,934 INFO exited: collect_process (exit status 1; not expected)
+2025-07-07 15:48:31,001 INFO spawned: 'collect_process' with pid 104
+2025-07-07 15:48:31,222 INFO success: start_consumer entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:31,233 INFO exited: gunicorn (exit status 3; not expected)
+2025-07-07 15:48:31,306 INFO spawned: 'gunicorn' with pid 105
+2025-07-07 15:48:31,320 INFO success: collect_iostat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:31,690 INFO success: collect_netstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:31,691 INFO success: collect_vmstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:31,692 INFO exited: start_consumer (exit status 1; not expected)
+2025-07-07 15:48:31,945 INFO spawned: 'start_consumer' with pid 106
+2025-07-07 15:48:31,951 INFO exited: collect_iostat (exit status 1; not expected)
+2025-07-07 15:48:31,997 INFO spawned: 'collect_iostat' with pid 107
+2025-07-07 15:48:32,012 INFO success: collect_process entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:32,340 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:32,343 INFO exited: collect_netstat (exit status 1; not expected)
+2025-07-07 15:48:32,415 INFO spawned: 'collect_netstat' with pid 109
+2025-07-07 15:48:32,428 INFO exited: collect_vmstat (exit status 1; not expected)
+2025-07-07 15:48:32,662 INFO spawned: 'collect_vmstat' with pid 110
+2025-07-07 15:48:32,910 INFO exited: collect_process (exit status 1; not expected)
+2025-07-07 15:48:33,197 INFO success: collect_iostat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:33,202 INFO spawned: 'collect_process' with pid 111
+2025-07-07 15:48:33,204 INFO success: start_consumer entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:33,517 INFO success: collect_netstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:33,518 INFO exited: start_consumer (exit status 1; not expected)
+2025-07-07 15:48:33,566 INFO spawned: 'start_consumer' with pid 112
+2025-07-07 15:48:33,574 INFO exited: collect_iostat (exit status 1; not expected)
+2025-07-07 15:48:33,651 INFO spawned: 'collect_iostat' with pid 113
+2025-07-07 15:48:33,657 INFO success: collect_vmstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:33,824 INFO exited: gunicorn (exit status 3; not expected)
+2025-07-07 15:48:33,833 INFO spawned: 'gunicorn' with pid 114
+2025-07-07 15:48:33,981 INFO exited: collect_netstat (exit status 1; not expected)
+2025-07-07 15:48:34,065 INFO spawned: 'collect_netstat' with pid 115
+2025-07-07 15:48:34,069 INFO exited: collect_vmstat (exit status 1; not expected)
+2025-07-07 15:48:34,357 INFO success: collect_process entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:34,371 INFO spawned: 'collect_vmstat' with pid 116
+2025-07-07 15:48:34,595 INFO success: start_consumer entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:34,620 INFO exited: collect_process (exit status 1; not expected)
+2025-07-07 15:48:34,679 INFO success: collect_iostat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:34,689 INFO spawned: 'collect_process' with pid 118
+2025-07-07 15:48:34,964 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:34,965 INFO exited: start_consumer (exit status 1; not expected)
+2025-07-07 15:48:34,992 INFO spawned: 'start_consumer' with pid 119
+2025-07-07 15:48:34,996 INFO exited: collect_iostat (exit status 1; not expected)
+2025-07-07 15:48:35,268 INFO spawned: 'collect_iostat' with pid 120
+2025-07-07 15:48:35,284 INFO success: collect_netstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:35,494 INFO success: collect_vmstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:35,531 INFO exited: collect_netstat (exit status 1; not expected)
+2025-07-07 15:48:35,596 INFO spawned: 'collect_netstat' with pid 121
+2025-07-07 15:48:35,751 INFO success: collect_process entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:35,753 INFO exited: collect_vmstat (exit status 1; not expected)
+2025-07-07 15:48:35,829 INFO spawned: 'collect_vmstat' with pid 122
+2025-07-07 15:48:36,071 INFO success: start_consumer entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:36,072 INFO exited: gunicorn (exit status 3; not expected)
+2025-07-07 15:48:36,105 INFO spawned: 'gunicorn' with pid 123
+2025-07-07 15:48:36,108 INFO exited: collect_process (exit status 1; not expected)
+2025-07-07 15:48:36,175 INFO spawned: 'collect_process' with pid 124
+2025-07-07 15:48:36,404 INFO success: collect_iostat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:36,523 INFO exited: start_consumer (exit status 1; not expected)
+2025-07-07 15:48:36,646 INFO success: collect_netstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:36,676 INFO spawned: 'start_consumer' with pid 125
+2025-07-07 15:48:36,691 INFO exited: collect_iostat (exit status 1; not expected)
+2025-07-07 15:48:36,712 INFO spawned: 'collect_iostat' with pid 126
+2025-07-07 15:48:36,851 INFO success: collect_vmstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:37,002 INFO exited: collect_netstat (exit status 1; not expected)
+2025-07-07 15:48:37,018 INFO spawned: 'collect_netstat' with pid 128
+2025-07-07 15:48:37,263 INFO success: collect_process entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:37,265 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:37,266 INFO exited: collect_vmstat (exit status 1; not expected)
+2025-07-07 15:48:37,401 INFO spawned: 'collect_vmstat' with pid 129
+2025-07-07 15:48:37,676 INFO success: start_consumer entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:37,677 INFO exited: collect_process (exit status 1; not expected)
+2025-07-07 15:48:37,770 INFO success: collect_iostat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:37,777 INFO spawned: 'collect_process' with pid 130
+2025-07-07 15:48:38,079 INFO success: collect_netstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:38,101 INFO exited: start_consumer (exit status 1; not expected)
+2025-07-07 15:48:38,115 INFO spawned: 'start_consumer' with pid 131
+2025-07-07 15:48:38,121 INFO exited: collect_iostat (exit status 1; not expected)
+2025-07-07 15:48:38,131 INFO spawned: 'collect_iostat' with pid 132
+2025-07-07 15:48:38,298 INFO exited: gunicorn (exit status 3; not expected)
+2025-07-07 15:48:38,344 INFO spawned: 'gunicorn' with pid 133
+2025-07-07 15:48:38,347 INFO exited: collect_netstat (exit status 1; not expected)
+2025-07-07 15:48:38,356 INFO spawned: 'collect_netstat' with pid 134
+2025-07-07 15:48:38,529 INFO success: collect_vmstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:38,748 INFO exited: collect_vmstat (exit status 1; not expected)
+2025-07-07 15:48:38,795 INFO success: collect_process entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:38,801 INFO spawned: 'collect_vmstat' with pid 135
+2025-07-07 15:48:39,039 INFO exited: collect_process (exit status 1; not expected)
+2025-07-07 15:48:39,046 INFO spawned: 'collect_process' with pid 137
+2025-07-07 15:48:39,263 INFO success: collect_iostat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:39,264 INFO success: start_consumer entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:39,264 INFO exited: start_consumer (exit status 1; not expected)
+2025-07-07 15:48:39,275 INFO spawned: 'start_consumer' with pid 138
+2025-07-07 15:48:39,277 INFO exited: collect_iostat (exit status 1; not expected)
+2025-07-07 15:48:39,298 INFO spawned: 'collect_iostat' with pid 139
+2025-07-07 15:48:39,548 INFO success: collect_netstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:39,549 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:39,550 INFO exited: collect_netstat (exit status 1; not expected)
+2025-07-07 15:48:39,784 INFO spawned: 'collect_netstat' with pid 140
+2025-07-07 15:48:39,796 INFO success: collect_vmstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:40,090 INFO success: collect_process entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:40,119 INFO exited: collect_vmstat (exit status 1; not expected)
+2025-07-07 15:48:40,162 INFO spawned: 'collect_vmstat' with pid 141
+2025-07-07 15:48:40,357 INFO success: collect_iostat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:40,358 INFO success: start_consumer entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:40,490 INFO exited: collect_process (exit status 1; not expected)
+2025-07-07 15:48:40,503 INFO spawned: 'collect_process' with pid 142
+2025-07-07 15:48:40,635 INFO exited: gunicorn (exit status 3; not expected)
+2025-07-07 15:48:40,670 INFO spawned: 'gunicorn' with pid 143
+2025-07-07 15:48:40,674 INFO exited: start_consumer (exit status 1; not expected)
+2025-07-07 15:48:40,754 INFO spawned: 'start_consumer' with pid 144
+2025-07-07 15:48:40,756 INFO exited: collect_iostat (exit status 1; not expected)
+2025-07-07 15:48:40,769 INFO spawned: 'collect_iostat' with pid 145
+2025-07-07 15:48:41,138 INFO success: collect_netstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:41,150 INFO success: collect_vmstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:41,392 INFO exited: collect_netstat (exit status 1; not expected)
+2025-07-07 15:48:41,496 INFO spawned: 'collect_netstat' with pid 147
+2025-07-07 15:48:41,500 INFO success: collect_process entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:41,597 INFO exited: collect_vmstat (exit status 1; not expected)
+2025-07-07 15:48:41,662 INFO spawned: 'collect_vmstat' with pid 148
+2025-07-07 15:48:41,672 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:41,723 INFO exited: collect_process (exit status 1; not expected)
+2025-07-07 15:48:41,737 INFO spawned: 'collect_process' with pid 149
+2025-07-07 15:48:41,931 INFO success: collect_iostat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:41,933 INFO success: start_consumer entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:41,940 INFO exited: start_consumer (exit status 1; not expected)
+2025-07-07 15:48:41,998 INFO spawned: 'start_consumer' with pid 150
+2025-07-07 15:48:42,002 INFO exited: collect_iostat (exit status 1; not expected)
+2025-07-07 15:48:42,347 INFO spawned: 'collect_iostat' with pid 151
+2025-07-07 15:48:42,553 INFO success: collect_netstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:42,669 INFO success: collect_vmstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:42,732 INFO success: collect_process entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:42,844 INFO exited: collect_netstat (exit status 1; not expected)
+2025-07-07 15:48:42,898 INFO spawned: 'collect_netstat' with pid 152
+2025-07-07 15:48:42,908 INFO exited: gunicorn (exit status 3; not expected)
+2025-07-07 15:48:43,039 INFO spawned: 'gunicorn' with pid 153
+2025-07-07 15:48:43,041 INFO success: start_consumer entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:43,043 INFO exited: collect_vmstat (exit status 1; not expected)
+2025-07-07 15:48:43,107 INFO spawned: 'collect_vmstat' with pid 154
+2025-07-07 15:48:43,111 INFO exited: collect_process (exit status 1; not expected)
+2025-07-07 15:48:43,124 INFO spawned: 'collect_process' with pid 155
+2025-07-07 15:48:43,406 INFO success: collect_iostat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:43,408 INFO exited: start_consumer (exit status 1; not expected)
+2025-07-07 15:48:43,474 INFO spawned: 'start_consumer' with pid 156
+2025-07-07 15:48:43,732 INFO exited: collect_iostat (exit status 1; not expected)
+2025-07-07 15:48:43,745 INFO spawned: 'collect_iostat' with pid 158
+2025-07-07 15:48:43,941 INFO success: collect_netstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:44,103 INFO success: collect_vmstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:44,104 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:44,127 INFO success: collect_process entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:44,222 INFO exited: collect_netstat (exit status 1; not expected)
+2025-07-07 15:48:44,382 INFO spawned: 'collect_netstat' with pid 159
+2025-07-07 15:48:44,384 INFO exited: collect_vmstat (exit status 1; not expected)
+2025-07-07 15:48:44,397 INFO spawned: 'collect_vmstat' with pid 160
+2025-07-07 15:48:44,399 INFO exited: collect_process (exit status 1; not expected)
+2025-07-07 15:48:44,496 INFO spawned: 'collect_process' with pid 161
+2025-07-07 15:48:44,498 INFO success: start_consumer entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:44,750 INFO success: collect_iostat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:44,751 INFO exited: start_consumer (exit status 1; not expected)
+2025-07-07 15:48:44,916 INFO spawned: 'start_consumer' with pid 162
+2025-07-07 15:48:44,919 INFO exited: collect_iostat (exit status 1; not expected)
+2025-07-07 15:48:44,928 INFO spawned: 'collect_iostat' with pid 163
+2025-07-07 15:48:45,153 INFO exited: gunicorn (exit status 3; not expected)
+2025-07-07 15:48:45,400 INFO success: collect_netstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:45,400 INFO success: collect_vmstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:45,405 INFO spawned: 'gunicorn' with pid 164
+2025-07-07 15:48:45,542 INFO success: collect_process entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:45,767 INFO exited: collect_netstat (exit status 1; not expected)
+2025-07-07 15:48:45,880 INFO spawned: 'collect_netstat' with pid 165
+2025-07-07 15:48:45,882 INFO exited: collect_vmstat (exit status 1; not expected)
+2025-07-07 15:48:45,906 INFO spawned: 'collect_vmstat' with pid 166
+2025-07-07 15:48:45,909 INFO exited: collect_process (exit status 1; not expected)
+2025-07-07 15:48:46,041 INFO success: collect_iostat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:46,046 INFO spawned: 'collect_process' with pid 167
+2025-07-07 15:48:46,048 INFO success: start_consumer entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:46,315 INFO exited: start_consumer (exit status 1; not expected)
+2025-07-07 15:48:46,392 INFO spawned: 'start_consumer' with pid 169
+2025-07-07 15:48:46,393 INFO exited: collect_iostat (exit status 1; not expected)
+2025-07-07 15:48:46,821 INFO spawned: 'collect_iostat' with pid 170
+2025-07-07 15:48:46,824 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:46,881 INFO success: collect_netstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:46,903 INFO success: collect_vmstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:47,056 INFO success: collect_process entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:47,069 INFO exited: collect_netstat (exit status 1; not expected)
+2025-07-07 15:48:47,154 INFO spawned: 'collect_netstat' with pid 171
+2025-07-07 15:48:47,156 INFO exited: collect_vmstat (exit status 1; not expected)
+2025-07-07 15:48:47,163 INFO spawned: 'collect_vmstat' with pid 172
+2025-07-07 15:48:47,261 INFO exited: collect_process (exit status 1; not expected)
+2025-07-07 15:48:47,393 INFO spawned: 'collect_process' with pid 173
+2025-07-07 15:48:47,395 INFO success: start_consumer entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:47,602 INFO exited: gunicorn (exit status 3; not expected)
+2025-07-07 15:48:47,690 INFO spawned: 'gunicorn' with pid 174
+2025-07-07 15:48:47,692 INFO exited: start_consumer (exit status 1; not expected)
+2025-07-07 15:48:47,878 INFO success: collect_iostat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:47,882 INFO spawned: 'start_consumer' with pid 175
+2025-07-07 15:48:48,079 INFO exited: collect_iostat (exit status 1; not expected)
+2025-07-07 15:48:48,122 INFO spawned: 'collect_iostat' with pid 176
+2025-07-07 15:48:48,145 INFO success: collect_netstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:48,166 INFO success: collect_vmstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:48,380 INFO exited: collect_vmstat (exit status 1; not expected)
+2025-07-07 15:48:48,392 INFO spawned: 'collect_vmstat' with pid 178
+2025-07-07 15:48:48,396 INFO success: collect_process entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:48,414 INFO exited: collect_netstat (exit status 1; not expected)
+2025-07-07 15:48:48,420 INFO spawned: 'collect_netstat' with pid 179
+2025-07-07 15:48:48,594 INFO exited: collect_process (exit status 1; not expected)
+2025-07-07 15:48:48,773 INFO spawned: 'collect_process' with pid 180
+2025-07-07 15:48:48,776 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:49,018 INFO success: start_consumer entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:49,019 INFO exited: start_consumer (exit status 1; not expected)
+2025-07-07 15:48:49,056 INFO spawned: 'start_consumer' with pid 181
+2025-07-07 15:48:49,266 INFO success: collect_iostat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:49,267 INFO exited: collect_iostat (exit status 1; not expected)
+2025-07-07 15:48:49,273 INFO spawned: 'collect_iostat' with pid 182
+2025-07-07 15:48:49,496 INFO success: collect_netstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:49,498 INFO success: collect_vmstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:49,499 INFO exited: collect_vmstat (exit status 1; not expected)
+2025-07-07 15:48:49,510 INFO spawned: 'collect_vmstat' with pid 183
+2025-07-07 15:48:49,520 INFO exited: gunicorn (exit status 3; not expected)
+2025-07-07 15:48:49,530 INFO spawned: 'gunicorn' with pid 184
+2025-07-07 15:48:49,532 INFO exited: collect_netstat (exit status 1; not expected)
+2025-07-07 15:48:49,696 INFO spawned: 'collect_netstat' with pid 185
+2025-07-07 15:48:49,891 INFO success: collect_process entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:49,892 INFO exited: collect_process (exit status 1; not expected)
+2025-07-07 15:48:49,931 INFO spawned: 'collect_process' with pid 186
+2025-07-07 15:48:50,108 INFO success: start_consumer entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:50,165 INFO exited: start_consumer (exit status 1; not expected)
+2025-07-07 15:48:50,174 INFO spawned: 'start_consumer' with pid 188
+2025-07-07 15:48:50,353 INFO success: collect_iostat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:50,354 INFO exited: collect_iostat (exit status 1; not expected)
+2025-07-07 15:48:50,378 INFO spawned: 'collect_iostat' with pid 189
+2025-07-07 15:48:50,531 INFO success: collect_vmstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:50,531 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:50,559 INFO exited: collect_vmstat (exit status 1; not expected)
+2025-07-07 15:48:50,750 INFO success: collect_netstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:50,755 INFO spawned: 'collect_vmstat' with pid 190
+2025-07-07 15:48:50,758 INFO exited: collect_netstat (exit status 1; not expected)
+2025-07-07 15:48:50,771 INFO spawned: 'collect_netstat' with pid 191
+2025-07-07 15:48:51,028 INFO success: collect_process entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:51,029 INFO exited: collect_process (exit status 1; not expected)
+2025-07-07 15:48:51,059 INFO spawned: 'collect_process' with pid 192
+2025-07-07 15:48:51,199 INFO success: start_consumer entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:51,292 INFO exited: start_consumer (exit status 1; not expected)
+2025-07-07 15:48:51,338 INFO spawned: 'start_consumer' with pid 193
+2025-07-07 15:48:51,340 INFO exited: gunicorn (exit status 3; not expected)
+2025-07-07 15:48:51,449 INFO success: collect_iostat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:51,454 INFO spawned: 'gunicorn' with pid 194
+2025-07-07 15:48:51,457 INFO exited: collect_iostat (exit status 1; not expected)
+2025-07-07 15:48:51,604 INFO spawned: 'collect_iostat' with pid 195
+2025-07-07 15:48:51,856 INFO success: collect_netstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:51,857 INFO success: collect_vmstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:51,858 INFO exited: collect_vmstat (exit status 1; not expected)
+2025-07-07 15:48:51,909 INFO spawned: 'collect_vmstat' with pid 196
+2025-07-07 15:48:51,913 INFO exited: collect_netstat (exit status 1; not expected)
+2025-07-07 15:48:51,924 INFO spawned: 'collect_netstat' with pid 197
+2025-07-07 15:48:52,071 INFO success: collect_process entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:52,127 INFO exited: collect_process (exit status 1; not expected)
+2025-07-07 15:48:52,214 INFO spawned: 'collect_process' with pid 199
+2025-07-07 15:48:52,468 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:52,469 INFO success: start_consumer entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:52,471 INFO exited: start_consumer (exit status 1; not expected)
+2025-07-07 15:48:52,564 INFO spawned: 'start_consumer' with pid 200
+2025-07-07 15:48:52,755 INFO success: collect_iostat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:52,756 INFO exited: collect_iostat (exit status 1; not expected)
+2025-07-07 15:48:52,812 INFO spawned: 'collect_iostat' with pid 201
+2025-07-07 15:48:52,943 INFO success: collect_netstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:52,944 INFO success: collect_vmstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:53,031 INFO exited: collect_vmstat (exit status 1; not expected)
+2025-07-07 15:48:53,058 INFO spawned: 'collect_vmstat' with pid 202
+2025-07-07 15:48:53,060 INFO exited: collect_netstat (exit status 1; not expected)
+2025-07-07 15:48:53,156 INFO spawned: 'collect_netstat' with pid 203
+2025-07-07 15:48:53,261 INFO success: collect_process entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:53,396 INFO exited: gunicorn (exit status 3; not expected)
+2025-07-07 15:48:53,411 INFO spawned: 'gunicorn' with pid 204
+2025-07-07 15:48:53,413 INFO exited: collect_process (exit status 1; not expected)
+2025-07-07 15:48:53,422 INFO spawned: 'collect_process' with pid 205
+2025-07-07 15:48:53,679 INFO success: start_consumer entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:53,680 INFO exited: start_consumer (exit status 1; not expected)
+2025-07-07 15:48:53,726 INFO spawned: 'start_consumer' with pid 206
+2025-07-07 15:48:53,901 INFO success: collect_iostat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:53,902 INFO exited: collect_iostat (exit status 1; not expected)
+2025-07-07 15:48:53,921 INFO spawned: 'collect_iostat' with pid 207
+2025-07-07 15:48:54,156 INFO success: collect_netstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:54,157 INFO success: collect_vmstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:54,158 INFO exited: collect_vmstat (exit status 1; not expected)
+2025-07-07 15:48:54,190 INFO spawned: 'collect_vmstat' with pid 209
+2025-07-07 15:48:54,192 INFO exited: collect_netstat (exit status 1; not expected)
+2025-07-07 15:48:54,219 INFO spawned: 'collect_netstat' with pid 210
+2025-07-07 15:48:54,477 INFO success: collect_process entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:54,478 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:54,480 INFO exited: collect_process (exit status 1; not expected)
+2025-07-07 15:48:54,564 INFO spawned: 'collect_process' with pid 211
+2025-07-07 15:48:54,750 INFO success: start_consumer entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:54,777 INFO exited: start_consumer (exit status 1; not expected)
+2025-07-07 15:48:54,822 INFO spawned: 'start_consumer' with pid 212
+2025-07-07 15:48:55,022 INFO success: collect_iostat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:55,027 INFO exited: collect_iostat (exit status 1; not expected)
+2025-07-07 15:48:55,079 INFO spawned: 'collect_iostat' with pid 213
+2025-07-07 15:48:55,159 INFO exited: gunicorn (exit status 3; not expected)
+2025-07-07 15:48:55,309 INFO success: collect_netstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:55,310 INFO success: collect_vmstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:55,314 INFO spawned: 'gunicorn' with pid 214
+2025-07-07 15:48:55,317 INFO exited: collect_vmstat (exit status 1; not expected)
+2025-07-07 15:48:55,318 INFO exited: collect_netstat (exit status 1; not expected)
+2025-07-07 15:48:55,391 INFO spawned: 'collect_netstat' with pid 215
+2025-07-07 15:48:55,398 INFO spawned: 'collect_vmstat' with pid 216
+2025-07-07 15:48:55,588 INFO success: collect_process entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:55,589 INFO exited: collect_process (exit status 1; not expected)
+2025-07-07 15:48:55,643 INFO spawned: 'collect_process' with pid 217
+2025-07-07 15:48:55,876 INFO success: start_consumer entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:55,917 INFO exited: start_consumer (exit status 1; not expected)
+2025-07-07 15:48:56,000 INFO spawned: 'start_consumer' with pid 219
+2025-07-07 15:48:56,206 INFO success: collect_iostat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:56,207 INFO exited: collect_iostat (exit status 1; not expected)
+2025-07-07 15:48:56,269 INFO spawned: 'collect_iostat' with pid 220
+2025-07-07 15:48:56,492 INFO success: collect_netstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:56,493 INFO success: collect_vmstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:56,493 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:56,495 INFO exited: collect_netstat (exit status 1; not expected)
+2025-07-07 15:48:56,504 INFO spawned: 'collect_netstat' with pid 221
+2025-07-07 15:48:56,510 INFO exited: collect_vmstat (exit status 1; not expected)
+2025-07-07 15:48:56,588 INFO spawned: 'collect_vmstat' with pid 222
+2025-07-07 15:48:56,710 INFO success: collect_process entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:56,816 INFO exited: collect_process (exit status 1; not expected)
+2025-07-07 15:48:56,825 INFO spawned: 'collect_process' with pid 223
+2025-07-07 15:48:57,077 INFO success: start_consumer entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:57,078 INFO exited: start_consumer (exit status 1; not expected)
+2025-07-07 15:48:57,120 INFO spawned: 'start_consumer' with pid 224
+2025-07-07 15:48:57,122 INFO exited: gunicorn (exit status 3; not expected)
+2025-07-07 15:48:57,160 INFO spawned: 'gunicorn' with pid 225
+2025-07-07 15:48:57,411 INFO success: collect_iostat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:57,412 INFO exited: collect_iostat (exit status 1; not expected)
+2025-07-07 15:48:57,431 INFO spawned: 'collect_iostat' with pid 226
+2025-07-07 15:48:57,504 INFO success: collect_netstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:57,622 INFO success: collect_vmstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:57,623 INFO exited: collect_netstat (exit status 1; not expected)
+2025-07-07 15:48:57,680 INFO spawned: 'collect_netstat' with pid 227
+2025-07-07 15:48:57,685 INFO exited: collect_vmstat (exit status 1; not expected)
+2025-07-07 15:48:57,692 INFO spawned: 'collect_vmstat' with pid 228
+2025-07-07 15:48:57,868 INFO success: collect_process entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:57,869 INFO exited: collect_process (exit status 1; not expected)
+2025-07-07 15:48:57,945 INFO spawned: 'collect_process' with pid 230
+2025-07-07 15:48:58,128 INFO success: start_consumer entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:58,128 INFO exited: start_consumer (exit status 1; not expected)
+2025-07-07 15:48:58,172 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:48:58,176 INFO spawned: 'start_consumer' with pid 231
+2025-07-07 15:48:58,368 INFO exited: collect_iostat (exit status 1; not expected)
+2025-07-07 15:48:58,607 INFO exited: collect_netstat (exit status 1; not expected)
+2025-07-07 15:48:58,620 INFO exited: collect_vmstat (exit status 1; not expected)
+2025-07-07 15:48:58,744 INFO exited: gunicorn (exit status 3; not expected)
+2025-07-07 15:48:58,819 INFO spawned: 'gunicorn' with pid 232
+2025-07-07 15:48:58,821 INFO exited: collect_process (exit status 1; not expected)
+2025-07-07 15:48:59,001 INFO exited: start_consumer (exit status 1; not expected)
+2025-07-07 15:48:59,559 INFO spawned: 'collect_iostat' with pid 234
+2025-07-07 15:48:59,714 INFO spawned: 'collect_netstat' with pid 235
+2025-07-07 15:48:59,722 INFO spawned: 'collect_vmstat' with pid 236
+2025-07-07 15:48:59,806 INFO exited: gunicorn (exit status 3; not expected)
+2025-07-07 15:49:00,137 INFO spawned: 'collect_process' with pid 237
+2025-07-07 15:49:00,145 INFO spawned: 'start_consumer' with pid 238
+2025-07-07 15:49:00,325 INFO exited: collect_iostat (exit status 1; not expected)
+2025-07-07 15:49:00,448 INFO exited: collect_netstat (exit status 1; not expected)
+2025-07-07 15:49:00,449 INFO exited: collect_vmstat (exit status 1; not expected)
+2025-07-07 15:49:00,794 INFO exited: start_consumer (exit status 1; not expected)
+2025-07-07 15:49:00,797 INFO exited: collect_process (exit status 1; not expected)
+2025-07-07 15:49:01,801 INFO spawned: 'gunicorn' with pid 239
+2025-07-07 15:49:02,479 INFO spawned: 'collect_iostat' with pid 241
+2025-07-07 15:49:02,485 INFO spawned: 'collect_netstat' with pid 242
+2025-07-07 15:49:02,491 INFO spawned: 'collect_vmstat' with pid 243
+2025-07-07 15:49:02,728 INFO exited: gunicorn (exit status 3; not expected)
+2025-07-07 15:49:02,985 INFO spawned: 'collect_process' with pid 244
+2025-07-07 15:49:02,993 INFO spawned: 'start_consumer' with pid 245
+2025-07-07 15:49:03,200 INFO exited: collect_netstat (exit status 1; not expected)
+2025-07-07 15:49:03,206 INFO exited: collect_vmstat (exit status 1; not expected)
+2025-07-07 15:49:03,210 INFO exited: collect_iostat (exit status 1; not expected)
+2025-07-07 15:49:03,770 INFO exited: collect_process (exit status 1; not expected)
+2025-07-07 15:49:03,786 INFO exited: start_consumer (exit status 1; not expected)
+2025-07-07 15:49:04,790 INFO spawned: 'gunicorn' with pid 246
+2025-07-07 15:49:05,826 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:49:05,913 INFO exited: gunicorn (exit status 3; not expected)
+2025-07-07 15:49:06,918 INFO spawned: 'collect_iostat' with pid 248
+2025-07-07 15:49:06,926 INFO spawned: 'collect_netstat' with pid 249
+2025-07-07 15:49:06,935 INFO spawned: 'collect_process' with pid 250
+2025-07-07 15:49:06,940 INFO spawned: 'collect_vmstat' with pid 251
+2025-07-07 15:49:06,956 INFO spawned: 'gunicorn' with pid 252
+2025-07-07 15:49:06,963 INFO spawned: 'start_consumer' with pid 253
+2025-07-07 15:49:07,882 INFO exited: collect_iostat (exit status 1; not expected)
+2025-07-07 15:49:07,902 INFO gave up: collect_iostat entered FATAL state, too many start retries too quickly
+2025-07-07 15:49:07,903 INFO exited: collect_process (exit status 1; not expected)
+2025-07-07 15:49:07,918 INFO gave up: collect_process entered FATAL state, too many start retries too quickly
+2025-07-07 15:49:07,918 INFO exited: collect_vmstat (exit status 1; not expected)
+2025-07-07 15:49:07,924 INFO success: collect_netstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:49:07,925 INFO gave up: collect_vmstat entered FATAL state, too many start retries too quickly
+2025-07-07 15:49:07,925 INFO exited: collect_netstat (exit status 1; not expected)
+2025-07-07 15:49:07,926 INFO exited: start_consumer (exit status 1; not expected)
+2025-07-07 15:49:07,931 INFO spawned: 'collect_netstat' with pid 255
+2025-07-07 15:49:07,933 INFO gave up: start_consumer entered FATAL state, too many start retries too quickly
+2025-07-07 15:49:08,110 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:49:08,388 INFO exited: gunicorn (exit status 3; not expected)
+2025-07-07 15:49:08,520 INFO spawned: 'gunicorn' with pid 256
+2025-07-07 15:49:08,656 INFO exited: collect_netstat (exit status 1; not expected)
+2025-07-07 15:49:09,487 INFO exited: gunicorn (exit status 3; not expected)
+2025-07-07 15:49:10,490 INFO spawned: 'collect_netstat' with pid 258
+2025-07-07 15:49:10,495 INFO spawned: 'gunicorn' with pid 259
+2025-07-07 15:49:11,197 INFO exited: collect_netstat (exit status 1; not expected)
+2025-07-07 15:49:11,519 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:49:11,578 INFO exited: gunicorn (exit status 3; not expected)
+2025-07-07 15:49:12,583 INFO spawned: 'gunicorn' with pid 261
+2025-07-07 15:49:13,669 INFO spawned: 'collect_netstat' with pid 263
+2025-07-07 15:49:13,671 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:49:13,948 INFO exited: gunicorn (exit status 3; not expected)
+2025-07-07 15:49:13,954 INFO spawned: 'gunicorn' with pid 264
+2025-07-07 15:49:14,606 INFO exited: collect_netstat (exit status 1; not expected)
+2025-07-07 15:49:15,080 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:49:15,361 INFO exited: gunicorn (exit status 3; not expected)
+2025-07-07 15:49:16,364 INFO spawned: 'gunicorn' with pid 266
+2025-07-07 15:49:17,362 INFO exited: gunicorn (exit status 3; not expected)
+2025-07-07 15:49:18,366 INFO spawned: 'collect_netstat' with pid 268
+2025-07-07 15:49:18,371 INFO spawned: 'gunicorn' with pid 269
+2025-07-07 15:49:18,373 WARN received SIGTERM indicating exit request
+2025-07-07 15:49:18,374 INFO waiting for collect_netstat, gunicorn to die
+2025-07-07 15:49:19,101 INFO exited: collect_netstat (exit status 1; not expected)
+2025-07-07 15:49:19,269 INFO gave up: collect_netstat entered FATAL state, too many start retries too quickly
+2025-07-07 15:49:19,514 INFO stopped: gunicorn (exit status 1)
+2025-07-07 15:50:58,854 INFO Set uid to user 0 succeeded
+2025-07-07 15:50:58,893 INFO supervisord started with pid 1
+2025-07-07 15:50:59,897 INFO spawned: 'collect_iostat' with pid 7
+2025-07-07 15:50:59,904 INFO spawned: 'collect_netstat' with pid 8
+2025-07-07 15:50:59,909 INFO spawned: 'collect_process' with pid 9
+2025-07-07 15:50:59,914 INFO spawned: 'collect_vmstat' with pid 10
+2025-07-07 15:50:59,923 INFO spawned: 'gunicorn' with pid 11
+2025-07-07 15:50:59,933 INFO spawned: 'start_consumer' with pid 12
+2025-07-07 15:51:00,948 INFO success: collect_iostat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:51:00,949 INFO success: collect_netstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:51:00,952 INFO success: collect_process entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:51:00,952 INFO success: collect_vmstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:51:00,953 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:51:00,954 INFO success: start_consumer entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:51:00,955 INFO exited: collect_iostat (exit status 1; not expected)
+2025-07-07 15:51:00,955 INFO exited: collect_netstat (exit status 1; not expected)
+2025-07-07 15:51:00,956 INFO exited: collect_process (exit status 1; not expected)
+2025-07-07 15:51:00,957 INFO exited: collect_vmstat (exit status 1; not expected)
+2025-07-07 15:51:00,958 INFO exited: start_consumer (exit status 1; not expected)
+2025-07-07 15:51:00,962 INFO spawned: 'collect_iostat' with pid 14
+2025-07-07 15:51:00,967 INFO spawned: 'collect_netstat' with pid 15
+2025-07-07 15:51:00,972 INFO spawned: 'collect_process' with pid 16
+2025-07-07 15:51:00,978 INFO spawned: 'collect_vmstat' with pid 17
+2025-07-07 15:51:00,985 INFO spawned: 'start_consumer' with pid 18
+2025-07-07 15:51:01,667 INFO exited: gunicorn (exit status 3; not expected)
+2025-07-07 15:51:01,812 INFO spawned: 'gunicorn' with pid 19
+2025-07-07 15:51:01,963 INFO success: collect_iostat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:51:01,964 INFO success: collect_netstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:51:02,178 INFO success: collect_process entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:51:02,182 INFO success: collect_vmstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:51:02,184 INFO success: start_consumer entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:51:02,186 INFO exited: collect_netstat (exit status 1; not expected)
+2025-07-07 15:51:02,187 INFO exited: collect_process (exit status 1; not expected)
+2025-07-07 15:51:02,188 INFO exited: collect_iostat (exit status 1; not expected)
+2025-07-07 15:51:02,189 INFO exited: collect_vmstat (exit status 1; not expected)
+2025-07-07 15:51:02,194 INFO spawned: 'collect_iostat' with pid 20
+2025-07-07 15:51:02,203 INFO spawned: 'collect_netstat' with pid 21
+2025-07-07 15:51:02,217 INFO spawned: 'collect_process' with pid 22
+2025-07-07 15:51:02,227 INFO spawned: 'collect_vmstat' with pid 23
+2025-07-07 15:51:02,299 INFO exited: start_consumer (exit status 1; not expected)
+2025-07-07 15:51:02,625 INFO spawned: 'start_consumer' with pid 24
+2025-07-07 15:51:03,369 INFO success: collect_iostat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:51:03,371 INFO success: collect_netstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:51:03,372 INFO success: collect_process entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:51:03,373 INFO success: collect_vmstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:51:03,374 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:51:03,725 INFO success: start_consumer entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:51:03,778 INFO exited: collect_vmstat (exit status 1; not expected)
+2025-07-07 15:51:03,816 INFO spawned: 'collect_vmstat' with pid 26
+2025-07-07 15:51:03,819 INFO exited: collect_iostat (exit status 1; not expected)
+2025-07-07 15:51:03,834 INFO spawned: 'collect_iostat' with pid 27
+2025-07-07 15:51:03,841 INFO exited: collect_netstat (exit status 1; not expected)
+2025-07-07 15:51:03,855 INFO spawned: 'collect_netstat' with pid 28
+2025-07-07 15:51:03,859 INFO exited: collect_process (exit status 1; not expected)
+2025-07-07 15:51:03,870 INFO spawned: 'collect_process' with pid 29
+2025-07-07 15:51:04,255 INFO exited: start_consumer (exit status 1; not expected)
+2025-07-07 15:51:04,519 INFO spawned: 'start_consumer' with pid 30
+2025-07-07 15:51:04,525 INFO exited: gunicorn (exit status 3; not expected)
+2025-07-07 15:51:05,249 INFO success: collect_iostat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:51:05,252 INFO success: collect_netstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:51:05,253 INFO success: collect_process entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:51:05,254 INFO success: collect_vmstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:51:05,266 INFO spawned: 'gunicorn' with pid 31
+2025-07-07 15:51:05,755 INFO success: start_consumer entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:51:05,757 INFO exited: collect_netstat (exit status 1; not expected)
+2025-07-07 15:51:05,779 INFO spawned: 'collect_netstat' with pid 32
+2025-07-07 15:51:05,786 INFO exited: collect_vmstat (exit status 1; not expected)
+2025-07-07 15:51:05,789 INFO exited: collect_iostat (exit status 1; not expected)
+2025-07-07 15:51:05,800 INFO spawned: 'collect_iostat' with pid 33
+2025-07-07 15:51:05,814 INFO spawned: 'collect_vmstat' with pid 34
+2025-07-07 15:51:05,890 INFO exited: collect_process (exit status 1; not expected)
+2025-07-07 15:51:06,086 INFO spawned: 'collect_process' with pid 35
+2025-07-07 15:51:06,470 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:51:06,472 INFO exited: start_consumer (exit status 1; not expected)
+2025-07-07 15:51:06,820 INFO success: collect_iostat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:51:06,821 INFO success: collect_netstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:51:06,822 INFO success: collect_vmstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:51:06,830 INFO spawned: 'start_consumer' with pid 37
+2025-07-07 15:51:07,099 INFO success: collect_process entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:51:07,204 INFO exited: collect_netstat (exit status 1; not expected)
+2025-07-07 15:51:07,273 INFO spawned: 'collect_netstat' with pid 38
+2025-07-07 15:51:07,289 INFO exited: collect_vmstat (exit status 1; not expected)
+2025-07-07 15:51:07,295 INFO exited: collect_iostat (exit status 1; not expected)
+2025-07-07 15:51:07,314 INFO spawned: 'collect_iostat' with pid 39
+2025-07-07 15:51:07,326 INFO spawned: 'collect_vmstat' with pid 40
+2025-07-07 15:51:07,557 INFO exited: collect_process (exit status 1; not expected)
+2025-07-07 15:51:07,655 INFO spawned: 'collect_process' with pid 41
+2025-07-07 15:51:07,929 INFO success: start_consumer entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:51:07,933 INFO exited: gunicorn (exit status 3; not expected)
+2025-07-07 15:51:08,045 INFO spawned: 'gunicorn' with pid 42
+2025-07-07 15:51:08,436 INFO success: collect_iostat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:51:08,437 INFO success: collect_netstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:51:08,438 INFO success: collect_vmstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:51:08,440 INFO exited: start_consumer (exit status 1; not expected)
+2025-07-07 15:51:08,478 INFO spawned: 'start_consumer' with pid 43
+2025-07-07 15:51:08,872 INFO success: collect_process entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:51:08,875 INFO exited: collect_vmstat (exit status 1; not expected)
+2025-07-07 15:51:08,885 INFO spawned: 'collect_vmstat' with pid 44
+2025-07-07 15:51:08,894 INFO exited: collect_netstat (exit status 1; not expected)
+2025-07-07 15:51:08,903 INFO spawned: 'collect_netstat' with pid 45
+2025-07-07 15:51:08,906 INFO exited: collect_iostat (exit status 1; not expected)
+2025-07-07 15:51:08,925 INFO spawned: 'collect_iostat' with pid 47
+2025-07-07 15:51:09,328 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:51:09,330 INFO exited: collect_process (exit status 1; not expected)
+2025-07-07 15:51:09,624 INFO spawned: 'collect_process' with pid 48
+2025-07-07 15:51:09,627 INFO success: start_consumer entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:51:09,903 INFO success: collect_netstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:51:09,906 INFO success: collect_vmstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:51:09,944 INFO success: collect_iostat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:51:09,947 INFO exited: start_consumer (exit status 1; not expected)
+2025-07-07 15:51:09,974 INFO spawned: 'start_consumer' with pid 49
+2025-07-07 15:51:10,342 INFO exited: collect_vmstat (exit status 1; not expected)
+2025-07-07 15:51:10,393 INFO spawned: 'collect_vmstat' with pid 50
+2025-07-07 15:51:10,395 INFO exited: collect_iostat (exit status 1; not expected)
+2025-07-07 15:51:10,410 INFO spawned: 'collect_iostat' with pid 51
+2025-07-07 15:51:10,414 INFO exited: collect_netstat (exit status 1; not expected)
+2025-07-07 15:51:10,587 INFO spawned: 'collect_netstat' with pid 52
+2025-07-07 15:51:10,589 INFO exited: gunicorn (exit status 3; not expected)
+2025-07-07 15:51:10,685 INFO success: collect_process entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:51:10,692 INFO spawned: 'gunicorn' with pid 53
+2025-07-07 15:51:11,087 INFO success: start_consumer entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:51:11,093 INFO exited: collect_process (exit status 1; not expected)
+2025-07-07 15:51:11,130 INFO spawned: 'collect_process' with pid 54
+2025-07-07 15:51:11,514 INFO success: collect_iostat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:51:11,515 INFO success: collect_vmstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:51:11,584 INFO success: collect_netstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:51:11,611 INFO exited: start_consumer (exit status 1; not expected)
+2025-07-07 15:51:11,628 INFO spawned: 'start_consumer' with pid 56
+2025-07-07 15:51:11,837 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:51:11,907 INFO exited: collect_vmstat (exit status 1; not expected)
+2025-07-07 15:51:11,955 INFO spawned: 'collect_vmstat' with pid 57
+2025-07-07 15:51:11,957 INFO exited: collect_iostat (exit status 1; not expected)
+2025-07-07 15:51:12,169 INFO spawned: 'collect_iostat' with pid 58
+2025-07-07 15:51:12,171 INFO success: collect_process entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:51:12,174 INFO exited: collect_netstat (exit status 1; not expected)
+2025-07-07 15:51:12,279 INFO spawned: 'collect_netstat' with pid 59
+2025-07-07 15:51:12,622 INFO success: start_consumer entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:51:12,625 INFO exited: collect_process (exit status 1; not expected)
+2025-07-07 15:51:12,691 INFO spawned: 'collect_process' with pid 60
+2025-07-07 15:51:13,102 INFO success: collect_vmstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:51:13,120 INFO exited: start_consumer (exit status 1; not expected)
+2025-07-07 15:51:13,139 INFO spawned: 'start_consumer' with pid 61
+2025-07-07 15:51:13,171 INFO success: collect_iostat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:51:13,383 INFO success: collect_netstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:51:13,390 INFO exited: gunicorn (exit status 3; not expected)
+2025-07-07 15:51:13,404 INFO spawned: 'gunicorn' with pid 62
+2025-07-07 15:51:13,579 INFO exited: collect_vmstat (exit status 1; not expected)
+2025-07-07 15:51:13,764 INFO success: collect_process entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:51:13,775 INFO spawned: 'collect_vmstat' with pid 63
+2025-07-07 15:51:13,780 INFO exited: collect_iostat (exit status 1; not expected)
+2025-07-07 15:51:13,798 INFO spawned: 'collect_iostat' with pid 64
+2025-07-07 15:51:13,909 INFO exited: collect_netstat (exit status 1; not expected)
+2025-07-07 15:51:13,990 INFO spawned: 'collect_netstat' with pid 65
+2025-07-07 15:51:14,188 INFO success: start_consumer entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:51:14,398 INFO exited: collect_process (exit status 1; not expected)
+2025-07-07 15:51:14,787 INFO success: collect_iostat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:51:14,797 INFO spawned: 'collect_process' with pid 67
+2025-07-07 15:51:14,800 INFO success: collect_vmstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:51:14,803 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:51:14,804 INFO exited: start_consumer (exit status 1; not expected)
+2025-07-07 15:51:15,098 INFO success: collect_netstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:51:15,104 INFO spawned: 'start_consumer' with pid 68
+2025-07-07 15:51:15,591 INFO exited: collect_iostat (exit status 1; not expected)
+2025-07-07 15:51:15,598 INFO spawned: 'collect_iostat' with pid 69
+2025-07-07 15:51:15,622 INFO exited: collect_vmstat (exit status 1; not expected)
+2025-07-07 15:51:15,845 INFO success: collect_process entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:51:15,852 INFO spawned: 'collect_vmstat' with pid 70
+2025-07-07 15:51:15,859 INFO exited: collect_netstat (exit status 1; not expected)
+2025-07-07 15:51:16,077 INFO spawned: 'collect_netstat' with pid 71
+2025-07-07 15:51:16,241 INFO success: start_consumer entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:51:16,374 INFO exited: gunicorn (exit status 3; not expected)
+2025-07-07 15:51:16,587 INFO spawned: 'gunicorn' with pid 72
+2025-07-07 15:51:16,595 INFO success: collect_iostat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:51:16,758 INFO exited: collect_process (exit status 1; not expected)
+2025-07-07 15:51:17,091 INFO success: collect_netstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:51:17,108 INFO spawned: 'collect_process' with pid 73
+2025-07-07 15:51:17,115 INFO success: collect_vmstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:51:17,165 INFO exited: start_consumer (exit status 1; not expected)
+2025-07-07 15:51:17,201 INFO spawned: 'start_consumer' with pid 74
+2025-07-07 15:51:17,752 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:51:17,786 INFO exited: collect_iostat (exit status 1; not expected)
+2025-07-07 15:51:17,813 INFO spawned: 'collect_iostat' with pid 75
+2025-07-07 15:51:18,044 INFO exited: collect_vmstat (exit status 1; not expected)
+2025-07-07 15:51:18,309 INFO success: collect_process entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:51:18,314 INFO spawned: 'collect_vmstat' with pid 77
+2025-07-07 15:51:18,316 INFO success: start_consumer entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:51:18,318 INFO exited: collect_netstat (exit status 1; not expected)
+2025-07-07 15:51:18,328 INFO spawned: 'collect_netstat' with pid 78
+2025-07-07 15:51:18,918 INFO success: collect_iostat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:51:19,573 INFO success: collect_netstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:51:19,578 INFO success: collect_vmstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:51:19,601 INFO exited: collect_process (exit status 1; not expected)
+2025-07-07 15:51:19,620 INFO spawned: 'collect_process' with pid 79
+2025-07-07 15:51:19,690 INFO exited: start_consumer (exit status 1; not expected)
+2025-07-07 15:51:20,046 INFO spawned: 'start_consumer' with pid 80
+2025-07-07 15:51:20,123 INFO exited: collect_iostat (exit status 1; not expected)
+2025-07-07 15:51:20,197 INFO spawned: 'collect_iostat' with pid 81
+2025-07-07 15:51:20,596 INFO exited: gunicorn (exit status 3; not expected)
+2025-07-07 15:51:20,651 INFO success: collect_process entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:51:20,661 INFO spawned: 'gunicorn' with pid 82
+2025-07-07 15:51:20,665 INFO exited: collect_netstat (exit status 1; not expected)
+2025-07-07 15:51:20,831 INFO spawned: 'collect_netstat' with pid 83
+2025-07-07 15:51:20,840 INFO exited: collect_vmstat (exit status 1; not expected)
+2025-07-07 15:51:21,418 INFO success: collect_iostat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:51:21,442 INFO spawned: 'collect_vmstat' with pid 84
+2025-07-07 15:51:21,445 INFO success: start_consumer entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:51:22,017 INFO success: collect_netstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:51:22,018 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:51:22,171 INFO exited: collect_process (exit status 1; not expected)
+2025-07-07 15:51:22,259 INFO spawned: 'collect_process' with pid 86
+2025-07-07 15:51:22,718 INFO success: collect_vmstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:51:22,719 INFO exited: start_consumer (exit status 1; not expected)
+2025-07-07 15:51:22,896 INFO spawned: 'start_consumer' with pid 87
+2025-07-07 15:51:22,907 INFO exited: collect_iostat (exit status 1; not expected)
+2025-07-07 15:51:22,924 INFO spawned: 'collect_iostat' with pid 88
+2025-07-07 15:51:23,933 INFO success: collect_iostat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:51:23,935 INFO success: collect_process entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:51:23,939 INFO success: start_consumer entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:51:33,622 INFO exited: collect_process (exit status 1; not expected)
+2025-07-07 15:51:33,645 INFO spawned: 'collect_process' with pid 145
+2025-07-07 15:51:33,651 INFO exited: collect_netstat (exit status 1; not expected)
+2025-07-07 15:51:33,696 INFO spawned: 'collect_netstat' with pid 146
+2025-07-07 15:51:33,699 INFO exited: collect_vmstat (exit status 1; not expected)
+2025-07-07 15:51:33,911 INFO spawned: 'collect_vmstat' with pid 147
+2025-07-07 15:51:33,925 INFO exited: start_consumer (exit status 1; not expected)
+2025-07-07 15:51:33,975 INFO spawned: 'start_consumer' with pid 148
+2025-07-07 15:51:33,978 INFO exited: collect_iostat (exit status 1; not expected)
+2025-07-07 15:51:34,994 INFO spawned: 'collect_iostat' with pid 149
+2025-07-07 15:51:35,004 INFO success: collect_netstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:51:35,007 INFO success: collect_process entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:51:35,010 INFO success: collect_vmstat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:51:35,013 INFO success: start_consumer entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:51:36,023 INFO success: collect_iostat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-07 15:52:00,643 WARN received SIGTERM indicating exit request
+2025-07-07 15:52:00,645 INFO waiting for collect_iostat, collect_netstat, collect_process, collect_vmstat, gunicorn, start_consumer to die
+2025-07-07 15:52:01,144 INFO stopped: start_consumer (exit status 0)
+2025-07-07 15:52:01,459 INFO stopped: gunicorn (exit status 0)
+2025-07-07 15:52:02,565 INFO stopped: collect_vmstat (exit status 0)
+2025-07-07 15:52:04,605 INFO waiting for collect_iostat, collect_netstat, collect_process to die
+2025-07-07 15:52:07,610 INFO waiting for collect_iostat, collect_netstat, collect_process to die
