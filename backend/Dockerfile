@@ -1,38 +1,19 @@
-# Dockerfile for Backend using Ubuntu base image (faster than Debian)
-FROM ubuntu:22.04
+# ========================================
+# SOLUTION 1: Python 3.11 slim with fixed repositories (DEFAULT - UNCOMMENT TO USE)
+# ========================================
+FROM python:3.11-slim
 
-# === DEBIAN VERSION (COMMENTED OUT - SLOW) ===
-# FROM python:3.11-slim
-# 
-# # Set environment variables early
-# ENV PYTHONDONTWRITEBYTECODE=1 \
-#     PYTHONUNBUFFERED=1
-# 
-# # Install system dependencies including supervisor
-# RUN apt-get update && apt-get install -y --no-install-recommends \
-#     build-essential \
-#     gcc \
-#     g++ \
-#     curl \
-#     postgresql-client \
-#     cron \
-#     python3.11-dev \
-#     libpq-dev \
-#     supervisor \
-#     && rm -rf /var/lib/apt/lists/*
-
-# === UBUNTU VERSION (ACTIVE) ===
-# Set environment variables early
+# Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     DEBIAN_FRONTEND=noninteractive
 
-# Install Python 3.11 and system dependencies in Ubuntu
+# Fix repository sources to use working mirrors (removes security repo)
+RUN echo 'deb http://deb.debian.org/debian bookworm main' > /etc/apt/sources.list && \
+    echo 'deb http://deb.debian.org/debian bookworm-updates main' >> /etc/apt/sources.list
+
+# Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    python3.11 \
-    python3.11-venv \
-    python3.11-distutils \
-    python3.11-dev \
     build-essential \
     gcc \
     g++ \
@@ -43,14 +24,84 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     supervisor \
     && rm -rf /var/lib/apt/lists/*
 
-# Install pip manually for Python 3.11 (Ubuntu 22.04 doesn't have python3.11-pip package)
-RUN curl https://bootstrap.pypa.io/get-pip.py | python3.11
+# ========================================
+# SOLUTION 2: Python 3.11 slim with alternative mirrors (COMMENT OUT IF NOT USING)
+# ========================================
+# FROM python:3.11-slim
 
-# Set Python 3.11 as default python and pip
-RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.11 1 && \
-    update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 1
+# # Set environment variables
+# ENV PYTHONDONTWRITEBYTECODE=1 \
+#     PYTHONUNBUFFERED=1 \
+#     DEBIAN_FRONTEND=noninteractive
 
-# Create a non-root user and group first
+# # Replace sources with alternative mirrors
+# RUN echo 'deb http://mirrors.kernel.org/debian bookworm main' > /etc/apt/sources.list && \
+#     echo 'deb http://mirrors.kernel.org/debian bookworm-updates main' >> /etc/apt/sources.list
+
+# # Alternative mirror options (uncomment if kernel.org doesn't work):
+# # RUN echo 'deb http://ftp.debian.org/debian bookworm main' > /etc/apt/sources.list && \
+# #     echo 'deb http://ftp.debian.org/debian bookworm-updates main' >> /etc/apt/sources.list
+
+# # Install system dependencies
+# RUN apt-get update && apt-get install -y --no-install-recommends \
+#     build-essential \
+#     gcc \
+#     g++ \
+#     curl \
+#     postgresql-client \
+#     cron \
+#     libpq-dev \
+#     supervisor \
+#     && rm -rf /var/lib/apt/lists/*
+
+# ========================================
+# SOLUTION 3: Ubuntu 22.04 with working mirrors (COMMENT OUT IF NOT USING)
+# ========================================
+# FROM ubuntu:22.04
+
+# # Set environment variables
+# ENV PYTHONDONTWRITEBYTECODE=1 \
+#     PYTHONUNBUFFERED=1 \
+#     DEBIAN_FRONTEND=noninteractive
+
+# # Use working mirrors for Ubuntu
+# RUN sed -i 's|http://archive.ubuntu.com|http://mirror.rackspace.com|g' /etc/apt/sources.list && \
+#     sed -i 's|http://security.ubuntu.com|http://mirror.rackspace.com|g' /etc/apt/sources.list
+
+# # Install Python 3.11 and system dependencies
+# RUN apt-get update && apt-get install -y --no-install-recommends \
+#     python3.11 \
+#     python3.11-venv \
+#     python3.11-distutils \
+#     python3.11-dev \
+#     python3-pip \
+#     build-essential \
+#     gcc \
+#     g++ \
+#     curl \
+#     postgresql-client \
+#     cron \
+#     libpq-dev \
+#     supervisor \
+#     && rm -rf /var/lib/apt/lists/*
+
+# # Set Python 3.11 as default
+# RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.11 1 && \
+#     update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 1
+
+# ========================================
+# SOLUTION 4: Alternative registry images (COMMENT OUT IF NOT USING)
+# ========================================
+# Try these if all above fail:
+# FROM mcr.microsoft.com/devcontainers/python:3.11
+# FROM public.ecr.aws/lambda/python:3.11
+# FROM gcr.io/distroless/python3-debian11
+
+# ========================================
+# COMMON SECTION - WORKS WITH ALL SOLUTIONS
+# ========================================
+
+
 RUN groupadd -r app_group && useradd -r -g app_group -m -d /home/app_user -s /sbin/nologin app_user
 
 # Set working directory
