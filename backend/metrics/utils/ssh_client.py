@@ -36,7 +36,7 @@ class AIXClient:
         if self._is_connected():
             # logger.debug("SSH connection already active.") # Can be noisy
             return True
-
+x²
         attempts = 0
         while attempts < self.max_retries:
             attempts += 1

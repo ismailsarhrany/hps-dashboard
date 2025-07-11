@@ -1,0 +1,736 @@
+# models.py
+from django.contrib.auth.models import AbstractUser
+from django.db import models
+from django.core.validators import RegexValidator
+
+class Role(models.Model):
+    ADMIN = 'admin'
+    ANALYST = 'analyst'
+    VIEWER = 'viewer'
+    
+    ROLE_CHOICES = [
+        (ADMIN, 'Admin'),
+        (ANALYST, 'Analyst'),
+        (VIEWER, 'Viewer'),
+    ]
+    
+    name = models.CharField(max_length=50, choices=ROLE_CHOICES, unique=True)
+    description = models.TextField(blank=True)
+    permissions = models.JSONField(default=dict, help_text="Store role permissions")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    def __str__(self):
+        return self.get_name_display()
+    
+    class Meta:
+        db_table = 'auth_roles'
+
+class CustomUser(AbstractUser):
+    email = models.EmailField(unique=True)
+    role = models.ForeignKey(Role, on_delete=models.CASCADE, related_name='users')
+    department = models.CharField(max_length=100, blank=True)
+    phone = models.CharField(
+        max_length=20, 
+        blank=True,
+        validators=[RegexValidator(r'^\+?1?\d{9,15}$')]
+    )
+    is_active = models.BooleanField(default=True)
+    last_login_ip = models.GenericIPAddressField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['username', 'role']
+    
+    def __str__(self):
+        return f"{self.email} ({self.role.name})"
+    
+    @property
+    def is_admin(self):
+        return self.role.name == Role.ADMIN
+    
+    @property
+    def is_analyst(self):
+        return self.role.name == Role.ANALYST
+    
+    @property
+    def is_viewer(self):
+        return self.role.name == Role.VIEWER
+    
+    def has_permission(self, permission):
+        """Check if user has specific permission"""
+        return self.role.permissions.get(permission, False)
+    
+    class Meta:
+        db_table = 'auth_users'
+
+class UserSession(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='sessions')
+    session_key = models.CharField(max_length=40, unique=True)
+    ip_address = models.GenericIPAddressField()
+    user_agent = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    last_activity = models.DateTimeField(auto_now=True)
+    is_active = models.BooleanField(default=True)
+    
+    class Meta:
+        db_table = 'user_sessions'
+
+
+
+        # serializers.py
+from rest_framework import serializers
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from django.contrib.auth import authenticate
+from django.contrib.auth.password_validation import validate_password
+from .models import CustomUser, Role
+
+class RoleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Role
+        fields = ['id', 'name', 'description', 'permissions']
+
+class UserSerializer(serializers.ModelSerializer):
+    role = RoleSerializer(read_only=True)
+    
+    class Meta:
+        model = CustomUser
+        fields = [
+            'id', 'username', 'email', 'first_name', 'last_name', 
+            'role', 'department', 'phone', 'is_active', 
+            'last_login', 'created_at'
+        ]
+        read_only_fields = ['id', 'last_login', 'created_at']
+
+class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    email = serializers.EmailField()
+    password = serializers.CharField(write_only=True)
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['username'].required = False
+        self.fields.pop('username', None)
+    
+    def validate(self, attrs):
+        email = attrs.get('email')
+        password = attrs.get('password')
+        
+        if email and password:
+            user = authenticate(
+                request=self.context.get('request'),
+                username=email,
+                password=password
+            )
+            
+            if not user:
+                raise serializers.ValidationError(
+                    'Invalid email or password.'
+                )
+                
+            if not user.is_active:
+                raise serializers.ValidationError(
+                    'Account is disabled.'
+                )
+            
+            # Update last login IP
+            request = self.context.get('request')
+            if request:
+                user.last_login_ip = self.get_client_ip(request)
+                user.save()
+            
+            attrs['user'] = user
+            return attrs
+        else:
+            raise serializers.ValidationError(
+                'Email and password are required.'
+            )
+    
+    def get_client_ip(self, request):
+        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        if x_forwarded_for:
+            ip = x_forwarded_for.split(',')[0]
+        else:
+            ip = request.META.get('REMOTE_ADDR')
+        return ip
+    
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+        
+        # Add custom claims
+        token['user_id'] = user.id
+        token['email'] = user.email
+        token['role'] = user.role.name
+        token['permissions'] = user.role.permissions
+        token['full_name'] = f"{user.first_name} {user.last_name}".strip()
+        
+        return token
+
+class LoginSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    password = serializers.CharField(write_only=True)
+    
+    def validate(self, attrs):
+        email = attrs.get('email')
+        password = attrs.get('password')
+        
+        if email and password:
+            user = authenticate(
+                request=self.context.get('request'),
+                username=email,
+                password=password
+            )
+            
+            if user:
+                if user.is_active:
+                    attrs['user'] = user
+                    return attrs
+                else:
+                    raise serializers.ValidationError('Account is disabled.')
+            else:
+                raise serializers.ValidationError('Invalid email or password.')
+        else:
+            raise serializers.ValidationError('Email and password are required.')
+
+class ChangePasswordSerializer(serializers.Serializer):
+    current_password = serializers.CharField(write_only=True)
+    new_password = serializers.CharField(write_only=True)
+    confirm_password = serializers.CharField(write_only=True)
+    
+    def validate_current_password(self, value):
+        user = self.context['request'].user
+        if not user.check_password(value):
+            raise serializers.ValidationError('Current password is incorrect.')
+        return value
+    
+    def validate_new_password(self, value):
+        validate_password(value)
+        return value
+    
+    def validate(self, attrs):
+        if attrs['new_password'] != attrs['confirm_password']:
+            raise serializers.ValidationError('New passwords do not match.')
+        return attrs
+
+class UserCreateSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True, validators=[validate_password])
+    role_id = serializers.IntegerField(write_only=True)
+    
+    class Meta:
+        model = CustomUser
+        fields = [
+            'username', 'email', 'password', 'first_name', 'last_name',
+            'role_id', 'department', 'phone'
+        ]
+    
+    def validate_role_id(self, value):
+        try:
+            role = Role.objects.get(id=value)
+            return role
+        except Role.DoesNotExist:
+            raise serializers.ValidationError('Invalid role ID.')
+    
+    def create(self, validated_data):
+        role = validated_data.pop('role_id')
+        password = validated_data.pop('password')
+        
+        user = CustomUser.objects.create_user(
+            password=password,
+            role=role,
+            **validated_data
+        )
+        return user
+
+        # views.py
+from rest_framework import status, permissions
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.tokens import RefreshToken
+from django.contrib.auth import login, logout
+from django.contrib.auth.decorators import login_required
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
+from .models import CustomUser, Role
+from .serializers import (
+    CustomTokenObtainPairSerializer, 
+    LoginSerializer, 
+    UserSerializer,
+    ChangePasswordSerializer,
+    UserCreateSerializer
+)
+from .permissions import IsAdminUser, IsAnalystOrAdmin
+
+class CustomTokenObtainPairView(TokenObtainPairView):
+    serializer_class = CustomTokenObtainPairSerializer
+
+class LoginView(APIView):
+    permission_classes = [permissions.AllowAny]
+    
+    def post(self, request):
+        serializer = LoginSerializer(data=request.data, context={'request': request})
+        
+        if serializer.is_valid():
+            user = serializer.validated_data['user']
+            
+            # Generate JWT tokens
+            refresh = RefreshToken.for_user(user)
+            access_token = refresh.access_token
+            
+            # Add custom claims
+            access_token['user_id'] = user.id
+            access_token['email'] = user.email
+            access_token['role'] = user.role.name
+            access_token['permissions'] = user.role.permissions
+            access_token['full_name'] = f"{user.first_name} {user.last_name}".strip()
+            
+            # Update last login
+            user.last_login_ip = self.get_client_ip(request)
+            user.save()
+            
+            return Response({
+                'message': 'Login successful',
+                'user': UserSerializer(user).data,
+                'tokens': {
+                    'access': str(access_token),
+                    'refresh': str(refresh)
+                }
+            }, status=status.HTTP_200_OK)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    def get_client_ip(self, request):
+        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        if x_forwarded_for:
+            ip = x_forwarded_for.split(',')[0]
+        else:
+            ip = request.META.get('REMOTE_ADDR')
+        return ip
+
+class LogoutView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def post(self, request):
+        try:
+            refresh_token = request.data.get('refresh_token')
+            if refresh_token:
+                token = RefreshToken(refresh_token)
+                token.blacklist()
+            
+            return Response({
+                'message': 'Logout successful'
+            }, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({
+                'error': 'Invalid token'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+class ProfileView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get(self, request):
+        serializer = UserSerializer(request.user)
+        return Response(serializer.data)
+    
+    def put(self, request):
+        serializer = UserSerializer(request.user, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class ChangePasswordView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def post(self, request):
+        serializer = ChangePasswordSerializer(data=request.data, context={'request': request})
+        
+        if serializer.is_valid():
+            user = request.user
+            user.set_password(serializer.validated_data['new_password'])
+            user.save()
+            
+            return Response({
+                'message': 'Password changed successfully'
+            }, status=status.HTTP_200_OK)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class UserManagementView(APIView):
+    permission_classes = [IsAdminUser]
+    
+    def get(self, request):
+        users = CustomUser.objects.all().select_related('role')
+        serializer = UserSerializer(users, many=True)
+        return Response(serializer.data)
+    
+    def post(self, request):
+        serializer = UserCreateSerializer(data=request.data)
+        if serializer.is_valid():
+            user = serializer.save()
+            return Response(UserSerializer(user).data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class RolePermissionsView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get(self, request):
+        user = request.user
+        permissions = {
+            'role': user.role.name,
+            'permissions': user.role.permissions,
+            'can_view_servers': user.has_permission('view_servers'),
+            'can_manage_servers': user.has_permission('manage_servers'),
+            'can_view_analytics': user.has_permission('view_analytics'),
+            'can_manage_users': user.has_permission('manage_users'),
+            'can_configure_system': user.has_permission('configure_system'),
+        }
+        return Response(permissions)
+
+@api_view(['GET'])
+@permission_classes([permissions.AllowAny])
+def health_check(request):
+    return Response({'status': 'healthy'}, status=status.HTTP_200_OK)
+
+# Management command to create default roles
+from django.core.management.base import BaseCommand
+
+class Command(BaseCommand):
+    help = 'Create default roles'
+    
+    def handle(self, *args, **options):
+        # Admin role - full access
+        admin_role, created = Role.objects.get_or_create(
+            name=Role.ADMIN,
+            defaults={
+                'description': 'Full system access',
+                'permissions': {
+                    'view_servers': True,
+                    'manage_servers': True,
+                    'view_analytics': True,
+                    'manage_analytics': True,
+                    'manage_users': True,
+                    'configure_system': True,
+                    'view_logs': True,
+                    'export_data': True,
+                }
+            }
+        )
+        
+        # Analyst role - can view and analyze
+        analyst_role, created = Role.objects.get_or_create(
+            name=Role.ANALYST,
+            defaults={
+                'description': 'Can analyze server data and generate reports',
+                'permissions': {
+                    'view_servers': True,
+                    'manage_servers': False,
+                    'view_analytics': True,
+                    'manage_analytics': True,
+                    'manage_users': False,
+                    'configure_system': False,
+                    'view_logs': True,
+                    'export_data': True,
+                }
+            }
+        )
+        
+        # Viewer role - read-only access
+        viewer_role, created = Role.objects.get_or_create(
+            name=Role.VIEWER,
+            defaults={
+                'description': 'Read-only access to server monitoring',
+                'permissions': {
+                    'view_servers': True,
+                    'manage_servers': False,
+                    'view_analytics': True,
+                    'manage_analytics': False,
+                    'manage_users': False,
+                    'configure_system': False,
+                    'view_logs': False,
+                    'export_data': False,
+                }
+            }
+        )
+        
+        self.stdout.write(self.style.SUCCESS('Default roles created successfully'))
+
+        # permissions.py
+from rest_framework import permissions
+from .models import Role
+
+class IsAdminUser(permissions.BasePermission):
+    """
+    Custom permission to only allow admin users.
+    """
+    def has_permission(self, request, view):
+        return (
+            request.user and 
+            request.user.is_authenticated and 
+            request.user.role.name == Role.ADMIN
+        )
+
+class IsAnalystOrAdmin(permissions.BasePermission):
+    """
+    Custom permission to allow analysts and admins.
+    """
+    def has_permission(self, request, view):
+        return (
+            request.user and 
+            request.user.is_authenticated and 
+            request.user.role.name in [Role.ADMIN, Role.ANALYST]
+        )
+
+class IsViewerOrAbove(permissions.BasePermission):
+    """
+    Custom permission for all authenticated users (viewer and above).
+    """
+    def has_permission(self, request, view):
+        return (
+            request.user and 
+            request.user.is_authenticated and 
+            request.user.role.name in [Role.ADMIN, Role.ANALYST, Role.VIEWER]
+        )
+
+class HasPermission(permissions.BasePermission):
+    """
+    Custom permission class that checks for specific permissions.
+    Usage: permission_classes = [HasPermission]
+    Then in view: required_permission = 'view_servers'
+    """
+    def has_permission(self, request, view):
+        if not (request.user and request.user.is_authenticated):
+            return False
+        
+        required_permission = getattr(view, 'required_permission', None)
+        if required_permission:
+            return request.user.has_permission(required_permission)
+        
+        return True
+
+class CanManageServers(permissions.BasePermission):
+    """
+    Permission for server management operations.
+    """
+    def has_permission(self, request, view):
+        return (
+            request.user and 
+            request.user.is_authenticated and 
+            request.user.has_permission('manage_servers')
+        )
+
+class CanViewAnalytics(permissions.BasePermission):
+    """
+    Permission for viewing analytics.
+    """
+    def has_permission(self, request, view):
+        return (
+            request.user and 
+            request.user.is_authenticated and 
+            request.user.has_permission('view_analytics')
+        )
+
+class CanExportData(permissions.BasePermission):
+    """
+    Permission for data export functionality.
+    """
+    def has_permission(self, request, view):
+        return (
+            request.user and 
+            request.user.is_authenticated and 
+            request.user.has_permission('export_data')
+        )
+
+        # urls.py
+from django.urls import path, include
+from rest_framework_simplejwt.views import TokenRefreshView
+from .views import (
+    CustomTokenObtainPairView,
+    LoginView,
+    LogoutView,
+    ProfileView,
+    ChangePasswordView,
+    UserManagementView,
+    RolePermissionsView,
+    health_check
+)
+
+urlpatterns = [
+    # Authentication endpoints
+    path('auth/login/', LoginView.as_view(), name='login'),
+    path('auth/logout/', LogoutView.as_view(), name='logout'),
+    path('auth/token/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    
+    # User management
+    path('auth/profile/', ProfileView.as_view(), name='profile'),
+    path('auth/change-password/', ChangePasswordView.as_view(), name='change_password'),
+    path('auth/users/', UserManagementView.as_view(), name='user_management'),
+    path('auth/permissions/', RolePermissionsView.as_view(), name='role_permissions'),
+    
+    # Health check
+    path('health/', health_check, name='health_check'),
+]
+
+
+# settings.py additions
+import os
+from datetime import timedelta
+
+# Custom User Model
+AUTH_USER_MODEL = 'authentication.CustomUser'
+
+# JWT Settings
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': True,
+    'UPDATE_LAST_LOGIN': True,
+    
+    'ALGORITHM': 'HS256',
+    'SIGNING_KEY': SECRET_KEY,
+    'VERIFYING_KEY': None,
+    'AUDIENCE': None,
+    'ISSUER': None,
+    'JWK_URL': None,
+    'LEEWAY': 0,
+    
+    'AUTH_HEADER_TYPES': ('Bearer',),
+    'AUTH_HEADER_NAME': 'HTTP_AUTHORIZATION',
+    'USER_ID_FIELD': 'id',
+    'USER_ID_CLAIM': 'user_id',
+    'USER_AUTHENTICATION_RULE': 'rest_framework_simplejwt.authentication.default_user_authentication_rule',
+    
+    'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
+    'TOKEN_TYPE_CLAIM': 'token_type',
+    'TOKEN_USER_CLASS': 'rest_framework_simplejwt.models.TokenUser',
+    
+    'JTI_CLAIM': 'jti',
+    
+    'SLIDING_TOKEN_REFRESH_EXP_CLAIM': 'refresh_exp',
+    'SLIDING_TOKEN_LIFETIME': timedelta(minutes=60),
+    'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=7),
+}
+
+# REST Framework Settings
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
+    'DEFAULT_RENDERER_CLASSES': [
+        'rest_framework.renderers.JSONRenderer',
+    ],
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 20,
+    'DEFAULT_FILTER_BACKENDS': [
+        'django_filters.rest_framework.DjangoFilterBackend',
+        'rest_framework.filters.SearchFilter',
+        'rest_framework.filters.OrderingFilter',
+    ],
+}
+
+# CORS Settings (for Angular frontend)
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:4200",  # Angular development server
+    "http://127.0.0.1:4200",
+]
+
+CORS_ALLOW_CREDENTIALS = True
+
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+]
+
+# Security Settings
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+X_FRAME_OPTIONS = 'DENY'
+
+# Session Settings
+SESSION_COOKIE_SECURE = True  # Set to True in production with HTTPS
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = 'Strict'
+
+# CSRF Settings
+CSRF_COOKIE_SECURE = True  # Set to True in production with HTTPS
+CSRF_COOKIE_HTTPONLY = True
+CSRF_COOKIE_SAMESITE = 'Strict'
+
+# Logging Configuration
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'file': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': 'logs/auth.log',
+            'formatter': 'verbose',
+        },
+        'console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+    },
+    'loggers': {
+        'authentication': {
+            'handlers': ['file', 'console'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+    },
+}
+
+# Additional Apps
+INSTALLED_APPS = [
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+    
+    # Third party apps
+    'rest_framework',
+    'rest_framework_simplejwt',
+    'rest_framework_simplejwt.token_blacklist',
+    'corsheaders',
+    'django_filters',
+    
+    # Local apps
+    'authentication',
+    'aix_monitoring',  # Your main app
+]
+
+MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
+    'django.middleware.security.SecurityMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.common.CommonMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+]

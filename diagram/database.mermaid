@@ -1,0 +1,276 @@
+erDiagram
+    %% Authentication & Authorization
+    User {
+        int id PK
+        string username UK
+        string email UK
+        string password_hash
+        string first_name
+        string last_name
+        boolean is_active
+        boolean is_staff
+        boolean is_superuser
+        datetime date_joined
+        datetime last_login
+    }
+    
+    Role {
+        int id PK
+        string name UK "admin, viewer, operator"
+        string description
+        json permissions
+        datetime created_at
+    }
+    
+    UserRole {
+        int id PK
+        int user_id FK
+        int role_id FK
+        datetime assigned_at
+        int assigned_by FK
+    }
+
+    %% Server Management
+    Server {
+        int id PK
+        string name UK
+        string ip_address
+        int ssh_port
+        string ssh_username
+        string ssh_key_fingerprint
+        string description
+        boolean is_active
+        string status "online, offline, error"
+        datetime last_seen
+        int added_by FK
+        datetime created_at
+        datetime updated_at
+        json metadata "OS version, hardware specs"
+    }
+    
+    ServerAccess {
+        int id PK
+        int user_id FK
+        int server_id FK
+        string access_level "read, write, admin"
+        datetime granted_at
+        int granted_by FK
+    }
+
+    %% Metrics Tables
+    VmstatMetric {
+        bigint id PK
+        int server_id FK
+        datetime timestamp
+        int r "runnable processes"
+        int b "blocked processes"
+        int avm "active virtual memory"
+        int fre "free memory"
+        int pi "pages in"
+        int po "pages out"
+        int fr "page faults"
+        int interface_in "interrupts"
+        int cs "context switches"
+        float us "user cpu %"
+        float sy "system cpu %"
+        float idle "idle cpu %"
+        bigint sequence_id
+    }
+    
+    IostatMetric {
+        bigint id PK
+        int server_id FK
+        datetime timestamp
+        string disk "disk name"
+        float tps "transfers per second"
+        float kb_read "KB read"
+        float kb_wrtn "KB written"
+        float service_time "avg service time"
+        float kb_read_rate "calculated rate"
+        float kb_wrtn_rate "calculated rate"
+        bigint sequence_id
+    }
+    
+    NetstatMetric {
+        bigint id PK
+        int server_id FK
+        datetime timestamp
+        string interface "network interface"
+        bigint ipkts "input packets"
+        bigint ierrs "input errors"
+        float ipkts_rate "input packet rate"
+        float ierrs_rate "input error rate"
+        bigint opkts "output packets"
+        float opkts_rate "output packet rate"
+        bigint oerrs "output errors"
+        float oerrs_rate "output error rate"
+        int time "collection time"
+        bigint sequence_id
+    }
+    
+    ProcessMetric {
+        bigint id PK
+        int server_id FK
+        datetime timestamp
+        int pid "process ID"
+        string user "process owner"
+        float cpu "CPU usage %"
+        float mem "memory usage %"
+        string command "process command"
+        bigint sequence_id
+    }
+
+    %% Anomaly Detection & ML
+    AnomalyDetectionModel {
+        int id PK
+        string name UK
+        string model_type "threshold, isolation_forest, lstm, arima"
+        string metric_types "vmstat,iostat,netstat,process"
+        json model_parameters
+        json training_config
+        float accuracy_score
+        boolean is_active
+        datetime trained_at
+        datetime created_at
+        int created_by FK
+    }
+    
+    Anomaly {
+        bigint id PK
+        int server_id FK
+        string metric_type "vmstat, iostat, netstat, process"
+        bigint metric_id "reference to specific metric record"
+        datetime detected_at
+        string anomaly_type "threshold, pattern, prediction"
+        string severity "low, medium, high, critical"
+        float confidence_score
+        json anomaly_details "values, thresholds, context"
+        boolean is_resolved
+        datetime resolved_at
+        int model_id FK
+        string status "new, acknowledged, investigating, resolved"
+    }
+    
+    AnomalyAnnotation {
+        int id PK
+        bigint anomaly_id FK
+        int user_id FK
+        text comment
+        string action_taken
+        datetime created_at
+    }
+
+    %% Alerting System
+    AlertRule {
+        int id PK
+        int server_id FK
+        string name
+        string metric_type
+        json conditions "threshold rules, time windows"
+        string severity
+        boolean is_active
+        json notification_config "email, webhook, slack"
+        int created_by FK
+        datetime created_at
+    }
+    
+    Alert {
+        bigint id PK
+        int rule_id FK
+        bigint anomaly_id FK
+        datetime triggered_at
+        string status "pending, sent, failed"
+        json recipients
+        text message
+        datetime resolved_at
+    }
+
+    %% Reporting
+    Report {
+        int id PK
+        string name
+        string report_type "daily, weekly, monthly, custom"
+        json server_ids "list of server IDs"
+        json metric_types "included metrics"
+        datetime start_time
+        datetime end_time
+        json parameters "filters, aggregations"
+        string format "pdf, html, json"
+        string status "generating, completed, failed"
+        string file_path
+        int generated_by FK
+        datetime created_at
+        datetime completed_at
+    }
+    
+    ScheduledReport {
+        int id PK
+        int report_template_id FK
+        string schedule_cron "cron expression"
+        json recipients
+        boolean is_active
+        datetime last_run
+        datetime next_run
+        int created_by FK
+    }
+
+    %% System Monitoring
+    SystemHealth {
+        bigint id PK
+        string component "kafka, database, consumer, api"
+        datetime timestamp
+        string status "healthy, warning, critical"
+        json metrics "response_time, memory, cpu"
+        text error_message
+    }
+    
+    DataRetentionPolicy {
+        int id PK
+        string metric_type
+        int retention_days
+        string aggregation_rule "raw, hourly, daily"
+        boolean is_active
+        datetime created_at
+    }
+
+    %% Audit Trail
+    AuditLog {
+        bigint id PK
+        int user_id FK
+        string action "create, update, delete, login"
+        string resource_type "server, user, anomaly, report"
+        string resource_id
+        json old_values
+        json new_values
+        string ip_address
+        string user_agent
+        datetime timestamp
+    }
+
+    %% Relationships
+    User ||--o{ UserRole : "has roles"
+    Role ||--o{ UserRole : "assigned to users"
+    User ||--o{ Server : "adds servers"
+    User ||--o{ ServerAccess : "has server access"
+    Server ||--o{ ServerAccess : "grants access to users"
+    
+    Server ||--o{ VmstatMetric : "generates"
+    Server ||--o{ IostatMetric : "generates"
+    Server ||--o{ NetstatMetric : "generates"
+    Server ||--o{ ProcessMetric : "generates"
+    
+    User ||--o{ AnomalyDetectionModel : "creates"
+    AnomalyDetectionModel ||--o{ Anomaly : "detects"
+    Server ||--o{ Anomaly : "has anomalies"
+    Anomaly ||--o{ AnomalyAnnotation : "has annotations"
+    User ||--o{ AnomalyAnnotation : "creates"
+    
+    Server ||--o{ AlertRule : "has rules"
+    User ||--o{ AlertRule : "creates"
+    AlertRule ||--o{ Alert : "triggers"
+    Anomaly ||--o{ Alert : "generates"
+    
+    User ||--o{ Report : "generates"
+    Report ||--o{ ScheduledReport : "schedules"
+    
+    User ||--o{ AuditLog : "performs actions"

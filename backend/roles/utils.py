@@ -1,5 +1,5 @@
 from django.utils import timezone
-from .models import AuditLog
+from /pages.models import AuditLog
 
 
 def get_client_ip(request):
@@ -109,7 +109,7 @@ def create_default_roles():
     """
     Create default roles if they don't exist
     """
-    from .models import Role
+    from /pages.models import Role
     
     default_roles = [
         {
@@ -142,7 +142,7 @@ def validate_role_assignment(user, new_role):
         return False, "Only administrators can assign roles"
     
     # Check if role exists
-    from .models import Role
+    from /pages.models import Role
     if not Role.objects.filter(name=new_role).exists():
         return False, "Role does not exist"
     
@@ -158,32 +158,29 @@ def get_menu_items_for_role(role_name):
     
     menu_items = {
         'admin': [
-            {'name': 'Dashboard', 'route': '/dashboard', 'icon': 'home'},
-            {'name': 'Real-time Monitoring', 'route': '/realtime', 'icon': 'activity'},
-            {'name': 'Historic Data', 'route': '/historic', 'icon': 'trending-up'},
+            {'name': 'Realtime Monitoring', 'route': '/pages/realtime', 'icon': 'activity'},
+            {'name': 'Historic Dashboard', 'route': '/pages/historic', 'icon': 'trending-up'},
             {'name': 'Process Monitoring', 'route': '/process', 'icon': 'cpu'},
             {'name': 'User Management', 'route': '/users', 'icon': 'users'},
             {'name': 'Role Management', 'route': '/roles', 'icon': 'shield'},
             {'name': 'Alert Configuration', 'route': '/alerts', 'icon': 'bell'},
-            {'name': 'Model Management', 'route': '/models', 'icon': 'brain'},
+            {'name': 'Model Management', 'route': '/pages/models', 'icon': 'brain'},
             {'name': 'Reports', 'route': '/reports', 'icon': 'file-text'},
             {'name': 'Audit Logs', 'route': '/audit', 'icon': 'list'},
             {'name': 'Settings', 'route': '/settings', 'icon': 'settings'},
         ],
         'analyst': [
-            {'name': 'Dashboard', 'route': '/dashboard', 'icon': 'home'},
-            {'name': 'Real-time Monitoring', 'route': '/realtime', 'icon': 'activity'},
-            {'name': 'Historic Data', 'route': '/historic', 'icon': 'trending-up'},
-            {'name': 'Process Monitoring', 'route': '/process', 'icon': 'cpu'},
-            {'name': 'Model Management', 'route': '/models', 'icon': 'brain'},
+            {'name': 'Realtime Monitoring', 'route': '/pages/realtime', 'icon': 'activity'},
+            {'name': 'Historic Dashboard', 'route': '/pages/historic', 'icon': 'trending-up'},
+            {'name': 'Process Monitoring', 'route': '/pages/process', 'icon': 'cpu'},
+            {'name': 'Model Management', 'route': '/pages/models', 'icon': 'brain'},
             {'name': 'Reports', 'route': '/reports', 'icon': 'file-text'},
             {'name': 'Data Export', 'route': '/export', 'icon': 'download'},
         ],
         'viewer': [
-            {'name': 'Dashboard', 'route': '/dashboard', 'icon': 'home'},
-            {'name': 'Real-time Monitoring', 'route': '/realtime', 'icon': 'activity'},
-            {'name': 'Historic Data', 'route': '/historic', 'icon': 'trending-up'},
-            {'name': 'Process Monitoring', 'route': '/process', 'icon': 'cpu'},
+            {'name': 'Realtime Monitoring', 'route': '/pages/realtime', 'icon': 'activity'},
+            {'name': 'Historic Dashboard', 'route': '/pages/historic', 'icon': 'trending-up'},
+            {'name': 'Process Monitoring', 'route': '/pages/process', 'icon': 'cpu'},
         ]
     }
     

@@ -127,6 +127,45 @@
   </div>
 </div>
 
+  <div class="row mt-3" *ngIf="loading">
+  <div class="col-12">
+    <nb-card>
+      <nb-card-body class="loading-state">
+        <nb-spinner status="primary"></nb-spinner>
+        <p>Loading system metrics...</p>
+      </nb-card-body>
+    </nb-card>
+  </div>
+</div>
+
+  <!-- No Data State -->
+  <div
+    class="no-data-container-wrapper"
+    *ngIf="
+      !loading &&
+      vmstatData.length === 0 &&
+      netstatData.length === 0 &&
+      iostatData.length === 0
+    "
+  >
+    <nb-card>
+      <nb-card-body class="no-data-container">
+        <nb-icon
+          icon="bar-chart-outline"
+          status="info"
+          [options]="{ width: '64px', height: '64px' }"
+          class="no-data-icon"
+        ></nb-icon>
+        <h6 class="no-data-title">No Data Available</h6>
+        <p class="no-data-message">
+          No monitoring data found for the selected time range.<br />
+          Please try selecting a different date range or check if monitoring is
+          active.
+        </p>
+      </nb-card-body>
+    </nb-card>
+  </div>
+
 <!-- Main Content Area (Charts + Loading Overlay) -->
 <div class="content-area">
   <!-- Charts Section (Dimmed during loading) -->
@@ -315,38 +354,14 @@
   </div>
   <!-- End charts-section -->
 
-  <!-- Loading Overlay -->
+  <!-- Loading Overlay
   <div class="loading-overlay" *ngIf="loading">
     <nb-spinner size="large"></nb-spinner>
     <p>Please wait while we fetch your system metrics.</p>
-  </div>
+  </div> -->
 
-  <!-- No Data State -->
-  <div
-    class="no-data-container-wrapper"
-    *ngIf="
-      !loading &&
-      vmstatData.length === 0 &&
-      netstatData.length === 0 &&
-      iostatData.length === 0
-    "
-  >
-    <nb-card>
-      <nb-card-body class="no-data-container">
-        <nb-icon
-          icon="bar-chart-outline"
-          status="info"
-          [options]="{ width: '64px', height: '64px' }"
-          class="no-data-icon"
-        ></nb-icon>
-        <h6 class="no-data-title">No Data Available</h6>
-        <p class="no-data-message">
-          No monitoring data found for the selected time range.<br />
-          Please try selecting a different date range or check if monitoring is
-          active.
-        </p>
-      </nb-card-body>
-    </nb-card>
-  </div>
+
+
+
 </div>
 <!-- End content-area -->

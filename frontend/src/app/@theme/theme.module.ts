@@ -56,7 +56,7 @@ const NB_MODULES = [
 const COMPONENTS = [
   HeaderComponent,
   // FooterComponent,
-  SearchInputComponent,
+  // SearchInputComponent,
   TinyMCEComponent,
   OneColumnLayoutComponent,
   ThreeColumnsLayoutComponent,

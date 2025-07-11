@@ -25,6 +25,7 @@ const routes: Routes = [{
         loadChildren: () => import('./anomaly/anomaly.module')
         .then(m => m.AnomalyModule)
         }
+        // {path:'login',}
   ],
 },
 ];

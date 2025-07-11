@@ -1,13 +1,13 @@
 # Dockerfile for Backend using Ubuntu base image (faster than Debian)
 FROM ubuntu:22.04
 
-# === DEBIAN VERSION (COMMENTED OUT - SLOW) ===
+# # === DEBIAN VERSION (COMMENTED OUT - SLOW) ===
 # FROM python:3.11-slim
-# 
+
 # # Set environment variables early
 # ENV PYTHONDONTWRITEBYTECODE=1 \
 #     PYTHONUNBUFFERED=1
-# 
+
 # # Install system dependencies including supervisor
 # RUN apt-get update && apt-get install -y --no-install-recommends \
 #     build-essential \
@@ -28,7 +28,25 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     DEBIAN_FRONTEND=noninteractive
 
 # Install Python 3.11 and system dependencies in Ubuntu
-RUN apt-get update && apt-get install -y --no-install-recommends \
+# RUN apt-get update && apt-get install -y --no-install-recommends \
+#     python3.11 \
+#     python3.11-venv \
+#     python3.11-distutils \
+#     python3.11-dev \
+#     build-essential \
+#     gcc \
+#     g++ \
+#     curl \
+#     postgresql-client \
+#     cron \
+#     libpq-dev \
+#     supervisor \
+#     && rm -rf /var/lib/apt/lists/*
+
+# Replace this section in your Dockerfile
+RUN sed -i 's|http://archive.ubuntu.com|http://mirror.rackspace.com|g' /etc/apt/sources.list && \
+    sed -i 's|http://security.ubuntu.com|http://mirror.rackspace.com|g' /etc/apt/sources.list && \
+    apt-get update && apt-get install -y --no-install-recommends \
     python3.11 \
     python3.11-venv \
     python3.11-distutils \
