@@ -1,5 +1,0 @@
-Evaluation Metrics for Prophet Model - us
-========================================
-MAE: 18.1437
-RMSE: 20.9246
-MAPE: 0.7049

@@ -2,6 +2,7 @@
 from django.core.management.base import BaseCommand
 from metrics.producers.metric_producer import MetricProducer
 from metrics.utils.ssh_client import AIXClient
+# from metrics.utils.parsers import parse_vmstat
 from metrics.utils.parsers import parse_vmstat
 import time
 import signal

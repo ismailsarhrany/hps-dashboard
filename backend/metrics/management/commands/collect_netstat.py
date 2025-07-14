@@ -2,7 +2,8 @@
 from django.core.management.base import BaseCommand
 from metrics.producers.metric_producer import MetricProducer
 from metrics.utils.ssh_client import AIXClient
-from metrics.utils.parsers import parse_netstat_i
+# from metrics.utils.parsers import parse_netstat_i
+from metrics.utils.multi_parsers import parse_netstat
 import time
 import signal
 
@@ -38,7 +39,7 @@ class Command(BaseCommand):
             while self.running:
                 try:
                     output = client.execute('netstat -i -n')
-                    metrics = parse_netstat_i(output)
+                    metrics = parse_netstat(output)
                     for metric in metrics:
                         producer.produce_metric('netstat', metric)
                     self.stdout.write(f"Netstat metrics collected at {time.strftime('%H:%M:%S')}")

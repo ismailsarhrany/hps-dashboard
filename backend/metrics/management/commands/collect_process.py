@@ -2,7 +2,8 @@
 from django.core.management.base import BaseCommand
 from metrics.producers.metric_producer import MetricProducer
 from metrics.utils.ssh_client import AIXClient
-from metrics.utils.parsers import parse_process
+# from metrics.utils.parsers import parse_process
+from metrics.utils.multi_parsers import  parse_process
 import time
 import signal
 
