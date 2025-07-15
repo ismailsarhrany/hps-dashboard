@@ -1,4 +1,5 @@
 # metrics/producers/metric_producer.py
+from asyncio import Server
 from confluent_kafka import Producer
 import json
 from datetime import datetime
@@ -31,13 +32,15 @@ class MetricProducer:
             logger.error(f"Failed to initialize Kafka Producer: {str(e)}")
             self.producer = None
 
-    def produce_metric(self, metric_type, data):
+    def produce_metric(self, server_id,os_type,metric_type, data):
         """Produce metric with microsecond-precision ordering."""
         if not self.producer:
             logger.error("Kafka producer is not initialized. Cannot produce metric.")
             return
         
-        topic = f"metrics_{metric_type}"
+        unix_timestamp_us = int(timestamp.timestamp() * 1000000)  # Microsecond precision
+        
+        topic = f"metrics_{metric_type}_{server_id}"
     
         # Create high-precision timestamp
         timestamp = datetime.now()
@@ -52,29 +55,27 @@ class MetricProducer:
                 timestamp = timestamp.replace(tzinfo=pytz.UTC)
     
         try:
-            # Use microsecond precision for better ordering
-            unix_timestamp_us = int(timestamp.timestamp() * 1000000)  # microseconds
-            message_key = f"{metric_type}_{unix_timestamp_us}"
-        
             message_value = json.dumps({
+                "server_id": server_id,
+                "os_type": os_type,
                 "timestamp": timestamp.isoformat(),
                 "data": data,
                 "producer_time": timestamp.timestamp(),
-                "sequence_id": unix_timestamp_us  # Add sequence ID for ordering
+                "sequence_id": unix_timestamp_us
             })
-        
+            
             self.producer.produce(
                 topic=topic, 
                 value=message_value, 
-                key=message_key,
+                key=f"{server_id}_{unix_timestamp_us}",
                 callback=self.delivery_report
             )
-        
+            
             self.producer.poll(0)
-            logger.debug(f"Produced {metric_type} metric with sequence_id {unix_timestamp_us}")
+            logger.debug(f"Produced {metric_type} metric for server {server_id}")
 
         except Exception as e:
-            logger.error(f"Error producing metric to topic {topic}: {str(e)}")
+            logger.error(f"Error producing metric: {str(e)}")
 
     def delivery_report(self, err, msg):
         """Called once for each message produced to indicate delivery result."""

@@ -10,7 +10,17 @@ class Command(BaseCommand):
         bootstrap_servers = os.environ.get('KAFKA_BOOTSTRAP_SERVERS', 'localhost:9092')
         admin_client = AdminClient({'bootstrap.servers': bootstrap_servers})
         
-        topics = ['metrics_vmstat', 'metrics_iostat', 'metrics_netstat', 'metrics_process']
+        from metrics.models import Server
+        topics = []
+        
+        # Create topics for all active servers
+        for server in Server.objects.filter(monitoring_enabled=True):
+            server_id = str(server.id)
+            topics.append(f"metrics_vmstat_{server_id}")
+            topics.append(f"metrics_iostat_{server_id}")
+            topics.append(f"metrics_netstat_{server_id}")
+            topics.append(f"metrics_process_{server_id}")
+            
         new_topics = [NewTopic(topic, num_partitions=3, replication_factor=1) for topic in topics]
         
         # Create topics

@@ -20,8 +20,8 @@ class Command(BaseCommand):
         parser.add_argument(
             '--interval',
             type=int,
-            default=30,
-            help='Collection interval in seconds (default: 30)'
+            default=10,
+            help='Collection interval in seconds (default: 10)'
         )
     
     def handle_interrupt(self, sig, frame):
@@ -29,27 +29,30 @@ class Command(BaseCommand):
         self.running = False
     
     def handle(self, *args, **options):
+        from metrics.models import Server
+        servers = Server.objects.filter(monitoring_enabled=True)
         interval = options['interval']
         producer = MetricProducer()
-        client = AIXClient()
         
         self.stdout.write(self.style.SUCCESS(f'Starting Process collection (interval: {interval}s)'))
         
         try:
             while self.running:
-                try:
-                    output = client.execute('ps aux | sort -nrk 3 | head -10')
-                    metrics = parse_process(output)
-                    for metric in metrics:
-                        producer.produce_metric('process', metric)
-                    self.stdout.write(f"Process metrics collected at {time.strftime('%H:%M:%S')}")
+                for server in servers:
+                    try:
+                        client=AIXClient(server.id)
+                        output = client.execute('ps aux |sort -nrk 3 |head -10')
+                        metrics = parse_process(output,server.os_type, datetime.now())
+                        for metric in metrics:
+                            producer.produce_metric(str(server.id),server.os_type,'process', metric)
+                        self.stdout.write(f"Process metrics collected for {server.hostname}   at {time.strftime('%H:%M:%S')}")
                     
-                    if self.running:
-                        time.sleep(interval)
+                        if self.running:
+                            time.sleep(interval)
                         
-                except Exception as e:
-                    self.stderr.write(f"Error collecting Process: {str(e)}")
-                    time.sleep(5)
+                    except Exception as e:
+                        self.stderr.write(f"Error collecting Process  for {server.hostname} : {str(e)}")
+                        time.sleep(5)
                     
         except KeyboardInterrupt:
             pass

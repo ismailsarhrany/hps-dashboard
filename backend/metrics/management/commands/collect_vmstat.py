@@ -24,45 +24,48 @@ class Command(BaseCommand):
             help='Collection interval in seconds (default: 5)'
         )
     
-    def handle_interrupt(self, sig, frame):
-        self.stdout.write(self.style.WARNING('Stopping VMStat collection...'))
-        self.running = False
-    
+
     def handle(self, *args, **options):
+        from metrics.models import Server
+        servers = Server.objects.filter(monitoring_enabled=True)
         interval = options['interval']
         producer = MetricProducer()
-        client = AIXClient()
         
-        self.stdout.write(self.style.SUCCESS(f'Starting VMStat collection (interval: {interval}s)'))
+        self.stdout.write(self.style.SUCCESS(f'Starting VMStat collection (interval: {interval}s'))
         
         try:
             while self.running:
-                try:
-                    output = client.execute('vmstat 1 1')
-                    parsed = parse_vmstat(output)
-                    producer.produce_metric('vmstat', parsed)
-                    self.stdout.write(f"VMStat metric collected at {time.strftime('%H:%M:%S')}")
-                    
-                    if self.running:  # Check if still running before sleeping
-                        time.sleep(interval)
+                for server in servers:
+                    try:
+                        client = AIXClient(server.id)
+                        output = client.execute('vmstat 1 1')
+                        parsed = parse_vmstat(output)
                         
-                except Exception as e:
-                    self.stderr.write(f"Error collecting VMStat: {str(e)}")
-                    time.sleep(5)  # Brief pause before retry
+                        # Pass server ID to producer
+                        producer.produce_metric(
+                            str(server.id),
+                            server.os_type,
+                            'vmstat',
+                            parsed
+                        )
+                        self.stdout.write(f"Collected VMStat for {server.hostname} at {time.strftime('%H:%M:%S')}")
                     
+                    except Exception as e:
+                        self.stderr.write(f"Error collecting VMStat for {server.hostname}: {str(e)}")
+                    
+                    finally:
+                        if self.running:
+                            time.sleep(interval)
+                
         except KeyboardInterrupt:
             pass
         finally:
-            self.cleanup_resources(client, producer)
+            self.cleanup_resources(producer)
     
-    def cleanup_resources(self, client, producer):
+    def cleanup_resources(self, producer):
         try:
-            if hasattr(client, 'close') and callable(client.close):
-                client.close()
             producer.close()
         except Exception as e:
             self.stderr.write(f"Error during cleanup: {str(e)}")
-        
         self.stdout.write(self.style.SUCCESS('VMStat collection completed.'))
-
 

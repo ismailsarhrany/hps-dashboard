@@ -15,6 +15,13 @@ from metrics.models import VmstatMetric, IostatMetric, NetstatMetric, ProcessMet
 from metrics.utils.ssh_client import get_ssh_client, get_all_ssh_clients, ssh_health_check
 import logging
 import json
+from django.contrib.auth.decorators import login_required
+from django.views.decorators.csrf import csrf_protect
+from .permissions import IsAdminUser, IsAnalystOrAdmin, method_permission_classes
+from rest_framework.views import APIView
+from rest_framework.authentication import TokenAuthentication
+from rest_framework.permissions import IsAuthenticated
+
 
 logger = logging.getLogger(__name__)
     
@@ -63,9 +70,12 @@ class GenericDateTrunc(Func):
         else:
             return 'day'
 
-class RealtimeMetricsView(View):
+class RealtimeMetricsView(APIView):
     """API endpoint to get the last 1 minute of data for a given metric."""
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAnalystOrAdmin]
     
+    @method_decorator(login_required)
     def get(self, request):
         metric = request.GET.get('metric')
         server_id = request.GET.get('server_id')
@@ -139,12 +149,16 @@ class RealtimeMetricsView(View):
                 "details": str(e)
             }, status=500)
 
-class HistoricalMetricsView(View):
+class HistoricalMetricsView(APIView):
     """
     API endpoint to get historical data for a given metric within a time range.
     Supports server filtering and aggregation for process metrics.
     """
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAnalystOrAdmin]
 
+
+    @method_decorator(login_required)
     def get(self, request):
         try:
             # Validate required parameters
@@ -499,7 +513,7 @@ class HistoricalMetricsView(View):
             logger.error(f"Aggregation query failed: {e}")
             raise
 
-# class ServerListView(View):
+# class ServerListView(APIView):
 #     def get(self, request):
 #         servers = Server.objects.all().values('id', 'hostname', 'alias', 'status', 'monitoring_enabled', 'last_seen')
 #         return JsonResponse({
@@ -507,15 +521,19 @@ class HistoricalMetricsView(View):
 #             "count": servers.count()
 #         })
     
-# Add to metrics/views.py
 from django.views.generic import View
 from django.forms.models import model_to_dict
 from django.core.exceptions import ValidationError
+from encrypted_model_fields.fields import EncryptedCharField
 import json
 
-class ServerCreateView(View):
+class ServerCreateView(APIView):
     """Create a new server instance"""
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAdminUser]
     
+    @method_decorator(csrf_protect)
+    @method_decorator(login_required)    
     def post(self, request):
         try:
             data = json.loads(request.body)
@@ -529,8 +547,8 @@ class ServerCreateView(View):
                 alias=data.get('alias'),
                 os_version=data.get('os_version'),
                 architecture=data.get('architecture'),
-                ssh_key_path=data.get('ssh_key_path'),
-                ssh_password=data.get('ssh_password'),
+                ssh_key_path=encrypt(data.get('ssh_key_path')),
+                ssh_password=encrypt(data.get('ssh_password')),
                 status=data.get('status', 'active'),
                 monitoring_enabled=data.get('monitoring_enabled', True),
                 monitoring_interval=data.get('monitoring_interval', 60),
@@ -559,9 +577,11 @@ class ServerCreateView(View):
                 "details": str(e)
             }, status=500)
 
-class ServerDetailView(View):
+class ServerDetailView(APIView):
     """Retrieve, update or delete a server instance"""
-    
+
+    @method_permission_classes([IsAdminUser])
+    @method_decorator(login_required)
     def get(self, request, server_id):
         try:
             server = Server.objects.get(id=server_id)
@@ -576,6 +596,9 @@ class ServerDetailView(View):
                 "details": str(e)
             }, status=500)
     
+    @method_permission_classes([IsAdminUser])
+    @method_decorator(csrf_protect)
+    @method_decorator(login_required)
     def put(self, request, server_id):
         try:
             server = Server.objects.get(id=server_id)
@@ -589,6 +612,10 @@ class ServerDetailView(View):
                          'description', 'location', 'environment']:
                 if field in data:
                     setattr(server, field, data[field])
+                if 'ssh_password' in data:
+                    server.ssh_password = encrypt(data['ssh_password'])
+                if 'ssh_key_path' in data:
+                    server.ssh_key_path = encrypt(data['ssh_key_path'])    
             
             server.save()
             return JsonResponse({
@@ -611,6 +638,9 @@ class ServerDetailView(View):
                 "details": str(e)
             }, status=500)
     
+    @method_permission_classes([IsAdminUser])
+    @method_decorator(csrf_protect)
+    @method_decorator(login_required)
     def delete(self, request, server_id):
         try:
             server = Server.objects.get(id=server_id)
@@ -630,8 +660,13 @@ class ServerDetailView(View):
                 "details": str(e)
             }, status=500)
 
-class ServerListView(View):
+class ServerListView(APIView):
     """List all servers or create a new server"""
+    authentication_classes = [TokenAuthentication]
+
+    permission_classes = [IsAnalystOrAdmin]
+    
+    @method_decorator(login_required)
     
     def get(self, request):
         try:
@@ -679,8 +714,13 @@ class ServerListView(View):
                 "details": str(e)
             }, status=500)
 
-class ServerTestConnectionView(View):
+class ServerTestConnectionView(APIView):
     """Test SSH connection to a server"""
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAdminUser]
+    
+    @method_decorator(csrf_protect)
+    @method_decorator(login_required)
     
     def post(self, request, server_id):
         try:
@@ -720,8 +760,13 @@ class ServerTestConnectionView(View):
                 "details": str(e)
             }, status=500)
 
-class ServerBulkStatusView(View):
+class ServerBulkStatusView(APIView):
     """Bulk update server statuses"""
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAdminUser]
+    
+    @method_decorator(csrf_protect)
+    @method_decorator(login_required)
     
     def post(self, request):
         try:
@@ -789,7 +834,7 @@ def health_check(request):
 
 
 # # New view to fetch metrics directly via SSH
-# class LiveMetricFetchView(View):
+# class LiveMetricFetchView(APIView):
 #     """Fetch live metrics directly from servers via SSH"""
     
 #     def get(self, request):
@@ -857,7 +902,7 @@ def health_check(request):
 #             }, status=500)
 
 # # New view for bulk metric collection
-# class BulkMetricCollectionView(View):
+# class BulkMetricCollectionView(APIView):
 #     """Collect metrics from all active servers simultaneously"""
     
 #     def get(self, request):
@@ -959,8 +1004,8 @@ def health_check(request):
 #             "error_count": sum(1 for r in results.values() if r['status'] == 'error')
 #         })
 
-# # SSH Health Check View
-# class SSHHealthCheckView(View):
+# # SSH Health Check APIView
+# class SSHHealthCheckView(APIView):
 #     """Check health of all SSH connections"""
     
 #     def get(self, request):

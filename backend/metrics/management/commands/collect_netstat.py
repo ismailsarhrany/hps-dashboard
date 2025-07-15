@@ -20,7 +20,7 @@ class Command(BaseCommand):
         parser.add_argument(
             '--interval',
             type=int,
-            default=15,
+            default=5,
             help='Collection interval in seconds (default: 15)'
         )
     
@@ -29,27 +29,30 @@ class Command(BaseCommand):
         self.running = False
     
     def handle(self, *args, **options):
+        from metrics.models import Server
+        servers = Server.objects.filter(monitoring_enabled=True)
         interval = options['interval']
         producer = MetricProducer()
-        client = AIXClient()
         
         self.stdout.write(self.style.SUCCESS(f'Starting Netstat collection (interval: {interval}s)'))
         
         try:
             while self.running:
-                try:
-                    output = client.execute('netstat -i -n')
-                    metrics = parse_netstat(output)
-                    for metric in metrics:
-                        producer.produce_metric('netstat', metric)
-                    self.stdout.write(f"Netstat metrics collected at {time.strftime('%H:%M:%S')}")
+                for server in servers:
+                    try:
+                        client = AIXClient(server.id)
+                        output = client.execute('netstat -i -n')
+                        metrics = parse_netstat(output)
+                        for metric in metrics:
+                            producer.produce_metric(str(server.id),server.os_type,'netstat', metric)
+                        self.stdout.write(f"Netstat metrics collected for {server.hostname}  at {time.strftime('%H:%M:%S')}")
                     
-                    if self.running:
-                        time.sleep(interval)
+                        if self.running:
+                            time.sleep(interval)
                         
-                except Exception as e:
-                    self.stderr.write(f"Error collecting Netstat: {str(e)}")
-                    time.sleep(5)
+                    except Exception as e:
+                        self.stderr.write(f"Error collecting Netstat  for {server.hostname} : {str(e)}")
+                        time.sleep(5)
                     
         except KeyboardInterrupt:
             pass

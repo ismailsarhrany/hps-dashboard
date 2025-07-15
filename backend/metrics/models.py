@@ -2,6 +2,7 @@ from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils import timezone
 import uuid
+from encrypted_model_fields.fields import EncryptedCharField
 
 class Server(models.Model):
     """
@@ -38,8 +39,8 @@ class Server(models.Model):
         validators=[MinValueValidator(1), MaxValueValidator(65535)]
     )
     ssh_username = models.CharField(max_length=50)
-    ssh_key_path = models.CharField(max_length=500, blank=True, null=True, help_text="Path to SSH private key")
-    ssh_password = models.CharField(max_length=255, blank=True, null=True, help_text="SSH password (if not using key)")
+    ssh_key_path = EncryptedCharField(max_length=500, blank=True, null=True, help_text="Path to SSH private key(encrypted)")
+    ssh_password = EncryptedCharField(max_length=255, blank=True, null=True, help_text="SSH password (encrypted)")
     
     # Server status and monitoring
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active')

@@ -7,121 +7,138 @@ logger = logging.getLogger(__name__)
 
 class VmstatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
-        await self.channel_layer.group_add("vmstat_metrics", self.channel_name)
+        # Extract server_id from URL
+        self.server_id = self.scope['url_route']['kwargs']['server_id']
+        group_name = f"vmstat_metrics_{self.server_id}"
+        await self.channel_layer.group_add(group_name, self.channel_name)
         await self.accept()
-        logger.info(f"VMStat WebSocket connected: {self.channel_name}")
+        logger.info(f"VMStat WebSocket connected for server {self.server_id}: {self.channel_name}")
 
     async def disconnect(self, close_code):
-        await self.channel_layer.group_discard("vmstat_metrics", self.channel_name)
-        logger.info(f"VMStat WebSocket disconnected: {self.channel_name}")
+        group_name = f"vmstat_metrics_{self.server_id}"
+        await self.channel_layer.group_discard(group_name, self.channel_name)
+        logger.info(f"VMStat WebSocket disconnected for server {self.server_id}: {self.channel_name}")
 
     async def vmstat_update(self, event):
-        """Handle vmstat_update events (underscore format)"""
-        try:
-            await self.send(text_data=json.dumps({
-                "metric": event["data"]["metric"],
-                "timestamp": event["data"]["timestamp"],
-                "values": event["data"]["values"],
-                "id": event["data"].get("id")
-            }))
-            logger.debug(f"Sent vmstat data: {event['data']['timestamp']}")
-        except Exception as e:
-            logger.error(f"Error sending vmstat data: {e}")
+        # Only send if server_id matches
+        if event["server_id"] == self.server_id:
+            try:
+                await self.send(text_data=json.dumps({
+                    "metric": event["data"]["metric"],
+                    "server_id": event["server_id"],
+                    "timestamp": event["data"]["timestamp"],
+                    "values": event["data"]["values"],
+                    "id": event["data"].get("id")
+                }))
+            except Exception as e:
+                logger.error(f"Error sending vmstat data: {e}")
 
+
+# ...existing code...
 
 class IostatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
-        await self.channel_layer.group_add("iostat_metrics", self.channel_name)
+        self.server_id = self.scope['url_route']['kwargs'].get('server_id')
+        group_name = f"iostat_metrics_{self.server_id}" if self.server_id else "iostat_metrics"
+        await self.channel_layer.group_add(group_name, self.channel_name)
         await self.accept()
-        logger.info(f"IOStat WebSocket connected: {self.channel_name}")
+        logger.info(f"IOStat WebSocket connected{f' for server {self.server_id}' if self.server_id else ''}: {self.channel_name}")
 
     async def disconnect(self, close_code):
-        await self.channel_layer.group_discard("iostat_metrics", self.channel_name)
-        logger.info(f"IOStat WebSocket disconnected: {self.channel_name}")
+        group_name = f"iostat_metrics_{self.server_id}" if self.server_id else "iostat_metrics"
+        await self.channel_layer.group_discard(group_name, self.channel_name)
+        logger.info(f"IOStat WebSocket disconnected{f' for server {self.server_id}' if self.server_id else ''}: {self.channel_name}")
 
     async def iostat_update(self, event):
-        """Handle iostat_update events (underscore format)"""
-        try:
-            await self.send(text_data=json.dumps({
-                "metric": event["data"]["metric"],
-                "timestamp": event["data"]["timestamp"],
-                "values": event["data"]["values"],
-                "id": event["data"].get("id")
-            }))
-            logger.debug(f"Sent iostat data: {event['data']['timestamp']}")
-        except Exception as e:
-            logger.error(f"Error sending iostat data: {e}")
-
+        if not self.server_id or event.get("server_id") == self.server_id:
+            try:
+                await self.send(text_data=json.dumps({
+                    "metric": event["data"]["metric"],
+                    "server_id": event.get("server_id"),
+                    "timestamp": event["data"]["timestamp"],
+                    "values": event["data"]["values"],
+                    "id": event["data"].get("id")
+                }))
+            except Exception as e:
+                logger.error(f"Error sending iostat data: {e}")
 
 class NetstatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
-        await self.channel_layer.group_add("netstat_metrics", self.channel_name)
+        self.server_id = self.scope['url_route']['kwargs'].get('server_id')
+        group_name = f"netstat_metrics_{self.server_id}" if self.server_id else "netstat_metrics"
+        await self.channel_layer.group_add(group_name, self.channel_name)
         await self.accept()
-        logger.info(f"Netstat WebSocket connected: {self.channel_name}")
+        logger.info(f"Netstat WebSocket connected{f' for server {self.server_id}' if self.server_id else ''}: {self.channel_name}")
 
     async def disconnect(self, close_code):
-        await self.channel_layer.group_discard("netstat_metrics", self.channel_name)
-        logger.info(f"Netstat WebSocket disconnected: {self.channel_name}")
+        group_name = f"netstat_metrics_{self.server_id}" if self.server_id else "netstat_metrics"
+        await self.channel_layer.group_discard(group_name, self.channel_name)
+        logger.info(f"Netstat WebSocket disconnected{f' for server {self.server_id}' if self.server_id else ''}: {self.channel_name}")
 
     async def netstat_update(self, event):
-        """Handle netstat_update events (underscore format)"""
-        try:
-            await self.send(text_data=json.dumps({
-                "metric": event["data"]["metric"],
-                "timestamp": event["data"]["timestamp"],
-                "values": event["data"]["values"],
-                "id": event["data"].get("id")
-            }))
-            logger.debug(f"Sent netstat data: {event['data']['timestamp']}")
-        except Exception as e:
-            logger.error(f"Error sending netstat data: {e}")
-
+        if not self.server_id or event.get("server_id") == self.server_id:
+            try:
+                await self.send(text_data=json.dumps({
+                    "metric": event["data"]["metric"],
+                    "server_id": event.get("server_id"),
+                    "timestamp": event["data"]["timestamp"],
+                    "values": event["data"]["values"],
+                    "id": event["data"].get("id")
+                }))
+            except Exception as e:
+                logger.error(f"Error sending netstat data: {e}")
 
 class ProcessConsumer(AsyncWebsocketConsumer):
     async def connect(self):
-        await self.channel_layer.group_add("process_metrics", self.channel_name)
+        self.server_id = self.scope['url_route']['kwargs'].get('server_id')
+        group_name = f"process_metrics_{self.server_id}" if self.server_id else "process_metrics"
+        await self.channel_layer.group_add(group_name, self.channel_name)
         await self.accept()
-        logger.info(f"Process WebSocket connected: {self.channel_name}")
+        logger.info(f"Process WebSocket connected{f' for server {self.server_id}' if self.server_id else ''}: {self.channel_name}")
 
     async def disconnect(self, close_code):
-        await self.channel_layer.group_discard("process_metrics", self.channel_name)
-        logger.info(f"Process WebSocket disconnected: {self.channel_name}")
+        group_name = f"process_metrics_{self.server_id}" if self.server_id else "process_metrics"
+        await self.channel_layer.group_discard(group_name, self.channel_name)
+        logger.info(f"Process WebSocket disconnected{f' for server {self.server_id}' if self.server_id else ''}: {self.channel_name}")
 
     async def process_update(self, event):
-        """Handle process_update events (underscore format)"""
-        try:
-            await self.send(text_data=json.dumps({
-                "metric": event["data"]["metric"],
-                "timestamp": event["data"]["timestamp"],
-                "values": event["data"]["values"],
-                "id": event["data"].get("id")
-            }))
-            logger.debug(f"Sent process data: {event['data']['timestamp']}")
-        except Exception as e:
-            logger.error(f"Error sending process data: {e}")
+        if not self.server_id or event.get("server_id") == self.server_id:
+            try:
+                await self.send(text_data=json.dumps({
+                    "metric": event["data"]["metric"],
+                    "server_id": event.get("server_id"),
+                    "timestamp": event["data"]["timestamp"],
+                    "values": event["data"]["values"],
+                    "id": event["data"].get("id")
+                }))
+            except Exception as e:
+                logger.error(f"Error sending process data: {e}")
 
 
 class MetricConsumer(AsyncWebsocketConsumer):
     """General metrics consumer for backwards compatibility"""
     async def connect(self):
-        await self.channel_layer.group_add("all_metrics", self.channel_name)
+        self.server_id = self.scope['url_route']['kwargs']['server_id']
+        group_name = f"all_metrics_{self.server_id}"
+        await self.channel_layer.group_add(group_name, self.channel_name)
         await self.accept()
-        logger.info(f"General Metrics WebSocket connected: {self.channel_name}")
+        logger.info(f"General Metrics WebSocket connected for server {self.server_id}: {self.channel_name}")
 
     async def disconnect(self, close_code):
-        await self.channel_layer.group_discard("all_metrics", self.channel_name)
-        logger.info(f"General Metrics WebSocket disconnected: {self.channel_name}")
+        group_name = f"all_metrics_{self.server_id}"
+        await self.channel_layer.group_discard(group_name, self.channel_name)
+        logger.info(f"General Metrics WebSocket disconnected for server {self.server_id}: {self.channel_name}")
 
     async def metric_update(self, event):
-        """Handle general metric_update events"""
-        try:
-            await self.send(text_data=json.dumps({
-                "metric": event["data"]["metric"],
-                "timestamp": event["data"]["timestamp"],
-                "values": event["data"]["values"],
-                "id": event["data"].get("id")
-            }))
-            logger.debug(f"Sent general metric data: {event['data']['timestamp']}")
-        except Exception as e:
-            logger.error(f"Error sending general metric data: {e}")
+        if event["server_id"] == self.server_id:
+            try:
+                await self.send(text_data=json.dumps({
+                    "metric": event["data"]["metric"],
+                    "server_id": event["server_id"],
+                    "timestamp": event["data"]["timestamp"],
+                    "values": event["data"]["values"],
+                    "id": event["data"].get("id")
+                }))
+            except Exception as e:
+                logger.error(f"Error sending general metric data: {e}")
 

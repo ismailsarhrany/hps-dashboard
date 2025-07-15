@@ -30,12 +30,16 @@ class Command(BaseCommand):
     
     def handle(self, *args, **options):
         consumer = MetricConsumer()
-        topics = [
-            'metrics_vmstat',
-            'metrics_iostat',
-            'metrics_netstat',
-            'metrics_process'
-        ]
+        # Dynamically get topics for all active servers
+        from metrics.models import Server
+        topics = []
+        for server in Server.objects.filter(monitoring_enabled=True):
+            server_id = str(server.id)
+            topics.append(f"metrics_vmstat_{server_id}")
+            topics.append(f"metrics_iostat_{server_id}")
+            topics.append(f"metrics_netstat_{server_id}")
+            topics.append(f"metrics_process_{server_id}")
+        
         consumer.consumer.subscribe(topics)
         
         self.stdout.write(self.style.SUCCESS(f"Starting Kafka consumer, subscribed to topics: {', '.join(topics)}"))

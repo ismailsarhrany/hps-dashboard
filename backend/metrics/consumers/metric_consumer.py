@@ -13,11 +13,10 @@ from django.apps import apps
 from django.conf import settings
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
-
-# Import your rate service
 from metrics.utils.rate_service import RateCalculatorService
 
 logger = logging.getLogger(__name__)
+
 
 class MetricConsumer:
     def __init__(self):
@@ -27,46 +26,40 @@ class MetricConsumer:
             "group.id": "metric_consumer_group",
             "auto.offset.reset": "earliest",
             "enable.auto.commit": "false",
-            "max.poll.interval.ms": 300000,  # 5 minutes
-            "session.timeout.ms": 10000      # 10 seconds
+            "max.poll.interval.ms": 300000,
+            "session.timeout.ms": 10000
         }
         
         try:
             self.consumer = Consumer(self.conf)
-            logger.info(f"Kafka Consumer initialized with config: {self.conf}")
+            logger.info(f"Kafka Consumer initialized")
         except Exception as e:
             logger.error(f"Failed to initialize Kafka Consumer: {e}")
-            self.consumer = None
             return
-            
 
         self.channel_layer = get_channel_layer()
         self.running = True
-        
-        # Initialize rate calculator service
         self.rate_calculator = RateCalculatorService(min_time_diff_seconds=0.5)
-        
-        # Simple message ordering without complex batching
-        self.message_queues = defaultdict(list)
-        self.queue_lock = threading.Lock()
         self.last_sent_sequence = defaultdict(int)
 
-    def _send_message_immediately(self, metric_type, message_data):
-        """Send message immediately while maintaining order."""
+    def _send_message_immediately(self, server_id, metric_type, message_data):
+        """Send to both metric-specific and all-metrics groups"""
         try:
             sequence_id = message_data.get("sequence_id", 0)
             
-            # Simple ordering check
-            if sequence_id <= self.last_sent_sequence[metric_type]:
-                logger.warning(f"Skipping out-of-order message for {metric_type}: "
-                             f"{sequence_id} <= {self.last_sent_sequence[metric_type]}")
-                return
-            
-            # Send to WebSocket
-            group_name = f"{metric_type}_metrics"
-            
-            async_to_sync(self.channel_layer.group_send)(group_name, {
+            # Server-specific metric group
+            metric_group = f"{metric_type}_metrics_{server_id}"
+            async_to_sync(self.channel_layer.group_send)(metric_group, {
                 "type": f"{metric_type}_update",
+                "server_id": server_id,
+                "data": message_data
+            })
+            
+            # All-metrics group for the server
+            all_group = f"all_metrics_{server_id}"
+            async_to_sync(self.channel_layer.group_send)(all_group, {
+                "type": "metric_update",
+                "server_id": server_id,
                 "data": {
                     "metric": metric_type,
                     "timestamp": message_data["timestamp"],
@@ -76,24 +69,88 @@ class MetricConsumer:
                 }
             })
             
-            # Update last sent sequence
-            self.last_sent_sequence[metric_type] = sequence_id
-            logger.debug(f"Sent {metric_type} message with sequence_id {sequence_id}")
-
-            # Broadcast via WebSocket (Corrected)
-            async_to_sync(self.channel_layer.group_send)(
-                "metrics",
-                {
-                    "type": "metric.update",
-                    "data": {
-                        "metric": metric_type,
-                        "timestamp": message_data["timestamp"],
-                        "values": message_data["values"]
-                    }
-                }
-            )        
+            self.last_sent_sequence[(server_id, metric_type)] = sequence_id
+            
         except Exception as e:
-            logger.error(f"Error sending message for {metric_type}: {e}")
+            logger.error(f"Error sending message: {e}")
+
+    def process_message(self, msg):
+        try:
+            data = json.loads(msg.value().decode("utf-8"))
+            topic = msg.topic()
+            
+            # Extract server_id and metric_type from topic
+            parts = topic.split('_')
+            if len(parts) < 3:
+                logger.error(f"Invalid topic format: {topic}")
+                return
+                
+            metric_type = parts[1]
+            server_id = parts[-1]
+            
+            model_map = {
+                "vmstat": "VmstatMetric",
+                "iostat": "IostatMetric",
+                "netstat": "NetstatMetric",
+                "process": "ProcessMetric"
+            }
+            
+            if metric_type not in model_map:
+                logger.warning(f"Unsupported metric type: {metric_type}")
+                return
+                
+            model = apps.get_model("metrics", model_map[metric_type])
+            original_timestamp = data.get("timestamp")
+            if isinstance(original_timestamp, str):
+                # Convert ISO string to datetime
+                timestamp = datetime.fromisoformat(original_timestamp)
+            else:
+                timestamp = original_timestamp
+
+            # Use this timestamp when creating model instances
+            instance_data = {"timestamp": timestamp, **data["data"]}            
+            sequence_id = data.get("sequence_id", 0)
+            
+            if not original_timestamp:
+                logger.warning("Missing timestamp in message")
+                return
+                
+            # Prepare data
+            instance_data = {"timestamp": original_timestamp, **data["data"]}
+            
+            # Add calculated rates
+            self._add_calculated_rates(metric_type, instance_data)
+            
+            # Save to database
+            try:
+                # Handle special field mapping
+                if metric_type == "vmstat" and "in" in instance_data:
+                    instance_data["interface_in"] = instance_data.pop("in")
+                    
+                instance = model.objects.create(**instance_data)
+                db_id = instance.id
+            except Exception as e:
+                logger.error(f"Database save error: {e}")
+                db_id = None
+                
+            # Prepare and send message
+            message_data = {
+                "timestamp": original_timestamp,
+                "values": instance_data,
+                "id": db_id,
+                "sequence_id": sequence_id
+            }
+            self._send_message_immediately(server_id, metric_type, message_data)
+            
+            # Commit message
+            self.consumer.commit(msg)
+            
+        except json.JSONDecodeError:
+            logger.error(f"JSON decode error for topic: {msg.topic()}")
+        except Exception as e:
+            logger.error(f"Message processing error: {e}")
+
+
 
     def _add_calculated_rates(self, metric_type, data_dict):
         """Add calculated rates to the data dictionary based on metric type."""
@@ -115,94 +172,6 @@ class MetricConsumer:
             logger.error(f"Error calculating rates for {metric_type}: {e}")
             # Continue without rates if calculation fails
 
-    def process_message(self, msg):
-        """Simplified message processing with rate calculation."""
-        if not self.running:
-            return
-             
-        model_map = {
-            "metrics_vmstat": "VmstatMetric",
-            "metrics_iostat": "IostatMetric", 
-            "metrics_netstat": "NetstatMetric",
-            "metrics_process": "ProcessMetric"
-        }
-        
-        try:
-            data = json.loads(msg.value().decode("utf-8"))
-            topic = msg.topic()
-            
-            if topic not in model_map:
-                logger.warning(f"Received message from unmapped topic: {topic}")
-                self.consumer.commit(msg)
-                return
-                
-            model_name = model_map[topic]
-            model = apps.get_model("metrics", model_name)
-            metric_type = topic.replace("metrics_", "")
-            
-            # Validate timestamp and sequence
-            original_timestamp = data.get("timestamp")
-            sequence_id = data.get("sequence_id", 0)
-            
-            if not original_timestamp:
-                logger.warning(f"Message missing timestamp for {topic}")
-                self.consumer.commit(msg)
-                return
-            
-            # Prepare data for DB insertion and rate calculation
-            instance_data = {
-                "timestamp": original_timestamp,
-                **data["data"]
-            }
-            
-            # Handle special field mapping for vmstat
-            if topic == "metrics_vmstat":
-                if "in" in instance_data:
-                    instance_data["interface_in"] = instance_data.pop("in")
-            
-            # Calculate rates BEFORE database saving
-            # This ensures we have the timestamp in the correct format
-            self._add_calculated_rates(metric_type, instance_data)
-            
-            # Database saving
-            try:
-                # Create a copy for DB insertion (without rate fields that might not exist in model)
-                db_data = instance_data.copy()
-                
-                # Remove rate fields if they don't exist in the model
-                rate_fields = ["ipkts_rate", "opkts_rate", "ierrs_rate", "oerrs_rate", 
-                              "kb_read_rate", "kb_wrtn_rate"]
-                for field in rate_fields:
-                    if field in db_data:
-                        # Check if field exists in model before saving
-                        if not hasattr(model, field):
-                            db_data.pop(field, None)
-                
-                instance = model.objects.create(**db_data)
-                db_id = instance.id
-                logger.debug(f"Saved {topic} metric to database (ID: {db_id})")
-            except Exception as db_err:
-                logger.error(f"Error saving {topic} metric to database: {db_err}")
-                db_id = None
-
-            # Send immediately with ordering check (including calculated rates)
-            message_data = {
-                "timestamp": original_timestamp,
-                "values": instance_data,  # This includes calculated rates
-                "id": db_id,
-                "sequence_id": sequence_id
-            }
-            
-            self._send_message_immediately(metric_type, message_data)
-            
-            # Commit the Kafka message
-            self.consumer.commit(msg)
-            
-        except json.JSONDecodeError as json_err:
-            logger.error(f"Failed to decode JSON from {msg.topic()}: {json_err}")
-            self.consumer.commit(msg)
-        except Exception as e:
-            logger.error(f"Error processing message from {msg.topic()}: {e}")
 
     def cleanup_old_cache_entries(self):
         """Periodically clean up old cache entries to prevent memory leaks."""

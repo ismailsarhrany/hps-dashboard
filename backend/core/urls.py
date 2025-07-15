@@ -23,5 +23,6 @@ urlpatterns = [
     path('', include('metrics.urls')),
     path('', RedirectView.as_view(url='api/metrics/realtime/')),
     path('api/', include('models.urls')),
+    path('api-token-auth/', obtain_auth_token, name='api_token_auth'),
 ]
 

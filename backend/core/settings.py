@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'rest_framework',  # Django REST framework
     'corsheaders',  # CORS headers
     'channels',  # Django Channels for WebSockets
+    'rest_framework.authtoken',
 ]
 
 MIDDLEWARE = [
@@ -54,13 +55,33 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'corsheaders.middleware.CorsMiddleware',  # Add this FIRST
+    'corsheaders.middleware.CorsMiddleware', 
+    'metrics.permissions.IsAdminUser'
    
+]
+
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
 ]
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:4200",
 ]
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ]
+}
+
+# Configure groups
+ADMIN_GROUP = 'admin'
+ANALYST_GROUP = 'analyst'
+
 
 ROOT_URLCONF = 'core.urls'
 
@@ -109,6 +130,13 @@ DATABASES = {
 AIX_HOST = os.environ.get('AIX_HOST')
 AIX_USER = os.environ.get('AIX_USER')
 AIX_PASSWORD = os.environ.get('AIX_PASSWORD')
+
+# Field encryption key for django-encrypted-model-fields
+FIELD_ENCRYPTION_KEY = os.environ.get('FIELD_ENCRYPTION_KEY')
+
+# Optional: Add validation
+if not FIELD_ENCRYPTION_KEY:
+    raise ValueError("FIELD_ENCRYPTION_KEY environment variable is required")
 
 # Settings for better timestamp ordering
 KAFKA_CONSUMER_BATCH_INTERVAL = 2.0  # seconds

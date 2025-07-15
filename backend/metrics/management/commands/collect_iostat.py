@@ -29,27 +29,31 @@ class Command(BaseCommand):
         self.running = False
     
     def handle(self, *args, **options):
+        from metrics.models import Server
+        servers = Server.objects.filter(monitoring_enabled=True)
         interval = options['interval']
         producer = MetricProducer()
-        client = AIXClient()
+        
         
         self.stdout.write(self.style.SUCCESS(f'Starting IOStat collection (interval: {interval}s)'))
         
         try:
             while self.running:
-                try:
-                    output = client.execute('iostat -d 1 1')
-                    metrics = parse_iostat(output)
-                    for metric in metrics:
-                        producer.produce_metric('iostat', metric)
-                    self.stdout.write(f"IOStat metrics collected at {time.strftime('%H:%M:%S')}")
+                for server in servers:
+                    try:
+                        client = AIXClient(server.id)
+                        output = client.execute('iostat -d 1 1')
+                        metrics = parse_iostat(output)
+                        for metric in metrics:
+                            producer.produce_metric(str(server.id),server.os_type,'iostat', metric)
+                        self.stdout.write(f"iostat metrics collected for {server.hostname}  at {time.strftime('%H:%M:%S')}")
                     
-                    if self.running:
-                        time.sleep(interval)
+                        if self.running:
+                            time.sleep(interval)
                         
-                except Exception as e:
-                    self.stderr.write(f"Error collecting IOStat: {str(e)}")
-                    time.sleep(5)
+                    except Exception as e:
+                        self.stderr.write(f"Error collecting iostat  for {server.hostname} : {str(e)}")
+                        time.sleep(5)
                     
         except KeyboardInterrupt:
             pass
