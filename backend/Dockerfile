@@ -35,12 +35,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 #     DEBIAN_FRONTEND=noninteractive
 
 # # Replace sources with alternative mirrors
-# RUN echo 'deb http://mirrors.kernel.org/debian bookworm main' > /etc/apt/sources.list && \
-#     echo 'deb http://mirrors.kernel.org/debian bookworm-updates main' >> /etc/apt/sources.list
+# # RUN echo 'deb http://mirrors.kernel.org/debian bookworm main' > /etc/apt/sources.list && \
+# #     echo 'deb http://mirrors.kernel.org/debian bookworm-updates main' >> /etc/apt/sources.list
 
 # # Alternative mirror options (uncomment if kernel.org doesn't work):
-# # RUN echo 'deb http://ftp.debian.org/debian bookworm main' > /etc/apt/sources.list && \
-# #     echo 'deb http://ftp.debian.org/debian bookworm-updates main' >> /etc/apt/sources.list
+# RUN echo 'deb http://ftp.debian.org/debian bookworm main' > /etc/apt/sources.list && \
+#     echo 'deb http://ftp.debian.org/debian bookworm-updates main' >> /etc/apt/sources.list
 
 # # Install system dependencies
 # RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -65,8 +65,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 #     DEBIAN_FRONTEND=noninteractive
 
 # # Use working mirrors for Ubuntu
-# RUN sed -i 's|http://archive.ubuntu.com|http://mirror.rackspace.com|g' /etc/apt/sources.list && \
-#     sed -i 's|http://security.ubuntu.com|http://mirror.rackspace.com|g' /etc/apt/sources.list
+# # RUN sed -i 's|http://archive.ubuntu.com|http://mirror.rackspace.com|g' /etc/apt/sources.list && \
+# #     sed -i 's|http://security.ubuntu.com|http://mirror.rackspace.com|g' /etc/apt/sources.list
 
 # # Install Python 3.11 and system dependencies
 # RUN apt-get update && apt-get install -y --no-install-recommends \

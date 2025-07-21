@@ -42,6 +42,7 @@ class SSHClient:
             return
             
         try:
+            Server = apps.get_model('metrics', 'Server')
             # Import here to avoid circular imports
             from metrics.models import Server
             

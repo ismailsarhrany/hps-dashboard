@@ -30,7 +30,7 @@ class Server(models.Model):
     
     # Operating system information
     os_type = models.CharField(max_length=20, choices=OS_CHOICES)
-    os_version = models.CharField(max_length=100, blank=True, null=True)
+    os_version = models.CharField(max_length=100, blank=True, null=True)                                     
     architecture = models.CharField(max_length=20, blank=True, null=True)  # x86_64, sparc, etc.
     
     # SSH connection details
@@ -127,8 +127,8 @@ class IostatMetric(models.Model):
     
     # I/O statistics
     tps = models.FloatField(help_text="Transactions per second")
-    kb_read = models.FloatField(help_text="KB read per second")
-    kb_wrtn = models.FloatField(help_text="KB written per second")
+    kb_read_rate = models.FloatField(help_text="KB read per second")
+    kb_wrtn_rate = models.FloatField(help_text="KB written per second")
     service_time = models.FloatField(help_text="Average service time in milliseconds")
     
     # Additional fields for extended metrics
@@ -243,7 +243,6 @@ class ServerGroup(models.Model):
     
     def __str__(self):
         return self.name
-
 
 class MetricAlert(models.Model):
     """

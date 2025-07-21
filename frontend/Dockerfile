@@ -1,14 +1,14 @@
 # Utilisez une version de Node.js compatible avec node-sass (v14)
-FROM node:14.21.3-buster
+FROM node:14.21.3-bullseye
 
 # # Installation des dépendances système requises
-# RUN apt-get update && apt-get install -y \
-#     build-essential \
-#     && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
 
-RUN sed -i 's|http://deb.debian.org/debian|http://archive.debian.org/debian|g' /etc/apt/sources.list && \
-    sed -i '/security.debian.org/d' /etc/apt/sources.list && \
-    apt-get update && apt-get install -y build-essential && rm -rf /var/lib/apt/lists/*
+# RUN sed -i 's|http://deb.debian.org/debian|http://archive.debian.org/debian|g' /etc/apt/sources.list && \
+#     sed -i '/security.debian.org/d' /etc/apt/sources.list && \
+#     apt-get update && apt-get install -y build-essential && rm -rf /var/lib/apt/lists/*
 
 
 # Configuration Python

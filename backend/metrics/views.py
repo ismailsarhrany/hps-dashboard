@@ -10,17 +10,24 @@ from django.db.models import (
 from django.db.models.functions import Trunc
 from django.core.paginator import Paginator
 from django.db import connection
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from metrics.models import VmstatMetric, IostatMetric, NetstatMetric, ProcessMetric, Server
 from metrics.utils.ssh_client import get_ssh_client, get_all_ssh_clients, ssh_health_check
 import logging
 import json
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_protect
-from .permissions import IsAdminUser, IsAnalystOrAdmin, method_permission_classes
+from .permissions import IsAdminUser, IsAnalystOrAdmin 
 from rest_framework.views import APIView
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
+from django.views.generic import View
+from django.forms.models import model_to_dict
+from encrypted_model_fields.fields import EncryptedCharField
+import json
+
+
+
 
 
 logger = logging.getLogger(__name__)
@@ -75,7 +82,7 @@ class RealtimeMetricsView(APIView):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAnalystOrAdmin]
     
-    @method_decorator(login_required)
+    # @method_decorator(login_required)
     def get(self, request):
         metric = request.GET.get('metric')
         server_id = request.GET.get('server_id')
@@ -158,7 +165,7 @@ class HistoricalMetricsView(APIView):
     permission_classes = [IsAnalystOrAdmin]
 
 
-    @method_decorator(login_required)
+    # @method_decorator(login_required)
     def get(self, request):
         try:
             # Validate required parameters
@@ -512,28 +519,14 @@ class HistoricalMetricsView(APIView):
         except Exception as e:
             logger.error(f"Aggregation query failed: {e}")
             raise
-
-# class ServerListView(APIView):
-#     def get(self, request):
-#         servers = Server.objects.all().values('id', 'hostname', 'alias', 'status', 'monitoring_enabled', 'last_seen')
-#         return JsonResponse({
-#             "servers": list(servers),
-#             "count": servers.count()
-#         })
     
-from django.views.generic import View
-from django.forms.models import model_to_dict
-from django.core.exceptions import ValidationError
-from encrypted_model_fields.fields import EncryptedCharField
-import json
-
 class ServerCreateView(APIView):
     """Create a new server instance"""
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAdminUser]
     
-    @method_decorator(csrf_protect)
-    @method_decorator(login_required)    
+    # @method_decorator(csrf_protect)
+    # @method_decorator(login_required)    
     def post(self, request):
         try:
             data = json.loads(request.body)
@@ -579,9 +572,11 @@ class ServerCreateView(APIView):
 
 class ServerDetailView(APIView):
     """Retrieve, update or delete a server instance"""
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAdminUser]  
 
-    @method_permission_classes([IsAdminUser])
-    @method_decorator(login_required)
+    # @method_permission_classes([IsAdminUser])
+    # @method_decorator(login_required)
     def get(self, request, server_id):
         try:
             server = Server.objects.get(id=server_id)
@@ -596,9 +591,9 @@ class ServerDetailView(APIView):
                 "details": str(e)
             }, status=500)
     
-    @method_permission_classes([IsAdminUser])
-    @method_decorator(csrf_protect)
-    @method_decorator(login_required)
+    # @method_permission_classes([IsAdminUser])
+    # @method_decorator(csrf_protect)
+    # @method_decorator(login_required)
     def put(self, request, server_id):
         try:
             server = Server.objects.get(id=server_id)
@@ -638,9 +633,9 @@ class ServerDetailView(APIView):
                 "details": str(e)
             }, status=500)
     
-    @method_permission_classes([IsAdminUser])
-    @method_decorator(csrf_protect)
-    @method_decorator(login_required)
+    # @method_permission_classes([IsAdminUser])
+    # @method_decorator(csrf_protect)
+    # @method_decorator(login_required)
     def delete(self, request, server_id):
         try:
             server = Server.objects.get(id=server_id)
@@ -663,10 +658,9 @@ class ServerDetailView(APIView):
 class ServerListView(APIView):
     """List all servers or create a new server"""
     authentication_classes = [TokenAuthentication]
-
     permission_classes = [IsAnalystOrAdmin]
     
-    @method_decorator(login_required)
+    # @method_decorator(login_required)
     
     def get(self, request):
         try:
@@ -719,8 +713,8 @@ class ServerTestConnectionView(APIView):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAdminUser]
     
-    @method_decorator(csrf_protect)
-    @method_decorator(login_required)
+    # @method_decorator(csrf_protect)
+    # @method_decorator(login_required)
     
     def post(self, request, server_id):
         try:
@@ -765,8 +759,8 @@ class ServerBulkStatusView(APIView):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAdminUser]
     
-    @method_decorator(csrf_protect)
-    @method_decorator(login_required)
+    # @method_decorator(csrf_protect)
+    # @method_decorator(login_required)
     
     def post(self, request):
         try:
@@ -804,7 +798,7 @@ class ServerBulkStatusView(APIView):
 
 
 
-# Debug view for routing tests
+# Debug view for routing tests 
 def debug_view(request):
     """Debug endpoint to test URL routing."""
     return HttpResponse("Debug view is working! Your Django URL routing is correct.")

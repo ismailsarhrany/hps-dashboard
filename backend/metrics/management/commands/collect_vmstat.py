@@ -37,7 +37,8 @@ class Command(BaseCommand):
             while self.running:
                 for server in servers:
                     try:
-                        client = AIXClient(server.id)
+                        from metrics.utils.ssh_client import get_ssh_client
+                        client = get_ssh_client(str(server.id))
                         output = client.execute('vmstat 1 1')
                         parsed = parse_vmstat(output)
                         

@@ -124,8 +124,8 @@ class MetricConsumer:
             # Save to database
             try:
                 # Handle special field mapping
-                if metric_type == "vmstat" and "in" in instance_data:
-                    instance_data["interface_in"] = instance_data.pop("in")
+                # if metric_type == "vmstat" and "in" in instance_data:
+                #     instance_data["interface_in"] = instance_data.pop("in")
                     
                 instance = model.objects.create(**instance_data)
                 db_id = instance.id
@@ -135,6 +135,7 @@ class MetricConsumer:
                 
             # Prepare and send message
             message_data = {
+                "metirc": metric_type,
                 "timestamp": original_timestamp,
                 "values": instance_data,
                 "id": db_id,

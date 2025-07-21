@@ -41,7 +41,8 @@ class Command(BaseCommand):
             while self.running:
                 for server in servers:
                     try:
-                        client = AIXClient(server.id)
+                        from metrics.utils.ssh_client import get_ssh_client
+                        client = get_ssh_client(str(server.id))
                         output = client.execute('iostat -d 1 1')
                         metrics = parse_iostat(output)
                         for metric in metrics:
@@ -60,10 +61,8 @@ class Command(BaseCommand):
         finally:
             self.cleanup_resources(client, producer)
     
-    def cleanup_resources(self, client, producer):
+    def cleanup_resources(self, producer):
         try:
-            if hasattr(client, 'close') and callable(client.close):
-                client.close()
             producer.close()
         except Exception as e:
             self.stderr.write(f"Error during cleanup: {str(e)}")
