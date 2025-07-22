@@ -42,21 +42,28 @@
 #     return decorator
 
 # metrics/permissions.py
+# from rest_framework.permissions import BasePermission
+# from django.conf import settings
+
+# class IsAdminUser(BasePermission):
+#     """Requires user to be in 'admin' group"""
+#     def has_permission(self, request, view):
+#         return (
+#             request.user.is_authenticated and 
+#             request.user.groups.filter(name='admin').exists()
+#         )
+
+# class IsAnalystOrAdmin(BasePermission):
+#     """Allows users in 'analyst' or 'admin' groups"""
+#     def has_permission(self, request, view):
+#         return (
+#             request.user.is_authenticated and 
+#             request.user.groups.filter(name__in=['admin', 'analyst']).exists()
+#         )
+
 from rest_framework.permissions import BasePermission
-from django.conf import settings
 
-class IsAdminUser(BasePermission):
-    """Requires user to be in 'admin' group"""
+class AllowAll(BasePermission):
+    """Allow all requests"""
     def has_permission(self, request, view):
-        return (
-            request.user.is_authenticated and 
-            request.user.groups.filter(name='admin').exists()
-        )
-
-class IsAnalystOrAdmin(BasePermission):
-    """Allows users in 'analyst' or 'admin' groups"""
-    def has_permission(self, request, view):
-        return (
-            request.user.is_authenticated and 
-            request.user.groups.filter(name__in=['admin', 'analyst']).exists()
-        )
+        return True

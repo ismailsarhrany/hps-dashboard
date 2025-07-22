@@ -34,16 +34,10 @@ class MetricProducer:
 
     def produce_metric(self, server_id,os_type,metric_type, data):
         """Produce metric with microsecond-precision ordering."""
-        if not self.producer:
-            logger.error("Kafka producer is not initialized. Cannot produce metric.")
-            return
-        
-        unix_timestamp_us = int(timestamp.timestamp() * 1000000)  # Microsecond precision
-        
-        topic = f"metrics_{metric_type}_{server_id}"
-    
         # Create high-precision timestamp
         timestamp = datetime.now()
+        unix_timestamp_us = int(timestamp.timestamp() * 1000000)  # Microsecond precision
+
         if settings.USE_TZ:
             tz = pytz.timezone(getattr(settings, "TIME_ZONE", "UTC"))
             if timestamp.tzinfo is None:
@@ -53,7 +47,14 @@ class MetricProducer:
         else:
             if timestamp.tzinfo is None:
                 timestamp = timestamp.replace(tzinfo=pytz.UTC)
-    
+
+        if not self.producer:
+            logger.error("Kafka producer is not initialized. Cannot produce metric.")
+            return
+        
+        
+        topic = f"metrics_{metric_type}_{server_id}"
+        
         try:
             message_value = json.dumps({
                 "server_id": server_id,

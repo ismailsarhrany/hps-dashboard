@@ -15,17 +15,17 @@ from metrics.models import VmstatMetric, IostatMetric, NetstatMetric, ProcessMet
 from metrics.utils.ssh_client import get_ssh_client, get_all_ssh_clients, ssh_health_check
 import logging
 import json
-from django.contrib.auth.decorators import login_required
+# from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_protect
-from .permissions import IsAdminUser, IsAnalystOrAdmin 
+# from .permissions import AllowAll, AllowAll 
 from rest_framework.views import APIView
-from rest_framework.authentication import TokenAuthentication
-from rest_framework.permissions import IsAuthenticated
+# from rest_framework.authentication import TokenAuthentication
+# from rest_framework.permissions import IsAuthenticated
 from django.views.generic import View
 from django.forms.models import model_to_dict
 from encrypted_model_fields.fields import EncryptedCharField
 import json
-
+from .permissions import AllowAll
 
 
 
@@ -79,8 +79,8 @@ class GenericDateTrunc(Func):
 
 class RealtimeMetricsView(APIView):
     """API endpoint to get the last 1 minute of data for a given metric."""
-    authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAnalystOrAdmin]
+    authentication_classes = []
+    permission_classes = [AllowAll]
     
     # @method_decorator(login_required)
     def get(self, request):
@@ -161,8 +161,8 @@ class HistoricalMetricsView(APIView):
     API endpoint to get historical data for a given metric within a time range.
     Supports server filtering and aggregation for process metrics.
     """
-    authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAnalystOrAdmin]
+    authentication_classes = []
+    permission_classes = [AllowAll]
 
 
     # @method_decorator(login_required)
@@ -522,8 +522,8 @@ class HistoricalMetricsView(APIView):
     
 class ServerCreateView(APIView):
     """Create a new server instance"""
-    authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAdminUser]
+    authentication_classes = []
+    permission_classes = [AllowAll]
     
     # @method_decorator(csrf_protect)
     # @method_decorator(login_required)    
@@ -540,8 +540,8 @@ class ServerCreateView(APIView):
                 alias=data.get('alias'),
                 os_version=data.get('os_version'),
                 architecture=data.get('architecture'),
-                ssh_key_path=encrypt(data.get('ssh_key_path')),
-                ssh_password=encrypt(data.get('ssh_password')),
+                ssh_key_path=data.get('ssh_key_path'),
+                ssh_password=data.get('ssh_password'),
                 status=data.get('status', 'active'),
                 monitoring_enabled=data.get('monitoring_enabled', True),
                 monitoring_interval=data.get('monitoring_interval', 60),
@@ -572,10 +572,10 @@ class ServerCreateView(APIView):
 
 class ServerDetailView(APIView):
     """Retrieve, update or delete a server instance"""
-    authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAdminUser]  
+    authentication_classes = []
+    permission_classes = [AllowAll]  
 
-    # @method_permission_classes([IsAdminUser])
+    # @method_permission_classes([AllowAll])
     # @method_decorator(login_required)
     def get(self, request, server_id):
         try:
@@ -591,7 +591,7 @@ class ServerDetailView(APIView):
                 "details": str(e)
             }, status=500)
     
-    # @method_permission_classes([IsAdminUser])
+    # @method_permission_classes([AllowAll])
     # @method_decorator(csrf_protect)
     # @method_decorator(login_required)
     def put(self, request, server_id):
@@ -607,10 +607,10 @@ class ServerDetailView(APIView):
                          'description', 'location', 'environment']:
                 if field in data:
                     setattr(server, field, data[field])
-                if 'ssh_password' in data:
-                    server.ssh_password = encrypt(data['ssh_password'])
-                if 'ssh_key_path' in data:
-                    server.ssh_key_path = encrypt(data['ssh_key_path'])    
+                # if 'ssh_password' in data:
+                #     server.ssh_password = encrypt(data['ssh_password'])
+                # if 'ssh_key_path' in data:
+                #     server.ssh_key_path = encrypt(data['ssh_key_path'])    
             
             server.save()
             return JsonResponse({
@@ -633,7 +633,7 @@ class ServerDetailView(APIView):
                 "details": str(e)
             }, status=500)
     
-    # @method_permission_classes([IsAdminUser])
+    # @method_permission_classes([AllowAll])
     # @method_decorator(csrf_protect)
     # @method_decorator(login_required)
     def delete(self, request, server_id):
@@ -657,8 +657,8 @@ class ServerDetailView(APIView):
 
 class ServerListView(APIView):
     """List all servers or create a new server"""
-    authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAnalystOrAdmin]
+    authentication_classes = []
+    permission_classes = [AllowAll]
     
     # @method_decorator(login_required)
     
@@ -710,8 +710,8 @@ class ServerListView(APIView):
 
 class ServerTestConnectionView(APIView):
     """Test SSH connection to a server"""
-    authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAdminUser]
+    authentication_classes = []
+    permission_classes = [AllowAll]
     
     # @method_decorator(csrf_protect)
     # @method_decorator(login_required)
@@ -756,8 +756,8 @@ class ServerTestConnectionView(APIView):
 
 class ServerBulkStatusView(APIView):
     """Bulk update server statuses"""
-    authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAdminUser]
+    authentication_classes = []
+    permission_classes = [AllowAll]
     
     # @method_decorator(csrf_protect)
     # @method_decorator(login_required)
