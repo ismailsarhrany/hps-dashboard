@@ -1,7 +1,7 @@
 # metrics/management/commands/collect_process.py
 from django.core.management.base import BaseCommand
 from metrics.producers.metric_producer import MetricProducer
-from metrics.utils.ssh_client import AIXClient
+# from metrics.utils.ssh_client import AIXClient
 # from metrics.utils.parsers import parse_process
 from metrics.utils.multi_parsers import  parse_process
 import time
@@ -21,8 +21,8 @@ class Command(BaseCommand):
         parser.add_argument(
             '--interval',
             type=int,
-            default=10,
-            help='Collection interval in seconds (default: 10)'
+            default=5,
+            help='Collection interval in seconds (default: 5)'
         )
     
     def handle_interrupt(self, sig, frame):
@@ -43,8 +43,10 @@ class Command(BaseCommand):
                     try:
                         from metrics.utils.ssh_client import get_ssh_client
                         client = get_ssh_client(str(server.id))
-                        output = client.execute('ps aux |sort -nrk 3 |head -10')
-                        metrics = parse_process(output,server.os_type, datetime.now())
+                        result = client.execute('ps aux |sort -nrk 3 |head -10')
+                        # Handle tuple (status, output) from SSH client
+                        output = result[1] if isinstance(result, tuple) else result
+                        metrics = parse_process(output, server.os_type, datetime.now())
                         for metric in metrics:
                             producer.produce_metric(str(server.id),server.os_type,'process', metric)
                         self.stdout.write(f"Process metrics collected for {server.hostname}   at {time.strftime('%H:%M:%S')}")
@@ -61,10 +63,14 @@ class Command(BaseCommand):
         finally:
             self.cleanup_resources(client, producer)
     
-    def cleanup_resources(self, producer):
+    def cleanup_resources(self,client=None ,producer=None):
+        if client:
+            try:
+                client.close()
+            except Exception as e:
+                self.stderr.write(f"Error closing SSH client: {str(e)}")
         try:
             producer.close()
         except Exception as e:
             self.stderr.write(f"Error during cleanup: {str(e)}")
-        
-        self.stdout.write(self.style.SUCCESS('Process collection completed.'))
+        self.stdout.write(self.style.SUCCESS('VMStat collection completed.'))

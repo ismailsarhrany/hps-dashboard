@@ -1,11 +1,12 @@
 # metrics/management/commands/collect_vmstat.py
 from django.core.management.base import BaseCommand
 from metrics.producers.metric_producer import MetricProducer
-from metrics.utils.ssh_client import AIXClient
+# from metrics.utils.ssh_client import AIXClient
 # from metrics.utils.parsers import parse_vmstat
-from metrics.utils.parsers import parse_vmstat
+from metrics.utils.multi_parsers import parse_vmstat
 import time
 import signal
+from datetime import datetime
 
 class Command(BaseCommand):
     help = 'Collect VMStat metrics from AIX server'
@@ -24,6 +25,9 @@ class Command(BaseCommand):
             help='Collection interval in seconds (default: 5)'
         )
     
+    def handle_interrupt(self, sig, frame):
+        self.stdout.write(self.style.WARNING('Stopping VMStat collection...'))
+        self.running = False
 
     def handle(self, *args, **options):
         from metrics.models import Server
@@ -39,16 +43,14 @@ class Command(BaseCommand):
                     try:
                         from metrics.utils.ssh_client import get_ssh_client
                         client = get_ssh_client(str(server.id))
-                        output = client.execute('vmstat 1 1')
-                        parsed = parse_vmstat(output)
+                        # After
+                        result = client.execute('vmstat 1 1')
+                        output = result[1] if isinstance(result, tuple) else result  # Extract stdout
+                        parsed = parse_vmstat(output, server.os_type, datetime.now())
                         
                         # Pass server ID to producer
                         producer.produce_metric(
-                            str(server.id),
-                            server.os_type,
-                            'vmstat',
-                            parsed
-                        )
+                            str(server.id), server.os_type,'vmstat',parsed)
                         self.stdout.write(f"Collected VMStat for {server.hostname} at {time.strftime('%H:%M:%S')}")
                     
                     except Exception as e:
@@ -63,10 +65,14 @@ class Command(BaseCommand):
         finally:
             self.cleanup_resources(producer)
     
-    def cleanup_resources(self, producer):
+    def cleanup_resources(self,client=None ,producer=None):
+        if client:
+            try:
+                client.close()
+            except Exception as e:
+                self.stderr.write(f"Error closing SSH client: {str(e)}")
         try:
             producer.close()
         except Exception as e:
             self.stderr.write(f"Error during cleanup: {str(e)}")
         self.stdout.write(self.style.SUCCESS('VMStat collection completed.'))
-

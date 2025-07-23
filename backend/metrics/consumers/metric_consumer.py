@@ -14,6 +14,8 @@ from django.conf import settings
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 from metrics.utils.rate_service import RateCalculatorService
+from django.utils import timezone
+from django.core.exceptions import ObjectDoesNotExist
 
 logger = logging.getLogger(__name__)
 
@@ -87,6 +89,15 @@ class MetricConsumer:
                 
             metric_type = parts[1]
             server_id = parts[-1]
+
+             # Validate server exists
+            try:
+                from metrics.models import Server
+                Server.objects.get(id=server_id)
+            except ObjectDoesNotExist:
+                logger.error(f"Server {server_id} does not exist in database")
+                self.consumer.commit(msg)
+                return
             
             model_map = {
                 "vmstat": "VmstatMetric",
@@ -101,22 +112,20 @@ class MetricConsumer:
                 
             model = apps.get_model("metrics", model_map[metric_type])
             original_timestamp = data.get("timestamp")
+
+            # Convert ISO string to datetime
             if isinstance(original_timestamp, str):
-                # Convert ISO string to datetime
                 timestamp = datetime.fromisoformat(original_timestamp)
             else:
                 timestamp = original_timestamp
 
-            # Use this timestamp when creating model instances
-            instance_data = {"timestamp": timestamp, **data["data"]}            
             sequence_id = data.get("sequence_id", 0)
-            
-            if not original_timestamp:
-                logger.warning("Missing timestamp in message")
-                return
-                
-            # Prepare data
-            instance_data = {"timestamp": original_timestamp, **data["data"]}
+
+                        
+            # Prepare data with server relationship
+            instance_data = data["data"].copy()
+            instance_data["server_id"] = server_id  # Critical fix
+            instance_data["timestamp"] = timestamp
             
             # Add calculated rates
             self._add_calculated_rates(metric_type, instance_data)
@@ -124,13 +133,14 @@ class MetricConsumer:
             # Save to database
             try:
                 # Handle special field mapping
-                # if metric_type == "vmstat" and "in" in instance_data:
-                #     instance_data["interface_in"] = instance_data.pop("in")
+                if metric_type == "vmstat" and "in" in instance_data:
+                    instance_data["interface_in"] = instance_data.pop("in")
                     
                 instance = model.objects.create(**instance_data)
                 db_id = instance.id
             except Exception as e:
                 logger.error(f"Database save error: {e}")
+                logger.error(f"Problematic data: {instance_data}")  # Better logging
                 db_id = None
                 
             # Prepare and send message
@@ -150,6 +160,12 @@ class MetricConsumer:
             logger.error(f"JSON decode error for topic: {msg.topic()}")
         except Exception as e:
             logger.error(f"Message processing error: {e}")
+            logger.exception(f"CRITICAL ERROR processing message:")  # Log full traceback
+            logger.error(f"Topic: {msg.topic()}")
+            logger.error(f"Message value: {msg.value()[:500]}")  # First 500 chars
+            logger.error(f"Exception type: {type(e).__name__}")
+
+        
 
 
 

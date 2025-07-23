@@ -34,13 +34,15 @@ class Command(BaseCommand):
         from metrics.models import Server
         topics = []
         for server in Server.objects.filter(monitoring_enabled=True):
+            if not server.id:  # Skip invalid servers
+                continue
             server_id = str(server.id)
             topics.append(f"metrics_vmstat_{server_id}")
             topics.append(f"metrics_iostat_{server_id}")
             topics.append(f"metrics_netstat_{server_id}")
             topics.append(f"metrics_process_{server_id}")
         
-        consumer.consumer.subscribe(topics)
+        consumer.consumer.subscribe(topics)     
         
         self.stdout.write(self.style.SUCCESS(f"Starting Kafka consumer, subscribed to topics: {', '.join(topics)}"))
         self.stdout.write(self.style.SUCCESS("Waiting for messages... Press Ctrl+C to stop."))
