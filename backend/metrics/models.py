@@ -127,6 +127,8 @@ class IostatMetric(models.Model):
     
     # I/O statistics
     tps = models.FloatField(help_text="Transactions per second")
+    kb_read = models.FloatField(default=0.0)
+    kb_wrtn = models.FloatField(default=0.0)
     kb_read_rate = models.FloatField(help_text="KB read per second")
     kb_wrtn_rate = models.FloatField(help_text="KB written per second")
     service_time = models.FloatField(help_text="Average service time in milliseconds")
@@ -163,7 +165,7 @@ class NetstatMetric(models.Model):
     oerrs_rate = models.FloatField(null=True, blank=True, help_text="Output errors per second")
     
     # Additional fields
-    time = models.BigIntegerField(help_text="Timestamp")
+    time = models.BigIntegerField(default=0,help_text="Timestamp")
     # collisions = models.BigIntegerField(null=True, blank=True, help_text="Collisions")
     # dropped = models.BigIntegerField(null=True, blank=True, help_text="Dropped packets")
 

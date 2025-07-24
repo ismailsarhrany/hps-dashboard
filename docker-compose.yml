@@ -60,6 +60,8 @@ services:
       timeout: 10s
       retries: 3
       start_period: 30s
+    extra_hosts:
+      - "kafka:172.20.0.5"
 
   # --- Redis ---
   redis:
@@ -89,7 +91,7 @@ services:
       postgres:
         condition: service_healthy
       kafka:
-        condition: service_started # Ou service_healthy si vous avez un healthcheck Kafka fiable
+        condition: service_started
       redis:
         condition: service_healthy
     env_file:
@@ -100,13 +102,7 @@ services:
       DEBUG: "True"
     networks:
       - app-network
-    # Le healthcheck peut nécessiter un ajustement si les migrations prennent du temps
-    # healthcheck:
-    #   test: ["CMD", "curl", "-f", "http://localhost:8000"]
-    #   interval: 30s
-    #   timeout: 10s
-    #   retries: 5
-    #   start_period: 60s # Augmenter potentiellement le start_period
+      - monitoring_network  # Add to monitoring network
 
   # --- Kafka UI ---
   kafka-ui:
@@ -141,9 +137,47 @@ services:
     command: npm start -- --host 0.0.0.0 --disable-host-check
     restart: on-failure
 
+  # --- Simulated servers ---
+  server1:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.simulated_server
+    container_name: server1
+    hostname: server1
+    networks:
+      monitoring_network:
+        ipv4_address: 172.20.0.101  # Static IP assignment
+
+
+  server2:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.simulated_server
+    container_name: server2
+    hostname: server2
+    networks:
+      monitoring_network:
+        ipv4_address: 172.20.0.102  # Static IP assignment
+
+  server3:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.simulated_server
+    container_name: server3
+    hostname: server3
+    networks:
+      monitoring_network:
+        ipv4_address: 172.20.0.103  # Static IP assignment
+
+
 volumes:
   frontend_node_modules:
 
 networks:
   app-network:
     driver: bridge
+  monitoring_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/24

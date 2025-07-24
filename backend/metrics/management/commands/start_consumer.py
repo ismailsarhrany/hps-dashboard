@@ -4,7 +4,7 @@ from metrics.consumers.metric_consumer import MetricConsumer
 import signal
 import datetime
 import json
-
+from collections import defaultdict  # Add this import
 
 class Command(BaseCommand):
     help = 'Start Kafka consumer for metric processing'
@@ -16,12 +16,8 @@ class Command(BaseCommand):
         signal.signal(signal.SIGINT, self.handle_interrupt)
         signal.signal(signal.SIGTERM, self.handle_interrupt)
         self.message_count = 0
-        self.topic_counters = {
-            'metrics_vmstat': 0,
-            'metrics_iostat': 0,
-            'metrics_netstat': 0,
-            'metrics_process': 0
-        }
+        # Use defaultdict to handle dynamic topics
+        self.topic_counters = defaultdict(int)
     
     def handle_interrupt(self, sig, frame):
         """Handle interrupt signal (Ctrl+C)"""
@@ -61,9 +57,10 @@ class Command(BaseCommand):
                     topic = msg.topic()
                     timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                     
-                    # Track message count by topic
+                    # Track message count by base topic name
                     self.message_count += 1
-                    self.topic_counters[topic] += 1
+                    base_topic = "_".join(topic.split("_")[:2])  # Get base name (e.g. metrics_vmstat)
+                    self.topic_counters[base_topic] += 1
                     
                     # Get a sample of the data for debugging
                     value = json.loads(msg.value().decode('utf-8'))

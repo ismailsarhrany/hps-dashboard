@@ -17,28 +17,35 @@ class RateCalculatorService:
         self.min_time_diff_seconds = min_time_diff_seconds
         logger.info(f"RateCalculatorService initialized with min_time_diff: {min_time_diff_seconds}s")
 
-    def _parse_timestamp(self, timestamp_str: str) -> Optional[float]:
-        """Parses ISO timestamp string to POSIX timestamp (seconds)."""
-        if not timestamp_str:
+    def _parse_timestamp(self, timestamp_input: Union[str, datetime]) -> Optional[float]:
+        """Parses timestamp (string or datetime) to POSIX timestamp (seconds)."""
+        if not timestamp_input:
             logger.warning("Empty timestamp provided")
             return None
-            
+        
         try:
+            # Handle datetime objects directly
+            if isinstance(timestamp_input, datetime):
+                return timestamp_input.timestamp()
+            
+            # Handle string timestamps
+            timestamp_str = str(timestamp_input)
+        
             # Handle potential timezone info (like +00:00 or Z)
             if timestamp_str.endswith('Z'):
                 timestamp_str = timestamp_str.replace("Z", "+00:00")
-            
+        
             dt = datetime.fromisoformat(timestamp_str)
-            
+        
             # Convert to UTC if timezone-aware, otherwise assume UTC
             if dt.tzinfo is not None and dt.tzinfo.utcoffset(dt) is not None:
                 return dt.timestamp()
             else:
                 # Assume UTC if naive
                 return dt.replace(tzinfo=timezone.utc).timestamp()
-                
+            
         except (ValueError, TypeError) as e:
-            logger.error(f"Error parsing timestamp '{timestamp_str}': {e}")
+            logger.error(f"Error parsing timestamp '{timestamp_input}': {e}")
             return None
 
     def _safe_float_conversion(self, value: Union[str, int, float], default: float = 0.0) -> float:

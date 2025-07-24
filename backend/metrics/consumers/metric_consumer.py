@@ -76,6 +76,94 @@ class MetricConsumer:
         except Exception as e:
             logger.error(f"Error sending message: {e}")
 
+    # def process_message(self, msg):
+    #     try:
+    #         data = json.loads(msg.value().decode("utf-8"))
+    #         topic = msg.topic()
+            
+    #         # Extract server_id and metric_type from topic
+    #         parts = topic.split('_')
+    #         if len(parts) < 3:
+    #             logger.error(f"Invalid topic format: {topic}")
+    #             return
+                
+    #         metric_type = parts[1]
+    #         server_id = parts[-1]
+
+    #          # Validate server exists
+    #         try:
+    #             from metrics.models import Server
+    #             Server.objects.get(id=server_id)
+    #         except ObjectDoesNotExist:
+    #             logger.error(f"Server {server_id} does not exist in database")
+    #             self.consumer.commit(msg)
+    #             return
+            
+    #         model_map = {
+    #             "vmstat": "VmstatMetric",
+    #             "iostat": "IostatMetric",
+    #             "netstat": "NetstatMetric",
+    #             "process": "ProcessMetric"
+    #         }
+            
+    #         if metric_type not in model_map:
+    #             logger.warning(f"Unsupported metric type: {metric_type}")
+    #             return
+                
+    #         model = apps.get_model("metrics", model_map[metric_type])
+    #         original_timestamp = data.get("timestamp")
+
+    #         # Convert ISO string to datetime
+    #         if isinstance(original_timestamp, str):
+    #             timestamp = datetime.fromisoformat(original_timestamp)
+    #         else:
+    #             timestamp = original_timestamp
+
+    #         sequence_id = data.get("sequence_id", 0)
+
+                        
+    #         # Prepare data with server relationship
+    #         instance_data = data["data"].copy()
+    #         instance_data["server_id"] = server_id  # Critical fix
+    #         instance_data["timestamp"] = timestamp
+            
+    #         # Add calculated rates
+    #         self._add_calculated_rates(metric_type, instance_data)
+            
+    #         # Save to database
+    #         try:
+    #             # Handle special field mapping
+    #             if metric_type == "vmstat" and "in" in instance_data:
+    #                 instance_data["interface_in"] = instance_data.pop("in")
+                    
+    #             instance = model.objects.create(**instance_data)
+    #             db_id = instance.id
+    #         except Exception as e:
+    #             logger.error(f"Database save error: {e}")
+    #             logger.error(f"Problematic data: {instance_data}")  # Better logging
+    #             db_id = None
+                
+    #         # Prepare and send message
+    #         message_data = {
+    #             "metirc": metric_type,
+    #             "timestamp": original_timestamp,
+    #             "values": instance_data,
+    #             "id": db_id,
+    #             "sequence_id": sequence_id
+    #         }
+    #         self._send_message_immediately(server_id, metric_type, message_data)
+            
+    #         # Commit message
+    #         self.consumer.commit(msg)
+            
+    #     except json.JSONDecodeError:
+    #         logger.error(f"JSON decode error for topic: {msg.topic()}")
+    #     except Exception as e:
+    #         logger.error(f"Message processing error: {e}")
+    #         logger.exception(f"CRITICAL ERROR processing message:")  # Log full traceback
+    #         logger.error(f"Topic: {msg.topic()}")
+    #         logger.error(f"Message value: {msg.value()[:500]}")  # First 500 chars
+    #         logger.error(f"Exception type: {type(e).__name__}")
     def process_message(self, msg):
         try:
             data = json.loads(msg.value().decode("utf-8"))
@@ -126,6 +214,10 @@ class MetricConsumer:
             instance_data = data["data"].copy()
             instance_data["server_id"] = server_id  # Critical fix
             instance_data["timestamp"] = timestamp
+
+            # Add this fallback for netstat metrics
+            if metric_type == "netstat" and 'time' not in instance_data:            
+                instance_data['time'] = 0
             
             # Add calculated rates
             self._add_calculated_rates(metric_type, instance_data)
@@ -143,11 +235,15 @@ class MetricConsumer:
                 logger.error(f"Problematic data: {instance_data}")  # Better logging
                 db_id = None
                 
-            # Prepare and send message
+            # Create WebSocket-safe values by reverting timestamp to original format
+            ws_values = instance_data.copy()
+            ws_values['timestamp'] = original_timestamp
+                
+            # Prepare and send message - FIXED TYPO: "metric" instead of "metirc"
             message_data = {
-                "metirc": metric_type,
+                "metric": metric_type,  # Fixed typo here
                 "timestamp": original_timestamp,
-                "values": instance_data,
+                "values": ws_values,    # Use modified values with original timestamp
                 "id": db_id,
                 "sequence_id": sequence_id
             }
@@ -164,7 +260,6 @@ class MetricConsumer:
             logger.error(f"Topic: {msg.topic()}")
             logger.error(f"Message value: {msg.value()[:500]}")  # First 500 chars
             logger.error(f"Exception type: {type(e).__name__}")
-
         
 
 
