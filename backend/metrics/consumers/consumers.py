@@ -2,6 +2,7 @@
 from channels.generic.websocket import AsyncWebsocketConsumer
 import json
 import logging
+import redis
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +35,7 @@ class VmstatConsumer(AsyncWebsocketConsumer):
                 logger.error(f"Error sending vmstat data: {e}")
 
 
-# ...existing code...
+
 
 class IostatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
@@ -141,4 +142,28 @@ class MetricConsumer(AsyncWebsocketConsumer):
                 }))
             except Exception as e:
                 logger.error(f"Error sending general metric data: {e}")
+
+
+class OracleDataConsumer(AsyncWebsocketConsumer):
+    async def connect(self):
+        self.server_id = self.scope['url_route']['kwargs']['server_id']
+        self.redis_group = f'oracle_updates_{self.server_id}'
+        
+        # Join Redis channel group
+        await self.channel_layer.group_add(
+            self.redis_group,
+            self.channel_name
+        )
+        await self.accept()
+
+    async def disconnect(self, close_code):
+        # Leave Redis group
+        await self.channel_layer.group_discard(
+            self.redis_group,
+            self.channel_name
+        )
+
+    async def oracle_data_update(self, event):
+        # Send data to WebSocket
+        await self.send(text_data=json.dumps(event['data']))
 

@@ -86,7 +86,7 @@ services:
   backend:
     build:
       context: ./backend
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.oracle
     working_dir: /app
     volumes:
       - ./backend:/app
@@ -106,6 +106,8 @@ services:
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       DEBUG: "True"
       PYTHONPATH: /app
+      LD_LIBRARY_PATH: /opt/oracle/instantclient_21_1
+      TNS_ADMIN: /opt/oracle/instantclient_21_1/network/admin
     networks:
       - app-network
       - monitoring_network
@@ -127,6 +129,21 @@ services:
     networks:
       - app-network
     restart: unless-stopped
+  
+  # Optional: Oracle Database for testing (if you don't have external Oracle)
+  oracle-test:
+    image: gvenzl/oracle-xe:21-slim
+    environment:
+      ORACLE_PASSWORD: oracle_password
+      APP_USER: testuser
+      APP_USER_PASSWORD: testpass
+    ports:
+      - "1521:1521"
+    volumes:
+      - oracle_data:/opt/oracle/oradata
+      - ./oracle-init:/docker-entrypoint-initdb.d
+    networks:
+      - app-network
 
   # --- Frontend ---
   frontend:
@@ -182,11 +199,11 @@ services:
 
 volumes:
   frontend_node_modules:
+  oracle_data:
 
 networks:
   app-network:
     driver: bridge
-    # Add explicit subnet to avoid conflicts
     ipam:
       config:
         - subnet: 172.18.0.0/24

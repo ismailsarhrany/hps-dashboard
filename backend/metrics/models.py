@@ -3,6 +3,8 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils import timezone
 import uuid
 from encrypted_model_fields.fields import EncryptedCharField
+from django.db.models import JSONField
+import json
 
 class Server(models.Model):
     """
@@ -281,3 +283,143 @@ class MetricAlert(models.Model):
         ]
 
 
+class OracleDatabase(models.Model):
+    """Oracle database configuration for each server"""
+    server = models.ForeignKey(Server, on_delete=models.CASCADE, related_name='oracle_databases')
+    name = models.CharField(max_length=100, help_text="Database identifier name")
+    host = models.GenericIPAddressField(help_text="Oracle DB host (can be same as server or different)")
+    port = models.IntegerField(default=1521)
+    service_name = models.CharField(max_length=100, help_text="Oracle service name or SID")
+    username = models.CharField(max_length=100)
+    password = EncryptedCharField(max_length=255)  # Consider encrypting this
+    
+    # Connection settings
+    connection_timeout = models.IntegerField(default=30, help_text="Connection timeout in seconds")
+    is_active = models.BooleanField(default=True)
+    
+    # Metadata
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    last_connection_test = models.DateTimeField(null=True, blank=True)
+    connection_status = models.CharField(
+        max_length=20,
+        choices=[
+            ('unknown', 'Unknown'),
+            ('connected', 'Connected'),
+            ('failed', 'Failed'),
+            ('timeout', 'Timeout'),
+        ],
+        default='unknown'
+    )
+
+    class Meta:
+        unique_together = ['server', 'name']
+
+    def __str__(self):
+        return f"{self.server.name} - {self.name}"
+
+class OracleTable(models.Model):
+    """Tables to monitor in each Oracle database"""
+    database = models.ForeignKey(OracleDatabase, on_delete=models.CASCADE, related_name='monitored_tables')
+    table_name = models.CharField(max_length=100)
+    schema_name = models.CharField(max_length=100, default='PUBLIC')
+    
+    # Monitoring settings
+    is_active = models.BooleanField(default=True)
+    polling_interval = models.IntegerField(default=30, help_text="Polling interval in seconds")
+    
+    # Query configuration
+    columns_to_monitor = JSONField(
+        default=list,
+        blank=True,
+        help_text="List of specific columns to monitor. Empty means all columns"
+    )
+    where_clause = models.TextField(
+        blank=True,
+        help_text="Optional WHERE clause for filtering data"
+    )
+    order_by = models.CharField(
+        max_length=200,
+        blank=True,
+        help_text="ORDER BY clause for consistent data retrieval"
+    )
+    
+    # Change detection
+    timestamp_column = models.CharField(
+        max_length=100,
+        blank=True,
+        help_text="Column to use for detecting changes (timestamp/date column)"
+    )
+    primary_key_columns = JSONField(
+        default=list,
+        help_text="List of primary key columns for change detection"
+    )
+    
+    # Metadata
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    last_poll_time = models.DateTimeField(null=True, blank=True)
+    last_record_count = models.IntegerField(default=0)
+
+    class Meta:
+        unique_together = ['database', 'table_name', 'schema_name']
+
+    def __str__(self):
+        return f"{self.database} - {self.schema_name}.{self.table_name}"
+
+    def get_full_table_name(self):
+        return f"{self.schema_name}.{self.table_name}"
+
+class OracleTableData(models.Model):
+    """Store historical data from Oracle tables"""
+    table = models.ForeignKey(OracleTable, on_delete=models.CASCADE, related_name='data_snapshots')
+    data = JSONField(help_text="JSON representation of the table data")
+    record_count = models.IntegerField()
+    checksum = models.CharField(max_length=64, help_text="MD5 checksum of data for change detection")
+    timestamp = models.DateTimeField(auto_now_add=True)
+    
+    # Metadata about the collection
+    collection_duration = models.FloatField(help_text="Time taken to collect data in seconds")
+    errors = JSONField(default=dict, blank=True, help_text="Any errors encountered during collection")
+
+    class Meta:
+        ordering = ['-timestamp']
+        indexes = [
+            models.Index(fields=['table', '-timestamp']),
+            models.Index(fields=['checksum']),
+        ]
+
+    def __str__(self):
+        return f"{self.table} - {self.timestamp}"
+
+class OracleMonitoringTask(models.Model):
+    """Track monitoring tasks and their status"""
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('running', 'Running'),
+        ('completed', 'Completed'),
+        ('failed', 'Failed'),
+        ('cancelled', 'Cancelled'),
+    ]
+    
+    table = models.ForeignKey(OracleTable, on_delete=models.CASCADE, related_name='monitoring_tasks')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    
+    # Task execution details
+    started_at = models.DateTimeField(null=True, blank=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    duration = models.FloatField(null=True, blank=True, help_text="Task duration in seconds")
+    
+    # Results
+    records_processed = models.IntegerField(default=0)
+    changes_detected = models.BooleanField(default=False)
+    error_message = models.TextField(blank=True)
+    
+    # Metadata
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.table} - {self.status} - {self.created_at}"

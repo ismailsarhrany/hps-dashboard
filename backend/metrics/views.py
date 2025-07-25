@@ -26,6 +26,20 @@ from django.forms.models import model_to_dict
 from encrypted_model_fields.fields import EncryptedCharField
 import json
 from .permissions import AllowAll
+from rest_framework import status, viewsets
+from rest_framework.decorators import action
+from rest_framework.response import Response
+
+from django.shortcuts import get_object_or_404
+from django.db import transaction
+from django.utils import timezone
+
+from .models import Server, OracleDatabase, OracleTable, OracleTableData, OracleMonitoringTask
+from .serializers import (
+    OracleDatabaseSerializer, OracleTableSerializer, 
+    OracleTableDataSerializer, OracleMonitoringTaskSerializer
+)
+from metrics.management.services.oracle_service import OracleService
 
 
 
@@ -825,190 +839,324 @@ def health_check(request):
         }, status=500)
     
 
-
-
-# # New view to fetch metrics directly via SSH
-# class LiveMetricFetchView(APIView):
-#     """Fetch live metrics directly from servers via SSH"""
+class OracleDatabaseViewSet(viewsets.ModelViewSet):
+    """API endpoints for Oracle database management"""
+    serializer_class = OracleDatabaseSerializer
+    # permission_classes = [IsAuthenticated]
     
-#     def get(self, request):
-#         metric = request.GET.get('metric')
-#         server_id = request.GET.get('server_id')
-#         hostname = request.GET.get('hostname')
-        
-#         if not metric:
-#             return JsonResponse({
-#                 "error": "Missing metric parameter",
-#                 "available_metrics": ["vmstat", "iostat", "netstat", "ps"]
-#             }, status=400)
-        
-#         # Get SSH client
-#         try:
-#             if server_id:
-#                 ssh_client = get_ssh_client(server_id)
-#             elif hostname:
-#                 ssh_client = get_ssh_client(hostname, by_hostname=True)
-#             else:
-#                 return JsonResponse({
-#                     "error": "Must specify either server_id or hostname"
-#                 }, status=400)
-                
-#             if not ssh_client:
-#                 return JsonResponse({
-#                     "error": "SSH client not available for server"
-#                 }, status=404)
-#         except Exception as e:
-#             logger.error(f"SSH client error: {str(e)}")
-#             return JsonResponse({
-#                 "error": "SSH connection failed",
-#                 "details": str(e)
-#             }, status=500)
-        
-#         # Map metric to command
-#         COMMAND_MAP = {
-#             'vmstat': 'vmstat 1 1',
-#             'iostat': 'iostat 1 1',
-#             'netstat': 'netstat -i',
-#             'ps': 'ps aux'
-#         }
-        
-#         command = COMMAND_MAP.get(metric.lower())
-#         if not command:
-#             return JsonResponse({
-#                 "error": "Unsupported metric",
-#                 "available_metrics": list(COMMAND_MAP.keys())
-#             }, status=400)
-        
-#         # Execute command
-#         try:
-#             output = ssh_client.execute(command)
-#             return JsonResponse({
-#                 "metric": metric,
-#                 "server_id": server_id,
-#                 "hostname": hostname,
-#                 "output": output
-#             })
-#         except Exception as e:
-#             logger.error(f"Command execution failed: {str(e)}")
-#             return JsonResponse({
-#                 "error": "Command execution failed",
-#                 "details": str(e)
-#             }, status=500)
+    def get_queryset(self):
+        queryset = OracleDatabase.objects.all().select_related('server')
+        server_id = self.request.query_params.get('server_id')
+        if server_id:
+            queryset = queryset.filter(server_id=server_id)
+        return queryset
 
-# # New view for bulk metric collection
-# class BulkMetricCollectionView(APIView):
-#     """Collect metrics from all active servers simultaneously"""
-    
-#     def get(self, request):
-#         metric = request.GET.get('metric')
-#         if not metric:
-#             return JsonResponse({
-#                 "error": "Missing metric parameter",
-#                 "available_metrics": ["vmstat", "iostat", "netstat", "ps"]
-#             }, status=400)
+    @action(detail=True, methods=['post'])
+    def test_connection(self, request, pk=None):
+        """Test connection to Oracle database"""
+        database = self.get_object()
+        oracle_service = OracleService()
         
-#         # Get all SSH clients
-#         try:
-#             ssh_clients = get_all_ssh_clients()
-#             if not ssh_clients:
-#                 return JsonResponse({
-#                     "message": "No active servers available"
-#                 }, status=404)
-#         except Exception as e:
-#             logger.error(f"SSH client error: {str(e)}")
-#             return JsonResponse({
-#                 "error": "Failed to get SSH clients",
-#                 "details": str(e)
-#             }, status=500)
+        result = oracle_service.test_connection(database)
         
-#         # Map metric to command
-#         COMMAND_MAP = {
-#             'vmstat': 'vmstat 1 1',
-#             'iostat': 'iostat 1 1',
-#             'netstat': 'netstat -i',
-#             'ps': 'ps aux'
-#         }
-        
-#         command = COMMAND_MAP.get(metric.lower())
-#         if not command:
-#             return JsonResponse({
-#                 "error": "Unsupported metric",
-#                 "available_metrics": list(COMMAND_MAP.keys())
-#             }, status=400)
-        
-#         # Execute commands concurrently
-#         from concurrent.futures import ThreadPoolExecutor
-#         results = {}
-        
-#         def fetch_metric(client_id, ssh_client):
-#             try:
-#                 output = ssh_client.execute(command)
-#                 return {
-#                     "status": "success",
-#                     "output": output
-#                 }
-#             except Exception as e:
-#                 return {
-#                     "status": "error",
-#                     "error": str(e)
-#                 }
-        
-#         with ThreadPoolExecutor(max_workers=10) as executor:
-#             futures = {
-#                 executor.submit(fetch_metric, client_id, ssh_client): client_id
-#                 for client_id, ssh_client in ssh_clients.items()
-#             }
-#             for future in futures:
-#                 client_id = futures[future]
-#                 try:
-#                     results[client_id] = future.result()
-#                 except Exception as e:
-#                     results[client_id] = {
-#                         "status": "error",
-#                         "error": str(e)
-#                     }
-        
-#         # Add server information
-#         final_results = {}
-#         for client_id, result in results.items():
-#             try:
-#                 server = Server.objects.get(id=client_id)
-#                 server_info = {
-#                     "hostname": server.hostname,
-#                     "alias": server.alias,
-#                     "status": server.status
-#                 }
-#             except ObjectDoesNotExist:
-#                 server_info = {
-#                     "hostname": "Unknown",
-#                     "alias": None,
-#                     "status": "unknown"
-#                 }
-                
-#             final_results[client_id] = {
-#                 "server": server_info,
-#                 "result": result
-#             }
-        
-#         return JsonResponse({
-#             "metric": metric,
-#             "results": final_results,
-#             "total_servers": len(results),
-#             "success_count": sum(1 for r in results.values() if r['status'] == 'success'),
-#             "error_count": sum(1 for r in results.values() if r['status'] == 'error')
-#         })
+        if result['success']:
+            return Response(result, status=status.HTTP_200_OK)
+        else:
+            return Response(result, status=status.HTTP_400_BAD_REQUEST)
 
-# # SSH Health Check APIView
-# class SSHHealthCheckView(APIView):
-#     """Check health of all SSH connections"""
+    @action(detail=True, methods=['get'])
+    def tables(self, request, pk=None):
+        """Get all monitored tables for this database"""
+        database = self.get_object()
+        tables = database.monitored_tables.filter(is_active=True)
+        serializer = OracleTableSerializer(tables, many=True)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['get'])
+    def status(self, request, pk=None):
+        """Get database connection status and statistics"""
+        database = self.get_object()
+        
+        # Get table count and recent activity
+        table_count = database.monitored_tables.filter(is_active=True).count()
+        recent_tasks = OracleMonitoringTask.objects.filter(
+            table__database=database,
+            created_at__gte=timezone.now() - timezone.timedelta(hours=1)
+        ).count()
+        
+        # Get latest data snapshots
+        latest_snapshots = OracleTableData.objects.filter(
+            table__database=database
+        ).select_related('table')[:5]
+        
+        return Response({
+            'database': OracleDatabaseSerializer(database).data,
+            'statistics': {
+                'table_count': table_count,
+                'recent_tasks': recent_tasks,
+                'connection_status': database.connection_status,
+                'last_connection_test': database.last_connection_test,
+            },
+            'latest_snapshots': OracleTableDataSerializer(latest_snapshots, many=True).data
+        })
+
+
+class OracleTableViewSet(viewsets.ModelViewSet):
+    """API endpoints for Oracle table management"""
+    serializer_class = OracleTableSerializer
+    # permission_classes = [IsAuthenticated]
     
-#     def get(self, request):
-#         try:
-#             health_data = ssh_health_check()
-#             return JsonResponse(health_data)
-#         except Exception as e:
-#             logger.error(f"SSH health check failed: {str(e)}")
-#             return JsonResponse({
-#                 "status": "error",
-#                 "error": str(e)
-#             }, status=500)
+    def get_queryset(self):
+        queryset = OracleTable.objects.all().select_related('database', 'database__server')
+        database_id = self.request.query_params.get('database_id')
+        server_id = self.request.query_params.get('server_id')
+        
+        if database_id:
+            queryset = queryset.filter(database_id=database_id)
+        if server_id:
+            queryset = queryset.filter(database__server_id=server_id)
+            
+        return queryset
+
+    @action(detail=True, methods=['post'])
+    def monitor_now(self, request, pk=None):
+        """Manually trigger monitoring for this table"""
+        table = self.get_object()
+        oracle_service = OracleService()
+        
+        result = oracle_service.monitor_table(table)
+        
+        if result['success']:
+            return Response(result, status=status.HTTP_200_OK)
+        else:
+            return Response(result, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=['get'])
+    def current_data(self, request, pk=None):
+        """Get current data from the table"""
+        table = self.get_object()
+        oracle_service = OracleService()
+        
+        result = oracle_service.get_table_data(table)
+        
+        if result['success']:
+            return Response({
+                'table': OracleTableSerializer(table).data,
+                'data': result['data'],
+                'record_count': result['record_count'],
+                'timestamp': result['timestamp'],
+                'collection_duration': result['collection_duration']
+            })
+        else:
+            return Response(result, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=['get'])
+    def history(self, request, pk=None):
+        """Get historical data for this table"""
+        table = self.get_object()
+        limit = int(request.query_params.get('limit', 10))
+        
+        oracle_service = OracleService()
+        history = oracle_service.get_table_history(table, limit)
+        
+        return Response({
+            'table': OracleTableSerializer(table).data,
+            'history': history
+        })
+
+    @action(detail=True, methods=['get'])
+    def monitoring_tasks(self, request, pk=None):
+        """Get monitoring tasks for this table"""
+        table = self.get_object()
+        limit = int(request.query_params.get('limit', 20))
+        
+        tasks = OracleMonitoringTask.objects.filter(table=table)[:limit]
+        serializer = OracleMonitoringTaskSerializer(tasks, many=True)
+        
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['post'])
+    def update_config(self, request, pk=None):
+        """Update table monitoring configuration"""
+        table = self.get_object()
+        
+        # Update allowed fields
+        allowed_fields = [
+            'polling_interval', 'columns_to_monitor', 'where_clause', 
+            'order_by', 'timestamp_column', 'primary_key_columns', 'is_active'
+        ]
+        
+        for field in allowed_fields:
+            if field in request.data:
+                setattr(table, field, request.data[field])
+        
+        table.save()
+        
+        return Response(OracleTableSerializer(table).data)
+
+
+class OracleDataViewSet(viewsets.ReadOnlyModelViewSet):
+    """API endpoints for Oracle data snapshots"""
+    serializer_class = OracleTableDataSerializer
+    # permission_classes = [IsAuthenticated]
+    
+    def get_queryset(self):
+        queryset = OracleTableData.objects.all().select_related('table', 'table__database')
+        table_id = self.request.query_params.get('table_id')
+        database_id = self.request.query_params.get('database_id')
+        server_id = self.request.query_params.get('server_id')
+        
+        if table_id:
+            queryset = queryset.filter(table_id=table_id)
+        if database_id:
+            queryset = queryset.filter(table__database_id=database_id)
+        if server_id:
+            queryset = queryset.filter(table__database__server_id=server_id)
+            
+        return queryset.order_by('-timestamp')
+
+    @action(detail=False, methods=['get'])
+    def latest_by_table(self, request):
+        """Get latest data snapshot for each table"""
+        from django.db.models import Max
+        
+        # Get latest timestamp for each table
+        latest_times = OracleTableData.objects.values('table').annotate(
+            latest_time=Max('timestamp')
+        )
+        
+        # Get the actual latest records
+        latest_snapshots = []
+        for item in latest_times:
+            snapshot = OracleTableData.objects.filter(
+                table_id=item['table'],
+                timestamp=item['latest_time']
+            ).select_related('table', 'table__database', 'table__database__server').first()
+            if snapshot:
+                latest_snapshots.append(snapshot)
+        
+        serializer = OracleTableDataSerializer(latest_snapshots, many=True)
+        return Response(serializer.data)
+
+
+class OracleMonitoringTaskViewSet(viewsets.ReadOnlyModelViewSet):
+    """API endpoints for monitoring tasks"""
+    serializer_class = OracleMonitoringTaskSerializer
+    # permission_classes = [IsAuthenticated]
+    
+    def get_queryset(self):
+        queryset = OracleMonitoringTask.objects.all().select_related('table', 'table__database')
+        table_id = self.request.query_params.get('table_id')
+        database_id = self.request.query_params.get('database_id')
+        status_filter = self.request.query_params.get('status')
+        
+        if table_id:
+            queryset = queryset.filter(table_id=table_id)
+        if database_id:
+            queryset = queryset.filter(table__database_id=database_id)
+        if status_filter:
+            queryset = queryset.filter(status=status_filter)
+            
+        return queryset.order_by('-created_at')
+
+    @action(detail=False, methods=['get'])
+    def statistics(self, request):
+        """Get monitoring task statistics"""
+        from django.db.models import Count
+        
+        # Overall statistics
+        total_tasks = OracleMonitoringTask.objects.count()
+        
+        # Status breakdown
+        status_counts = OracleMonitoringTask.objects.values('status').annotate(
+            count=Count('id')
+        )
+        
+        # Recent activity (last 24 hours)
+        recent_tasks = OracleMonitoringTask.objects.filter(
+            created_at__gte=timezone.now() - timezone.timedelta(hours=24)
+        ).count()
+        
+        # Failed tasks in last hour
+        recent_failures = OracleMonitoringTask.objects.filter(
+            status='failed',
+            created_at__gte=timezone.now() - timezone.timedelta(hours=1)
+        ).count()
+        
+        return Response({
+            'total_tasks': total_tasks,
+            'status_breakdown': {item['status']: item['count'] for item in status_counts},
+            'recent_tasks_24h': recent_tasks,
+            'recent_failures_1h': recent_failures
+        })
+
+
+# Additional utility views
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+
+@api_view(['GET'])
+# @permission_classes([IsAuthenticated])
+def oracle_dashboard_data(request):
+    """Get comprehensive dashboard data for Oracle monitoring"""
+    from django.db.models import Count, Max
+    
+    # Database statistics
+    total_databases = OracleDatabase.objects.filter(is_active=True).count()
+    connected_databases = OracleDatabase.objects.filter(
+        is_active=True, 
+        connection_status='connected'
+    ).count()
+    
+    # Table statistics
+    total_tables = OracleTable.objects.filter(is_active=True).count()
+    active_monitoring = OracleTable.objects.filter(
+        is_active=True,
+        database__is_active=True,
+        database__server__is_active=True
+    ).count()
+    
+    # Recent activity
+    recent_snapshots = OracleTableData.objects.filter(
+        timestamp__gte=timezone.now() - timezone.timedelta(hours=1)
+    ).count()
+    
+    recent_tasks = OracleMonitoringTask.objects.filter(
+        created_at__gte=timezone.now() - timezone.timedelta(hours=1)
+    ).values('status').annotate(count=Count('id'))
+    
+    # Latest data from each active table
+    latest_data = []
+    active_tables = OracleTable.objects.filter(
+        is_active=True,
+        database__is_active=True
+    ).select_related('database', 'database__server')[:10]
+    
+    for table in active_tables:
+        latest_snapshot = OracleTableData.objects.filter(table=table).first()
+        if latest_snapshot:
+            latest_data.append({
+                'table_name': str(table),
+                'server_name': table.database.server.name,
+                'database_name': table.database.name,
+                'record_count': latest_snapshot.record_count,
+                'timestamp': latest_snapshot.timestamp,
+                'collection_duration': latest_snapshot.collection_duration
+            })
+    
+    return Response({
+        'databases': {
+            'total': total_databases,
+            'connected': connected_databases,
+            'connection_rate': (connected_databases / total_databases * 100) if total_databases > 0 else 0
+        },
+        'tables': {
+            'total': total_tables,
+            'actively_monitored': active_monitoring
+        },
+        'activity': {
+            'recent_snapshots': recent_snapshots,
+            'recent_tasks': {item['status']: item['count'] for item in recent_tasks}
+        },
+        'latest_data': latest_data
+    })

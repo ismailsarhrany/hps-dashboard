@@ -1,4 +1,4 @@
-from django.urls import path, re_path
+from django.urls import path, re_path,include
 from .views import (
     RealtimeMetricsView,
     HistoricalMetricsView,
@@ -8,8 +8,21 @@ from .views import (
     ServerCreateView,
     ServerDetailView,
     ServerTestConnectionView,
-    ServerBulkStatusView
+    ServerBulkStatusView,
+    OracleDatabaseViewSet,
+    OracleTableViewSet,
+    OracleDataViewSet,
+    OracleMonitoringTaskViewSet,
+    oracle_dashboard_data
 )
+from rest_framework.routers import DefaultRouter
+
+# Create router for viewset endpoints
+router = DefaultRouter()
+router.register(r'oracle-databases', OracleDatabaseViewSet, basename='oracledatabase')
+router.register(r'oracle-tables', OracleTableViewSet, basename='oracletable')
+router.register(r'oracle-data', OracleDataViewSet, basename='oracletabledata')
+router.register(r'oracle-tasks', OracleMonitoringTaskViewSet, basename='oraclemonitoringtask')
 
 urlpatterns = [
     # Metrics endpoints
@@ -22,6 +35,11 @@ urlpatterns = [
     path('api/servers/<uuid:server_id>/', ServerDetailView.as_view(), name='server-detail'),
     path('api/servers/<uuid:server_id>/test-connection/', ServerTestConnectionView.as_view(), name='server-test-connection'),
     path('api/servers/bulk-status/', ServerBulkStatusView.as_view(), name='server-bulk-status'),
+    # Oracle monitoring endpoints
+    path('api/oracle/dashboard/', oracle_dashboard_data, name='oracle-dashboard'),
+    
+    # Include router URLs
+    path('api/', include(router.urls)),
     
     # Health and debug endpoints
     path('health/', health_check, name='health-check'),
