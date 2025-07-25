@@ -384,7 +384,7 @@ def parse_process(output: str, os_type: str, timestamp: datetime) -> List[Dict[s
                 if line.strip():
                     fields = line.split(None, 10)  # Split on whitespace, max 10 splits
                     logger.debug(f"Processing process line: {fields}")
-                    if len(fields) >= 11:
+                    if len(fields) >= 11 and fields[1].isdigit():
                         try:
                             process = {
                                 'timestamp': timestamp_str,  # ✅ Fixed: Use ISO string
