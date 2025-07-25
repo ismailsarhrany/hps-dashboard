@@ -45,23 +45,28 @@ services:
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      # Simplified configuration for better reliability
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
-      KAFKA_CREATE_TOPICS: "metrics_vmstat:1:1,metrics_iostat:1:1,metrics_netstat:1:1,metrics_process:1:1"
+      # Reduce startup time and resource usage
+      KAFKA_LOG_RETENTION_HOURS: 1
+      KAFKA_LOG_RETENTION_BYTES: 104857600
+      KAFKA_LOG_SEGMENT_BYTES: 104857600
+      KAFKA_NUM_PARTITIONS: 1
+      KAFKA_DEFAULT_REPLICATION_FACTOR: 1
     networks:
       - app-network
     healthcheck:
       test:
-        ["CMD", "kafka-topics", "--bootstrap-server", "kafka:9092", "--list"]
+        ["CMD", "kafka-topics", "--bootstrap-server", "localhost:9092", "--list"]
       interval: 30s
       timeout: 10s
-      retries: 3
-      start_period: 30s
-    extra_hosts:
-      - "kafka:172.20.0.5"
+      retries: 5
+      start_period: 60s
 
   # --- Redis ---
   redis:
@@ -91,7 +96,7 @@ services:
       postgres:
         condition: service_healthy
       kafka:
-        condition: service_started
+        condition: service_healthy  # Changed to healthy
       redis:
         condition: service_healthy
     env_file:
@@ -100,16 +105,19 @@ services:
       REDIS_URL: redis://redis:6379/0
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       DEBUG: "True"
+      PYTHONPATH: /app
     networks:
       - app-network
-      - monitoring_network  # Add to monitoring network
+      - monitoring_network
+    # Add restart policy for stability
+    restart: unless-stopped
 
   # --- Kafka UI ---
   kafka-ui:
     image: provectuslabs/kafka-ui:latest
     depends_on:
       kafka:
-        condition: service_started
+        condition: service_healthy
     ports:
       - "8080:8080"
     environment:
@@ -118,6 +126,7 @@ services:
       KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
     networks:
       - app-network
+    restart: unless-stopped
 
   # --- Frontend ---
   frontend:
@@ -135,7 +144,7 @@ services:
     networks:
       - app-network
     command: npm start -- --host 0.0.0.0 --disable-host-check
-    restart: on-failure
+    restart: unless-stopped
 
   # --- Simulated servers ---
   server1:
@@ -146,8 +155,8 @@ services:
     hostname: server1
     networks:
       monitoring_network:
-        ipv4_address: 172.20.0.101  # Static IP assignment
-
+        ipv4_address: 172.20.0.101
+    restart: unless-stopped
 
   server2:
     build:
@@ -157,7 +166,8 @@ services:
     hostname: server2
     networks:
       monitoring_network:
-        ipv4_address: 172.20.0.102  # Static IP assignment
+        ipv4_address: 172.20.0.102
+    restart: unless-stopped
 
   server3:
     build:
@@ -167,8 +177,8 @@ services:
     hostname: server3
     networks:
       monitoring_network:
-        ipv4_address: 172.20.0.103  # Static IP assignment
-
+        ipv4_address: 172.20.0.103
+    restart: unless-stopped
 
 volumes:
   frontend_node_modules:
@@ -176,8 +186,12 @@ volumes:
 networks:
   app-network:
     driver: bridge
+    # Add explicit subnet to avoid conflicts
+    ipam:
+      config:
+        - subnet: 172.18.0.0/24
   monitoring_network:
     driver: bridge
     ipam:
       config:
-        - subnet: 172.20.0.0/24
+        - subnet: 172.20.0.0/24 

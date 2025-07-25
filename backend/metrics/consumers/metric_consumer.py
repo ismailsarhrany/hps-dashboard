@@ -216,8 +216,6 @@ class MetricConsumer:
             instance_data["timestamp"] = timestamp
 
             # Add this fallback for netstat metrics
-            if metric_type == "netstat" and 'time' not in instance_data:            
-                instance_data['time'] = 0
             
             # Add calculated rates
             self._add_calculated_rates(metric_type, instance_data)

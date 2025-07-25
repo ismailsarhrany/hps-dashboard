@@ -25,7 +25,6 @@ trainning/data/
 # Logs
 *.log
 
-
 # IDEs and editors
 /.idea
 .project
