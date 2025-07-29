@@ -268,12 +268,12 @@ class MetricConsumer:
             if metric_type == "netstat":
                 rates = self.rate_calculator.calculate_netstat_rates(data_dict)
                 data_dict.update(rates)
-                logger.debug(f"Added netstat rates: {rates}")
+                # logger.debug(f"Added netstat rates: {rates}")
                 
             elif metric_type == "iostat":
                 rates = self.rate_calculator.calculate_iostat_rates(data_dict)
                 data_dict.update(rates)
-                logger.debug(f"Added iostat rates: {rates}")
+                # logger.debug(f"Added iostat rates: {rates}")
                 
             # vmstat and process metrics don't need rate calculations
             # as they already represent instantaneous values

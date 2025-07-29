@@ -13137,3 +13137,244 @@
 2025-07-25 15:25:25,948 INFO waiting for gunicorn, unified_collector to die
 2025-07-25 15:25:27,606 INFO stopped: unified_collector (exit status 0)
 2025-07-25 15:25:28,099 INFO stopped: gunicorn (exit status 0)
+2025-07-25 15:37:28,433 INFO Set uid to user 0 succeeded
+2025-07-25 15:37:28,444 INFO supervisord started with pid 1
+2025-07-25 15:37:29,457 INFO spawned: 'gunicorn' with pid 7
+2025-07-25 15:37:29,466 INFO spawned: 'unified_collector' with pid 8
+2025-07-25 15:37:29,493 INFO spawned: 'unified_consumer' with pid 9
+2025-07-25 15:37:30,505 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-25 15:37:40,442 INFO success: unified_collector entered RUNNING state, process has stayed up for > than 10 seconds (startsecs)
+2025-07-25 15:37:40,443 INFO success: unified_consumer entered RUNNING state, process has stayed up for > than 10 seconds (startsecs)
+2025-07-25 16:02:05,890 WARN received SIGTERM indicating exit request
+2025-07-25 16:02:05,901 INFO waiting for gunicorn, unified_collector, unified_consumer to die
+2025-07-25 16:02:07,390 INFO stopped: unified_consumer (exit status 0)
+2025-07-25 16:02:09,397 INFO waiting for gunicorn, unified_collector to die
+2025-07-25 16:02:11,682 INFO stopped: unified_collector (exit status 0)
+2025-07-25 16:02:12,134 INFO stopped: gunicorn (exit status 0)
+2025-07-25 16:02:18,340 INFO Set uid to user 0 succeeded
+2025-07-25 16:02:18,348 INFO supervisord started with pid 1
+2025-07-25 16:02:19,356 INFO spawned: 'gunicorn' with pid 7
+2025-07-25 16:02:19,361 INFO spawned: 'unified_collector' with pid 8
+2025-07-25 16:02:19,364 INFO spawned: 'unified_consumer' with pid 9
+2025-07-25 16:02:21,217 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-25 16:02:29,942 INFO success: unified_collector entered RUNNING state, process has stayed up for > than 10 seconds (startsecs)
+2025-07-25 16:02:29,943 INFO success: unified_consumer entered RUNNING state, process has stayed up for > than 10 seconds (startsecs)
+2025-07-28 07:47:09,264 WARN received SIGTERM indicating exit request
+2025-07-28 07:47:09,363 INFO waiting for gunicorn, unified_collector, unified_consumer to die
+2025-07-28 07:47:11,085 INFO stopped: unified_consumer (exit status 0)
+2025-07-28 07:47:13,102 INFO waiting for gunicorn, unified_collector to die
+2025-07-28 07:47:16,106 INFO waiting for gunicorn, unified_collector to die
+2025-07-28 08:14:11,823 INFO Set uid to user 0 succeeded
+2025-07-28 08:14:11,842 INFO supervisord started with pid 1
+2025-07-28 08:14:12,855 INFO spawned: 'gunicorn' with pid 7
+2025-07-28 08:14:12,863 INFO spawned: 'unified_collector' with pid 8
+2025-07-28 08:14:12,875 INFO spawned: 'unified_consumer' with pid 9
+2025-07-28 08:14:13,881 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-28 08:14:23,029 INFO success: unified_collector entered RUNNING state, process has stayed up for > than 10 seconds (startsecs)
+2025-07-28 08:14:23,030 INFO success: unified_consumer entered RUNNING state, process has stayed up for > than 10 seconds (startsecs)
+2025-07-28 08:16:54,074 WARN received SIGTERM indicating exit request
+2025-07-28 08:16:54,081 INFO waiting for gunicorn, unified_collector, unified_consumer to die
+2025-07-28 08:16:55,239 INFO stopped: unified_consumer (exit status 0)
+2025-07-28 08:16:57,243 INFO waiting for gunicorn, unified_collector to die
+2025-07-28 08:17:00,248 INFO waiting for gunicorn, unified_collector to die
+2025-07-28 08:17:03,252 INFO waiting for gunicorn, unified_collector to die
+2025-07-28 08:31:07,873 INFO Set uid to user 0 succeeded
+2025-07-28 08:31:07,886 INFO supervisord started with pid 1
+2025-07-28 08:31:08,891 INFO spawned: 'gunicorn' with pid 7
+2025-07-28 08:31:08,899 INFO spawned: 'unified_collector' with pid 8
+2025-07-28 08:31:08,906 INFO spawned: 'unified_consumer' with pid 9
+2025-07-28 08:31:09,911 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-28 08:31:19,500 INFO success: unified_collector entered RUNNING state, process has stayed up for > than 10 seconds (startsecs)
+2025-07-28 08:31:19,502 INFO success: unified_consumer entered RUNNING state, process has stayed up for > than 10 seconds (startsecs)
+2025-07-28 08:58:33,921 WARN received SIGTERM indicating exit request
+2025-07-28 08:58:33,929 INFO waiting for gunicorn, unified_collector, unified_consumer to die
+2025-07-28 08:58:37,021 INFO stopped: unified_consumer (exit status 0)
+2025-07-28 08:58:37,025 INFO waiting for gunicorn, unified_collector to die
+2025-07-28 08:58:40,030 INFO waiting for gunicorn, unified_collector to die
+2025-07-28 08:58:41,792 INFO stopped: unified_collector (exit status 0)
+2025-07-28 08:58:42,382 INFO stopped: gunicorn (exit status 0)
+2025-07-28 08:59:43,519 INFO Set uid to user 0 succeeded
+2025-07-28 08:59:43,531 INFO supervisord started with pid 1
+2025-07-28 08:59:44,535 INFO spawned: 'gunicorn' with pid 7
+2025-07-28 08:59:44,539 INFO spawned: 'unified_collector' with pid 8
+2025-07-28 08:59:44,542 INFO spawned: 'unified_consumer' with pid 9
+2025-07-28 08:59:45,544 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-28 08:59:54,808 INFO success: unified_collector entered RUNNING state, process has stayed up for > than 10 seconds (startsecs)
+2025-07-28 08:59:54,808 INFO success: unified_consumer entered RUNNING state, process has stayed up for > than 10 seconds (startsecs)
+2025-07-28 09:54:52,425 WARN received SIGTERM indicating exit request
+2025-07-28 09:54:52,434 INFO waiting for gunicorn, unified_collector, unified_consumer to die
+2025-07-28 09:54:54,005 INFO stopped: unified_consumer (exit status 0)
+2025-07-28 09:54:56,015 INFO waiting for gunicorn, unified_collector to die
+2025-07-28 09:54:59,019 INFO waiting for gunicorn, unified_collector to die
+2025-07-28 09:55:02,023 INFO waiting for gunicorn, unified_collector to die
+2025-07-28 09:56:54,078 INFO Set uid to user 0 succeeded
+2025-07-28 09:56:54,086 INFO supervisord started with pid 1
+2025-07-28 09:56:55,095 INFO spawned: 'gunicorn' with pid 7
+2025-07-28 09:56:55,108 INFO spawned: 'unified_collector' with pid 8
+2025-07-28 09:56:55,126 INFO spawned: 'unified_consumer' with pid 9
+2025-07-28 09:56:56,136 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-28 09:57:05,699 INFO success: unified_collector entered RUNNING state, process has stayed up for > than 10 seconds (startsecs)
+2025-07-28 09:57:05,700 INFO success: unified_consumer entered RUNNING state, process has stayed up for > than 10 seconds (startsecs)
+2025-07-28 09:58:40,697 WARN received SIGTERM indicating exit request
+2025-07-28 09:58:40,700 INFO waiting for gunicorn, unified_collector, unified_consumer to die
+2025-07-28 09:58:41,284 INFO stopped: unified_consumer (exit status 0)
+2025-07-28 09:58:44,108 INFO stopped: unified_collector (exit status 0)
+2025-07-28 09:58:44,109 INFO waiting for gunicorn to die
+2025-07-28 09:58:44,484 INFO stopped: gunicorn (exit status 0)
+2025-07-28 10:00:09,261 INFO Set uid to user 0 succeeded
+2025-07-28 10:00:09,267 INFO supervisord started with pid 1
+2025-07-28 10:00:10,275 INFO spawned: 'gunicorn' with pid 7
+2025-07-28 10:00:10,289 INFO spawned: 'unified_collector' with pid 8
+2025-07-28 10:00:10,302 INFO spawned: 'unified_consumer' with pid 9
+2025-07-28 10:00:11,313 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-28 10:00:21,138 INFO success: unified_collector entered RUNNING state, process has stayed up for > than 10 seconds (startsecs)
+2025-07-28 10:00:21,139 INFO success: unified_consumer entered RUNNING state, process has stayed up for > than 10 seconds (startsecs)
+2025-07-28 10:02:03,546 WARN received SIGTERM indicating exit request
+2025-07-28 10:02:03,547 INFO waiting for gunicorn, unified_collector, unified_consumer to die
+2025-07-28 10:02:04,296 INFO stopped: unified_consumer (exit status 0)
+2025-07-28 10:02:07,302 INFO waiting for gunicorn, unified_collector to die
+2025-07-28 10:02:08,520 INFO stopped: unified_collector (exit status 0)
+2025-07-28 10:02:08,801 INFO stopped: gunicorn (exit status 0)
+2025-07-28 10:06:49,613 INFO Set uid to user 0 succeeded
+2025-07-28 10:06:49,619 INFO supervisord started with pid 1
+2025-07-28 10:06:50,624 INFO spawned: 'gunicorn' with pid 7
+2025-07-28 10:06:50,635 INFO spawned: 'unified_collector' with pid 8
+2025-07-28 10:06:50,647 INFO spawned: 'unified_consumer' with pid 9
+2025-07-28 10:06:52,367 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-28 10:07:01,510 INFO success: unified_collector entered RUNNING state, process has stayed up for > than 10 seconds (startsecs)
+2025-07-28 10:07:01,511 INFO success: unified_consumer entered RUNNING state, process has stayed up for > than 10 seconds (startsecs)
+2025-07-28 13:16:33,470 WARN received SIGTERM indicating exit request
+2025-07-28 13:16:33,478 INFO waiting for gunicorn, unified_collector, unified_consumer to die
+2025-07-28 13:16:34,109 INFO stopped: unified_consumer (exit status 0)
+2025-07-28 13:16:37,118 INFO waiting for gunicorn, unified_collector to die
+2025-07-28 13:16:38,898 INFO stopped: unified_collector (exit status 0)
+2025-07-28 13:16:39,450 INFO stopped: gunicorn (exit status 0)
+2025-07-28 13:21:43,874 INFO Set uid to user 0 succeeded
+2025-07-28 13:21:43,883 INFO supervisord started with pid 1
+2025-07-28 13:21:44,889 INFO spawned: 'gunicorn' with pid 7
+2025-07-28 13:21:44,895 INFO spawned: 'unified_collector' with pid 8
+2025-07-28 13:21:44,902 INFO spawned: 'unified_consumer' with pid 9
+2025-07-28 13:21:45,904 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-28 13:21:55,655 INFO success: unified_collector entered RUNNING state, process has stayed up for > than 10 seconds (startsecs)
+2025-07-28 13:21:55,656 INFO success: unified_consumer entered RUNNING state, process has stayed up for > than 10 seconds (startsecs)
+2025-07-28 13:22:59,654 WARN received SIGTERM indicating exit request
+2025-07-28 13:22:59,655 INFO waiting for gunicorn, unified_collector, unified_consumer to die
+2025-07-28 13:23:00,269 INFO stopped: unified_consumer (exit status 0)
+2025-07-28 13:23:03,273 WARN received SIGTERM indicating exit request
+2025-07-28 13:23:03,274 INFO waiting for gunicorn, unified_collector to die
+2025-07-28 13:23:03,854 INFO stopped: unified_collector (exit status 0)
+2025-07-28 13:23:04,103 INFO stopped: gunicorn (exit status 0)
+2025-07-28 13:27:01,157 INFO Set uid to user 0 succeeded
+2025-07-28 13:27:01,163 INFO supervisord started with pid 1
+2025-07-28 13:27:02,167 INFO spawned: 'gunicorn' with pid 7
+2025-07-28 13:27:02,171 INFO spawned: 'unified_collector' with pid 8
+2025-07-28 13:27:02,176 INFO spawned: 'unified_consumer' with pid 9
+2025-07-28 13:27:04,038 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-28 13:27:13,080 INFO success: unified_collector entered RUNNING state, process has stayed up for > than 10 seconds (startsecs)
+2025-07-28 13:27:13,081 INFO success: unified_consumer entered RUNNING state, process has stayed up for > than 10 seconds (startsecs)
+2025-07-29 14:41:28,840 WARN received SIGTERM indicating exit request
+2025-07-29 14:41:28,881 INFO waiting for gunicorn, unified_collector, unified_consumer to die
+2025-07-29 14:41:30,019 INFO stopped: unified_consumer (exit status 0)
+2025-07-29 14:41:32,035 INFO waiting for gunicorn, unified_collector to die
+2025-07-29 14:41:35,039 INFO waiting for gunicorn, unified_collector to die
+2025-07-29 14:53:38,240 INFO Set uid to user 0 succeeded
+2025-07-29 14:53:38,253 INFO supervisord started with pid 1
+2025-07-29 14:53:39,259 INFO spawned: 'gunicorn' with pid 7
+2025-07-29 14:53:39,276 INFO spawned: 'unified_collector' with pid 8
+2025-07-29 14:53:39,284 INFO spawned: 'unified_consumer' with pid 9
+2025-07-29 14:53:40,295 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-29 14:53:42,523 WARN exited: gunicorn (exit status 3; not expected)
+2025-07-29 14:53:43,536 INFO spawned: 'gunicorn' with pid 33
+2025-07-29 14:53:44,565 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-29 14:53:47,679 WARN exited: gunicorn (exit status 3; not expected)
+2025-07-29 14:53:47,684 INFO spawned: 'gunicorn' with pid 43
+2025-07-29 14:53:48,691 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-29 14:53:49,395 INFO success: unified_collector entered RUNNING state, process has stayed up for > than 10 seconds (startsecs)
+2025-07-29 14:53:49,396 INFO success: unified_consumer entered RUNNING state, process has stayed up for > than 10 seconds (startsecs)
+2025-07-29 14:53:50,569 WARN exited: gunicorn (exit status 3; not expected)
+2025-07-29 14:53:51,573 INFO spawned: 'gunicorn' with pid 48
+2025-07-29 14:53:53,171 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-29 14:53:53,383 WARN exited: gunicorn (exit status 3; not expected)
+2025-07-29 14:53:54,390 INFO spawned: 'gunicorn' with pid 50
+2025-07-29 14:53:55,771 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-29 14:53:57,033 WARN exited: gunicorn (exit status 3; not expected)
+2025-07-29 14:53:58,038 INFO spawned: 'gunicorn' with pid 52
+2025-07-29 14:53:59,040 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-29 14:54:00,395 WARN exited: gunicorn (exit status 3; not expected)
+2025-07-29 14:54:00,801 INFO spawned: 'gunicorn' with pid 57
+2025-07-29 14:54:02,046 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-29 14:54:02,415 WARN exited: gunicorn (exit status 3; not expected)
+2025-07-29 14:54:03,419 INFO spawned: 'gunicorn' with pid 287
+2025-07-29 14:54:04,693 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-29 14:54:04,844 WARN exited: gunicorn (exit status 3; not expected)
+2025-07-29 14:54:05,848 INFO spawned: 'gunicorn' with pid 289
+2025-07-29 14:54:07,310 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-29 14:54:07,477 WARN exited: gunicorn (exit status 3; not expected)
+2025-07-29 14:54:08,481 INFO spawned: 'gunicorn' with pid 291
+2025-07-29 14:54:09,934 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-29 14:54:10,058 WARN exited: gunicorn (exit status 3; not expected)
+2025-07-29 14:54:11,062 INFO spawned: 'gunicorn' with pid 407
+2025-07-29 14:54:12,488 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-29 14:54:12,656 WARN exited: gunicorn (exit status 3; not expected)
+2025-07-29 14:54:13,659 INFO spawned: 'gunicorn' with pid 409
+2025-07-29 14:54:15,086 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-29 14:54:15,205 WARN exited: gunicorn (exit status 3; not expected)
+2025-07-29 14:54:16,208 INFO spawned: 'gunicorn' with pid 411
+2025-07-29 14:54:17,633 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-29 14:54:17,781 WARN exited: gunicorn (exit status 3; not expected)
+2025-07-29 14:54:18,787 INFO spawned: 'gunicorn' with pid 527
+2025-07-29 14:54:19,952 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-29 14:54:20,074 WARN exited: gunicorn (exit status 3; not expected)
+2025-07-29 14:54:21,080 INFO spawned: 'gunicorn' with pid 529
+2025-07-29 14:54:22,239 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-29 14:54:22,690 WARN exited: gunicorn (exit status 3; not expected)
+2025-07-29 14:54:23,697 INFO spawned: 'gunicorn' with pid 531
+2025-07-29 14:54:24,785 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-29 14:54:25,650 WARN exited: gunicorn (exit status 3; not expected)
+2025-07-29 14:54:26,654 INFO spawned: 'gunicorn' with pid 647
+2025-07-29 14:54:28,124 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-29 14:54:28,327 WARN exited: gunicorn (exit status 3; not expected)
+2025-07-29 14:54:29,331 INFO spawned: 'gunicorn' with pid 649
+2025-07-29 14:54:30,520 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-29 14:54:30,641 WARN exited: gunicorn (exit status 3; not expected)
+2025-07-29 14:54:31,341 INFO spawned: 'gunicorn' with pid 651
+2025-07-29 14:54:32,442 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-29 14:54:33,118 WARN exited: gunicorn (exit status 3; not expected)
+2025-07-29 14:54:34,122 INFO spawned: 'gunicorn' with pid 767
+2025-07-29 14:54:35,706 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-29 14:55:05,262 WARN received SIGTERM indicating exit request
+2025-07-29 14:55:05,263 INFO waiting for gunicorn, unified_collector, unified_consumer to die
+2025-07-29 14:55:07,378 INFO stopped: unified_consumer (exit status 0)
+2025-07-29 14:55:08,990 INFO waiting for gunicorn, unified_collector to die
+2025-07-29 14:55:10,395 INFO stopped: unified_collector (exit status 0)
+2025-07-29 14:55:10,737 INFO stopped: gunicorn (exit status 0)
+2025-07-29 14:55:17,733 INFO Set uid to user 0 succeeded
+2025-07-29 14:55:17,741 INFO supervisord started with pid 1
+2025-07-29 14:55:18,747 INFO spawned: 'gunicorn' with pid 7
+2025-07-29 14:55:18,757 INFO spawned: 'unified_collector' with pid 8
+2025-07-29 14:55:18,771 INFO spawned: 'unified_consumer' with pid 9
+2025-07-29 14:55:19,781 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-29 14:55:29,288 INFO success: unified_collector entered RUNNING state, process has stayed up for > than 10 seconds (startsecs)
+2025-07-29 14:55:29,289 INFO success: unified_consumer entered RUNNING state, process has stayed up for > than 10 seconds (startsecs)
+2025-07-29 15:04:28,772 WARN received SIGTERM indicating exit request
+2025-07-29 15:04:28,775 INFO waiting for gunicorn, unified_collector, unified_consumer to die
+2025-07-29 15:04:30,794 INFO stopped: unified_consumer (exit status 0)
+2025-07-29 15:04:31,798 INFO waiting for gunicorn, unified_collector to die
+2025-07-29 15:04:34,803 INFO waiting for gunicorn, unified_collector to die
+2025-07-29 15:04:37,387 INFO stopped: unified_collector (exit status 0)
+2025-07-29 15:04:37,701 INFO stopped: gunicorn (exit status 0)
+2025-07-29 15:15:04,070 INFO Set uid to user 0 succeeded
+2025-07-29 15:15:04,078 INFO supervisord started with pid 1
+2025-07-29 15:15:05,086 INFO spawned: 'gunicorn' with pid 7
+2025-07-29 15:15:05,097 INFO spawned: 'unified_collector' with pid 8
+2025-07-29 15:15:05,107 INFO spawned: 'unified_consumer' with pid 9
+2025-07-29 15:15:06,111 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-29 15:15:15,556 INFO success: unified_collector entered RUNNING state, process has stayed up for > than 10 seconds (startsecs)
+2025-07-29 15:15:15,557 INFO success: unified_consumer entered RUNNING state, process has stayed up for > than 10 seconds (startsecs)
+2025-07-29 15:18:08,794 WARN received SIGTERM indicating exit request
+2025-07-29 15:18:08,799 INFO waiting for gunicorn, unified_collector, unified_consumer to die
+2025-07-29 15:18:10,791 INFO stopped: unified_consumer (exit status 0)
+2025-07-29 15:18:12,546 INFO waiting for gunicorn, unified_collector to die
+2025-07-29 15:18:15,550 INFO waiting for gunicorn, unified_collector to die
+2025-07-29 15:18:16,241 INFO stopped: unified_collector (exit status 0)
+2025-07-29 15:18:16,542 INFO stopped: gunicorn (exit status 0)

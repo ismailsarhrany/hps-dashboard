@@ -28,4 +28,6 @@ websocket_urlpatterns = [
     
     # General metrics URL
     re_path(r'ws/metrics/(?P<server_id>[^/]+)/$', consumers.MetricConsumer.as_asgi()),
+    # Oracle data
+re_path(r'ws/oracle_updates_{server_id}/$', consumers.OracleDataConsumer.as_asgi())
 ]

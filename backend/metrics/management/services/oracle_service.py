@@ -12,6 +12,7 @@ from django.utils import timezone
 from kafka import KafkaProducer
 import redis
 
+
 from metrics.models import OracleDatabase, OracleTable, OracleTableData, OracleMonitoringTask
 
 logger = logging.getLogger(__name__)
@@ -25,9 +26,38 @@ class OracleService:
         )
         self.redis_client = redis.from_url(settings.REDIS_URL)
         
-    def test_connection(self, database: OracleDatabase) -> Dict[str, Any]:
+    def _get_connection(self, database):
+        """Create Oracle database connection using SID"""
+        try:
+            # Create DSN using SID instead of service_name
+            dsn = cx_Oracle.makedsn(
+                host=database.host,
+                port=database.port,
+                sid=database.sid  
+            )
+            
+            logger.info(f"Connecting to Oracle: {database.username}@{database.host}:{database.port}/{database.sid}")
+            
+            connection = cx_Oracle.connect(
+                user=database.username,
+                password=database.password,
+                dsn=dsn,
+                encoding="UTF-8"
+            )
+            
+            return connection
+            
+        except cx_Oracle.Error as e:
+            logger.error(f"Oracle connection error: {e}")
+            raise
+        except Exception as e:
+            logger.error(f"Unexpected connection error: {e}")
+            raise
+
+    def test_connection(self, database) -> Dict[str, Any]:
         """Test connection to Oracle database"""
         try:
+            logger.info(f"Testing connection to {database}")
             connection = self._get_connection(database)
             cursor = connection.cursor()
             cursor.execute("SELECT 1 FROM DUAL")
@@ -40,6 +70,7 @@ class OracleService:
             database.last_connection_test = timezone.now()
             database.save()
             
+            logger.info(f"Connection test successful for {database}")
             return {
                 'success': True,
                 'message': 'Connection successful',
@@ -73,24 +104,7 @@ class OracleService:
                 'timestamp': timezone.now().isoformat()
             }
 
-    def _get_connection(self, database: OracleDatabase):
-        """Create Oracle database connection"""
-        dsn = cx_Oracle.makedsn(
-            host=database.host,
-            port=database.port,
-            service_name=database.service_name
-        )
-        
-        connection = cx_Oracle.connect(
-            user=database.username,
-            password=database.password,
-            dsn=dsn,
-            encoding="UTF-8"
-        )
-        
-        return connection
-
-    def get_table_data(self, table: OracleTable) -> Dict[str, Any]:
+    def get_table_data(self, table) -> Dict[str, Any]:
         """Fetch data from Oracle table"""
         start_time = time.time()
         
@@ -120,6 +134,8 @@ class OracleService:
                         value = value.read()
                     elif hasattr(value, 'isoformat'):  # datetime objects
                         value = value.isoformat()
+                    elif isinstance(value, (cx_Oracle.Timestamp, cx_Oracle.Date)):
+                        value = value.isoformat() if hasattr(value, 'isoformat') else str(value)
                     row_dict[columns[i]] = value
                 data.append(row_dict)
             
@@ -147,6 +163,7 @@ class OracleService:
             table.last_record_count = len(data)
             table.save()
             
+            logger.info(f"Successfully fetched {len(data)} records from {table}")
             return result
             
         except cx_Oracle.Error as e:
@@ -169,6 +186,199 @@ class OracleService:
                 'collection_duration': time.time() - start_time,
                 'timestamp': timezone.now().isoformat()
             }
+
+    def _build_query(self, table) -> str:
+        """Build SQL query for table data collection"""
+        # Determine columns to select
+        if table.columns_to_monitor:
+            columns = ', '.join(table.columns_to_monitor)
+        else:
+            columns = '*'
+        
+        # Base query
+        query = f"SELECT {columns} FROM {table.get_full_table_name()}"
+        
+        # Add WHERE clause if specified
+        if table.where_clause:
+            query += f" WHERE {table.where_clause}"
+        
+        # Add ORDER BY if specified
+        if table.order_by:
+            query += f" ORDER BY {table.order_by}"
+        
+        return query
+
+    def get_table_schema(self, database, table_name, schema_name=None):
+        """Get table schema information"""
+        try:
+            connection = self._get_connection(database)
+            cursor = connection.cursor()
+            
+            # Query to get table columns
+            if schema_name:
+                query = """
+                SELECT column_name, data_type, data_length, data_precision, data_scale, nullable
+                FROM all_tab_columns 
+                WHERE table_name = :table_name AND owner = :schema_name
+                ORDER BY column_id
+                """
+                cursor.execute(query, {'table_name': table_name.upper(), 'schema_name': schema_name.upper()})
+            else:
+                query = """
+                SELECT column_name, data_type, data_length, data_precision, data_scale, nullable
+                FROM user_tab_columns 
+                WHERE table_name = :table_name
+                ORDER BY column_id
+                """
+                cursor.execute(query, {'table_name': table_name.upper()})
+            
+            columns = []
+            for row in cursor.fetchall():
+                columns.append({
+                    'column_name': row[0],
+                    'data_type': row[1],
+                    'data_length': row[2],
+                    'data_precision': row[3],
+                    'data_scale': row[4],
+                    'nullable': row[5] == 'Y'
+                })
+            
+            cursor.close()
+            connection.close()
+            
+            return {
+                'success': True,
+                'columns': columns
+            }
+            
+        except cx_Oracle.Error as e:
+            return {
+                'success': False,
+                'error': str(e)
+            }
+
+    def list_tables(self, database, schema_name=None):
+        """List all tables in the database/schema"""
+        try:
+            connection = self._get_connection(database)
+            cursor = connection.cursor()
+            
+            if schema_name:
+                query = """
+                SELECT table_name, owner 
+                FROM all_tables 
+                WHERE owner = :schema_name
+                ORDER BY table_name
+                """
+                cursor.execute(query, {'schema_name': schema_name.upper()})
+            else:
+                query = """
+                SELECT table_name, user as owner 
+                FROM user_tables 
+                ORDER BY table_name
+                """
+                cursor.execute(query)
+            
+            tables = []
+            for row in cursor.fetchall():
+                    tables.append({
+                    'table_name': row[0],
+                    'schema_name': row[1]
+                })
+            
+            cursor.close()
+            connection.close()
+            
+            return {
+                'success': True,
+                'tables': tables
+            }
+            
+        except cx_Oracle.Error as e:
+            return {
+                'success': False,
+                'error': str(e)
+            }
+
+    # def get_table_data(self, table: OracleTable) -> Dict[str, Any]:
+    #     """Fetch data from Oracle table"""
+    #     start_time = time.time()
+        
+    #     try:
+    #         connection = self._get_connection(table.database)
+    #         cursor = connection.cursor()
+            
+    #         # Build query
+    #         query = self._build_query(table)
+    #         logger.info(f"Executing query for {table}: {query}")
+            
+    #         cursor.execute(query)
+            
+    #         # Get column names
+    #         columns = [col[0] for col in cursor.description]
+            
+    #         # Fetch data
+    #         rows = cursor.fetchall()
+            
+    #         # Convert to list of dictionaries
+    #         data = []
+    #         for row in rows:
+    #             row_dict = {}
+    #             for i, value in enumerate(row):
+    #                 # Handle Oracle-specific types
+    #                 if isinstance(value, cx_Oracle.LOB):
+    #                     value = value.read()
+    #                 elif hasattr(value, 'isoformat'):  # datetime objects
+    #                     value = value.isoformat()
+    #                 row_dict[columns[i]] = value
+    #             data.append(row_dict)
+            
+    #         cursor.close()
+    #         connection.close()
+            
+    #         collection_duration = time.time() - start_time
+            
+    #         # Calculate checksum for change detection
+    #         data_str = json.dumps(data, sort_keys=True, default=str)
+    #         checksum = hashlib.md5(data_str.encode()).hexdigest()
+            
+    #         result = {
+    #             'success': True,
+    #             'data': data,
+    #             'record_count': len(data),
+    #             'checksum': checksum,
+    #             'collection_duration': collection_duration,
+    #             'timestamp': timezone.now().isoformat(),
+    #             'columns': columns
+    #         }
+            
+    #         # Update table metadata
+    #         table.last_poll_time = timezone.now()
+    #         table.last_record_count = len(data)
+    #         table.save()
+            
+    #         return result
+            
+    #     except cx_Oracle.Error as e:
+    #         error_msg = str(e)
+    #         logger.error(f"Oracle query failed for {table}: {error_msg}")
+            
+    #         return {
+    #             'success': False,
+    #             'error': error_msg,
+    #             'collection_duration': time.time() - start_time,
+    #             'timestamp': timezone.now().isoformat()
+    #         }
+    #     except Exception as e:
+    #         error_msg = str(e)
+    #         logger.error(f"Unexpected error querying {table}: {error_msg}")
+            
+    #         return {
+    #             'success': False,
+    #             'error': error_msg,
+    #             'collection_duration': time.time() - start_time,
+    #             'timestamp': timezone.now().isoformat()
+    #         }
 
     def _build_query(self, table: OracleTable) -> str:
         """Build SQL query for table data collection"""
@@ -306,7 +516,7 @@ class OracleService:
         """Send data to Redis for real-time WebSocket updates"""
         try:
             # Redis key for this table's data
-            redis_key = f"oracle_data:{table.database.server.id}:{table.database.id}:{table.id}"
+            redis_key = f"oracle_data:{table.database.server.uuid}:{table.database.id}:{table.id}"
             
             # Message for WebSocket
             message = {

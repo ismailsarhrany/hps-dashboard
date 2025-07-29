@@ -1095,7 +1095,7 @@ class OracleMonitoringTaskViewSet(viewsets.ReadOnlyModelViewSet):
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 
-@api_view(['GET'])
+@api_view(['GET','POST'])
 # @permission_classes([IsAuthenticated])
 def oracle_dashboard_data(request):
     """Get comprehensive dashboard data for Oracle monitoring"""

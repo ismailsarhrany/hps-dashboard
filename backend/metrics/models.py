@@ -131,8 +131,8 @@ class IostatMetric(models.Model):
     tps = models.FloatField(help_text="Transactions per second")
     kb_read = models.FloatField(default=0.0)
     kb_wrtn = models.FloatField(default=0.0)
-    kb_read_rate = models.FloatField(help_text="KB read per second")
-    kb_wrtn_rate = models.FloatField(help_text="KB written per second")
+    kb_read_rate = models.FloatField(help_text="KB read per second",default=0.0)
+    kb_wrtn_rate = models.FloatField(help_text="KB written per second",default=0.0)
     service_time = models.FloatField(help_text="Average service time in milliseconds")
     
     # Additional fields for extended metrics
@@ -284,40 +284,38 @@ class MetricAlert(models.Model):
 
 
 class OracleDatabase(models.Model):
-    """Oracle database configuration for each server"""
-    server = models.ForeignKey(Server, on_delete=models.CASCADE, related_name='oracle_databases')
-    name = models.CharField(max_length=100, help_text="Database identifier name")
-    host = models.GenericIPAddressField(help_text="Oracle DB host (can be same as server or different)")
-    port = models.IntegerField(default=1521)
-    service_name = models.CharField(max_length=100, help_text="Oracle service name or SID")
-    username = models.CharField(max_length=100)
-    password = EncryptedCharField(max_length=255)  # Consider encrypting this
+    CONNECTION_STATUS_CHOICES = [
+        ('connected', 'Connected'),
+        ('failed', 'Failed'),
+        ('testing', 'Testing'),
+        ('unknown', 'Unknown'),
+    ]
     
-    # Connection settings
+    id = models.AutoField(primary_key=True)
+    server = models.ForeignKey('Server', on_delete=models.CASCADE, related_name='oracle_databases')
+    name = models.CharField(max_length=100, help_text="Database alias/name for identification")
+    host = models.CharField(max_length=255, help_text="Oracle server IP address")
+    port = models.IntegerField(default=1521, help_text="Oracle server port")
+    sid = models.CharField(default='1521',max_length=100, help_text="Oracle SID (System Identifier)")  # Changed from service_name
+    username = models.CharField(max_length=100, help_text="Oracle database username")
+    password = models.CharField(max_length=255, help_text="Oracle database password")
     connection_timeout = models.IntegerField(default=30, help_text="Connection timeout in seconds")
     is_active = models.BooleanField(default=True)
-    
-    # Metadata
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     last_connection_test = models.DateTimeField(null=True, blank=True)
     connection_status = models.CharField(
-        max_length=20,
-        choices=[
-            ('unknown', 'Unknown'),
-            ('connected', 'Connected'),
-            ('failed', 'Failed'),
-            ('timeout', 'Timeout'),
-        ],
+        max_length=20, 
+        choices=CONNECTION_STATUS_CHOICES, 
         default='unknown'
     )
-
+    
     class Meta:
-        unique_together = ['server', 'name']
-
+        db_table = 'oracle_databases'
+        unique_together = ['host', 'port', 'sid']
+    
     def __str__(self):
-        return f"{self.server.name} - {self.name}"
-
+        return f"{self.name} ({self.host}:{self.port}/{self.sid})"
 class OracleTable(models.Model):
     """Tables to monitor in each Oracle database"""
     database = models.ForeignKey(OracleDatabase, on_delete=models.CASCADE, related_name='monitored_tables')
