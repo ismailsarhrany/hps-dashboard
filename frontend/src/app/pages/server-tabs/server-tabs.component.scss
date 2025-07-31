@@ -1,0 +1,188 @@
+/* src/app/pages/server-tabs/server-tabs.component.scss */
+
+.server-tabs-container {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+
+  .loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 300px;
+
+    p {
+      margin-top: 1rem;
+      color: var(--text-hint-color);
+    }
+  }
+
+  .no-servers-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 400px;
+
+    nb-card {
+      max-width: 400px;
+      text-align: center;
+    }
+  }
+
+  .tabs-container {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+
+    .tab-header-container {
+      display: flex;
+      align-items: flex-start;
+      border-bottom: 1px solid var(--border-basic-color);
+      background: var(--card-background-color);
+
+      .server-tabs {
+        flex: 1;
+
+        ::ng-deep {
+          .tabset {
+            border-bottom: none;
+
+            .tab {
+              position: relative;
+
+              &.disabled {
+                opacity: 0.6;
+
+                .tab-title-content {
+                  color: var(--text-disabled-color);
+                }
+              }
+
+              .tab-text {
+                margin: 0 0.5rem;
+                font-weight: 500;
+              }
+
+              .tab-title-content {
+                display: flex;
+                align-items: center;
+                position: relative;
+                padding: 0.25rem 0.5rem;
+
+                .tab-icon {
+                  margin-right: 0.5rem;
+                }
+
+                .connection-badge {
+                  position: absolute;
+                  top: -2px;
+                  right: -2px;
+                  width: 8px;
+                  height: 8px;
+                  border-radius: 50%;
+                  border: 1px solid var(--card-background-color);
+                }
+
+                .close-tab-btn {
+                  margin-left: 0.5rem;
+                  padding: 0.125rem;
+                  opacity: 0.6;
+                  transition: opacity 0.2s ease;
+
+                  &:hover {
+                    opacity: 1;
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+
+      .add-server-section {
+        padding: 0.75rem 1rem;
+        border-left: 1px solid var(--border-basic-color);
+      }
+    }
+
+    .tab-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+
+      .server-info-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem;
+        background: var(--card-background-color);
+        border-bottom: 1px solid var(--border-basic-color);
+
+        .server-details {
+          h6 {
+            margin: 0;
+            font-weight: 600;
+            color: var(--text-basic-color);
+          }
+
+          small {
+            color: var(--text-hint-color);
+            font-size: 0.875rem;
+          }
+        }
+
+        .server-status {
+          display: flex;
+          align-items: center;
+          gap: 1rem;
+
+          .status-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-basic-color);
+            font-size: 0.875rem;
+          }
+        }
+      }
+    }
+  }
+}
+.server-tabs-container .tab-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
+
+  .server-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+
+    h6 {
+      margin: 0;
+      font-weight: 600;
+      color: var(--text-basic-color);
+    }
+
+    small {
+      color: var(--text-hint-color);
+      font-size: 0.875rem;
+    }
+  }
+
+  .server-status {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+
+    .status-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--text-basic-color);
+      font-size: 0.875rem;
+    }
+  }
+}

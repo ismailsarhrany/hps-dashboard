@@ -21,9 +21,10 @@ import {
   NbWindowModule,
   NbThemeModule,
 } from '@nebular/theme';
+import { ServerSelectionComponent } from './server-selection/server-selection.component';
 
 @NgModule({
-  declarations: [AppComponent],
+  declarations: [AppComponent, ServerSelectionComponent],
   imports: [
     BrowserModule,
     BrowserAnimationsModule,

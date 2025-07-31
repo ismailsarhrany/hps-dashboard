@@ -1,13 +1,15 @@
 // src/app/pages/historic/historic.component.ts (Refactored for In/Out Chart Separation & Scale Issue Diagnosis)
+// src/app/pages/historic/historic.component.ts
 import {
   Component,
   OnInit,
   OnDestroy,
   ChangeDetectionStrategy,
-  ChangeDetectorRef,
+  ChangeDetectorRef
 } from "@angular/core";
 import { FormBuilder, FormGroup, Validators } from "@angular/forms";
-import { Subscription, forkJoin } from "rxjs";
+import { Subscription, forkJoin, Subject } from "rxjs";
+import { takeUntil } from "rxjs/operators";
 import { NbThemeService } from "@nebular/theme";
 import { EChartsOption } from "echarts";
 import {
@@ -15,30 +17,26 @@ import {
   VmstatData,
   DateTimeRange,
 } from "../../services/monitoring.service";
-import { DiskDataService, HistoricalIostatPoint } from "../../services/disk-data.service";
-import {
-  NetworkDataService,
-  HistoricalNetstatPoint,
-} from "../../services/network-data.service";
+import { ServerService } from '../../services/server.service'; // Added
 
 @Component({
   selector: "ngx-historic",
   templateUrl: "./historic.component.html",
   styleUrls: ["./historic.component.scss"],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  providers: [DiskDataService, NetworkDataService],
 })
 export class HistoricComponent implements OnInit, OnDestroy {
   dateRangeForm: FormGroup;
   loading = false;
+  private destroy$ = new Subject<void>(); // For subscription cleanup
+  private currentServerId: string; // Track current server
 
-  // Chart Options (Split Network Charts)
+  // Chart Options
   cpuChartOption: EChartsOption = {};
   memoryChartOption: EChartsOption = {};
   diskReadRateChartOption: EChartsOption = {};
   diskWriteRateChartOption: EChartsOption = {};
   diskOpsChartOption: EChartsOption = {};
-  // --- Split Network Charts ---
   networkPacketsInChartOption: EChartsOption = {};
   networkPacketsOutChartOption: EChartsOption = {};
   networkErrorsInChartOption: EChartsOption = {};
@@ -46,8 +44,8 @@ export class HistoricComponent implements OnInit, OnDestroy {
 
   // Data Arrays
   vmstatData: VmstatData[] = [];
-  netstatData: HistoricalNetstatPoint[] = [];
-  iostatData: HistoricalIostatPoint[] = [];
+  netstatData: any[] = []; // Changed to any[] since we're using ApiService directly
+  iostatData: any[] = [];  // Changed to any[] since we're using ApiService directly
 
   private themeSubscription: Subscription;
   private dataSubscription: Subscription;
@@ -56,38 +54,52 @@ export class HistoricComponent implements OnInit, OnDestroy {
 
   constructor(
     private fb: FormBuilder,
-    private apiService: ApiService, // Still needed for Vmstat
-    private diskDataService: DiskDataService,
-    private networkDataService: NetworkDataService,
+    private apiService: ApiService,
     private themeService: NbThemeService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private serverService: ServerService // Injected
   ) {
     this.initializeDateForm();
   }
 
   ngOnInit(): void {
+    // Handle theme changes
     this.themeSubscription = this.themeService
       .getJsTheme()
       .subscribe((theme) => {
         this.theme = theme;
-        this.initializeChartOptions(); // Initialize all charts including split network ones
-        // Update charts only if data already exists
-        if (
-          this.vmstatData.length > 0 ||
-          this.netstatData.length > 0 ||
-          this.iostatData.length > 0
-        ) {
+        this.initializeChartOptions();
+        if (this.vmstatData.length > 0 || this.netstatData.length > 0 || this.iostatData.length > 0) {
           this.updateAllCharts();
         }
         this.cdr.markForCheck();
       });
 
-    this.loadDefaultData();
+    // Handle server changes
+    this.serverService.currentServerId$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(serverId => {
+        if (serverId && serverId !== this.currentServerId) {
+          this.currentServerId = serverId;
+          this.resetData();
+          this.loadHistoricalData();
+        }
+      });
   }
 
   ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
     this.themeSubscription?.unsubscribe();
     this.dataSubscription?.unsubscribe();
+  }
+
+  private resetData() {
+    this.vmstatData = [];
+    this.netstatData = [];
+    this.iostatData = [];
+    this.updateAllCharts(); // Clear charts
+    this.cdr.markForCheck();
   }
 
   // initializeDateForm, formatDateForInput, getDateTimeRange remain the same
@@ -137,42 +149,35 @@ export class HistoricComponent implements OnInit, OnDestroy {
   }
 
   loadHistoricalData(dateRange?: DateTimeRange): void {
+    if (!this.currentServerId) {
+      console.warn("No server selected");
+      return;
+    }
+
     this.loading = true;
     this.cdr.markForCheck();
     const range = dateRange || this.getDateTimeRange();
 
-    this.vmstatData = [];
-    this.netstatData = [];
-    this.iostatData = [];
-    this.updateAllCharts(); // Clear charts
+    this.resetData(); // Clear existing data
 
     this.dataSubscription?.unsubscribe();
 
     this.dataSubscription = forkJoin({
-      vmstat: this.apiService.getHistoricalVmstat(range),
-      netstat: this.networkDataService.getHistoricalNetworkData(range),
-      iostat: this.diskDataService.getHistoricalDiskData(range),
+      vmstat: this.apiService.getHistoricalVmstat(this.currentServerId, range),
+      netstat: this.apiService.getHistoricalNetstat(this.currentServerId, range),
+      iostat: this.apiService.getHistoricalIostat(this.currentServerId, range),
     }).subscribe({
       next: ({ vmstat, netstat, iostat }) => {
         this.vmstatData = vmstat?.data || [];
-        this.netstatData = netstat;
-        this.iostatData = iostat;
-        console.log(
-          `HistoricComponent: Received Data - vmstat=${this.vmstatData.length}, netstat=${this.netstatData.length}, iostat=${this.iostatData.length}`
-        );
+        this.netstatData = netstat?.data || [];
+        this.iostatData = iostat?.data || [];
         this.updateAllCharts();
         this.loading = false;
         this.cdr.markForCheck();
       },
       error: (error) => {
-        console.error(
-          "HistoricComponent: Error loading combined historical data:",
-          error
-        );
-        this.vmstatData = [];
-        this.netstatData = [];
-        this.iostatData = [];
-        this.updateAllCharts();
+        console.error("Error loading historical data:", error);
+        this.resetData();
         this.loading = false;
         this.cdr.markForCheck();
       },

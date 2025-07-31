@@ -1,7 +1,8 @@
 // src/app/pages/process/process.component.ts
 import { Component, OnInit, OnDestroy } from "@angular/core";
 import { FormBuilder, FormGroup, Validators } from "@angular/forms";
-import { Subscription, of } from "rxjs";
+import { Subscription, of, Subject } from "rxjs";
+import { takeUntil } from "rxjs/operators";
 import { NbThemeService } from "@nebular/theme";
 import { catchError, map, tap } from "rxjs/operators";
 import {
@@ -14,7 +15,7 @@ import {
   RealtimeService,
   RealtimeConnectionStatus,
 } from "../../services/realtime.service";
-
+import { ServerService } from '../../services/server.service'; // Added
 interface ProcessStatistics {
   command: string;
   user: string;
@@ -37,8 +38,11 @@ interface ProcessStatistics {
 export class ProcessComponent implements OnInit, OnDestroy {
   private themeSubscription: Subscription;
   private dataSubscriptions: Subscription[] = [];
+  private destroy$ = new Subject<void>(); // Added for cleanup
+  private currentServerId: string; // Added to track current server
   private colors: any;
   private echartTheme: any;
+
 
   private getThemeColors(): any {
     if (!this.colors) {
@@ -65,7 +69,7 @@ export class ProcessComponent implements OnInit, OnDestroy {
       borderColor: this.colors.separator || "#e0e0e0",
     };
   }
-  
+
   connectionStatus: RealtimeConnectionStatus = RealtimeConnectionStatus.DISCONNECTED;
   lastUpdateTime = new Date();
 
@@ -90,26 +94,52 @@ export class ProcessComponent implements OnInit, OnDestroy {
     private theme: NbThemeService,
     private monitoringService: ApiService,
     private realtimeService: RealtimeService,
-    private fb: FormBuilder
+    private fb: FormBuilder,
+    private serverService: ServerService // Injected
   ) {
     this.initializeForm();
   }
 
   ngOnInit() {
+    // Handle theme changes
     this.themeSubscription = this.theme.getJsTheme().subscribe((config) => {
       this.colors = config.variables;
       this.echartTheme = config.name;
       this.initializeCharts();
     });
 
-    this.startRealtimeMonitoring();
-    this.loadProcessList();
+    // Handle server changes
+    this.serverService.currentServerId$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(serverId => {
+        if (serverId && serverId !== this.currentServerId) {
+          this.currentServerId = serverId;
+          this.resetData();
+          this.startRealtimeMonitoring();
+          this.loadProcessList();
+        }
+      });
   }
 
   ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
     this.themeSubscription?.unsubscribe();
     this.dataSubscriptions.forEach((sub) => sub.unsubscribe());
     this.dataSubscriptions = [];
+    this.stopRealtimeMonitoring();
+  }
+
+  private resetData() {
+    this.activeProcesses = [];
+    this.processes = [];
+    this.historicalProcesses = [];
+    this.processSummary = [];
+    this.selectedProcesses = [];
+    this.connectionStatus = RealtimeConnectionStatus.DISCONNECTED;
+    this.lastUpdateTime = new Date();
+    this.hasError = false;
+    this.errorMessage = '';
     this.stopRealtimeMonitoring();
   }
 
@@ -379,16 +409,18 @@ export class ProcessComponent implements OnInit, OnDestroy {
   }
 
   startRealtimeMonitoring() {
-    this.realtimeService.connectToMetrics(["process"]);
+    if (!this.currentServerId) return;
+
+    this.realtimeService.connectToMetrics(this.currentServerId, ["process"]);
 
     this.dataSubscriptions.push(
-      this.realtimeService.getConnectionStatus("process").subscribe((status) => {
+      this.realtimeService.getConnectionStatus(this.currentServerId).subscribe((status) => {
         this.connectionStatus = status;
       })
     );
 
     this.dataSubscriptions.push(
-      this.realtimeService.getRealtimeProcess().subscribe((processData) => {
+      this.realtimeService.getRealtimeProcess(this.currentServerId).subscribe((processData) => {
         if (processData) {
           this.lastUpdateTime = new Date();
           this.updateActiveProcesses(processData);
@@ -397,7 +429,6 @@ export class ProcessComponent implements OnInit, OnDestroy {
       })
     );
   }
-
   stopRealtimeMonitoring() {
     this.realtimeService.disconnectAll();
     this.dataSubscriptions.forEach((sub) => sub.unsubscribe());
@@ -441,7 +472,7 @@ export class ProcessComponent implements OnInit, OnDestroy {
     const recentRange = this.monitoringService.getDateRange(0.1);
 
     this.dataSubscriptions.push(
-      this.monitoringService.getHistoricalProcesses(recentRange)
+      this.monitoringService.getHistoricalProcesses(this.currentServerId, recentRange) // Added serverId
         .pipe(
           map(response => response.data || []),
           map(processes => {
@@ -725,7 +756,7 @@ export class ProcessComponent implements OnInit, OnDestroy {
   }
 
   loadHistoricalProcessData(): void {
-    if (!this.validateForm()) return;
+    if (!this.validateForm() || !this.currentServerId) return; // Added server check
 
     this.loading = true;
     this.hasError = false;
@@ -739,7 +770,7 @@ export class ProcessComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.monitoringService.getHistoricalProcesses(range)
+    this.monitoringService.getHistoricalProcesses(this.currentServerId, range) // Added serverId
       .pipe(
         tap(res => {
           this.historicalProcesses = res.data || [];
