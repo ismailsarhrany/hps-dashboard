@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from "@angular/core";
+import { Component, OnInit, OnDestroy, Input } from "@angular/core";
 import { Subscription } from "rxjs";
 import { NbThemeService } from "@nebular/theme";
 import {
@@ -9,6 +9,10 @@ import {
   ProcessData,
   RealtimeConnectionStatus,
 } from "../../services/realtime.service";
+
+import { ServerTabsService } from '../../services/server-tabs.service';
+
+
 
 // Interface pour stocker les points de taux (reçus du backend)
 interface RatePoint {
@@ -32,6 +36,7 @@ interface WebSocketData {
   styleUrls: ["./realtime.component.scss"],
 })
 export class RealtimeComponent implements OnInit, OnDestroy {
+  @Input() serverId?: string;
   private vmstatSubscription: Subscription;
   private netstatSubscription: Subscription;
   private iostatSubscription: Subscription;
@@ -82,11 +87,20 @@ export class RealtimeComponent implements OnInit, OnDestroy {
 
   constructor(
     private theme: NbThemeService,
-    private realtimeService: RealtimeService
-  ) {}
+    private realtimeService: RealtimeService,
+    private serverTabsService: ServerTabsService
+  ) { }
 
   ngOnInit() {
     this.themeSubscription = this.theme.getJsTheme().subscribe((config) => {
+      // Use serverId input if available
+      if (this.serverId) {
+        this.realtimeService.startServerMonitoring(this.serverId);
+      } else {
+        // Fallback to active server ID
+        const server = this.serverTabsService.getActiveServer();
+        if (server?.id) this.realtimeService.startServerMonitoring(server.id);
+      }
       this.colors = config.variables;
       this.echartTheme = config.name;
       this.initializeCharts();
@@ -111,8 +125,9 @@ export class RealtimeComponent implements OnInit, OnDestroy {
   }
 
   private startRealtimeMonitoring() {
-    this.realtimeService.startRealtimeMonitoring();
-    this.connectionSubscription = this.realtimeService
+    if (this.serverId) {
+      this.realtimeService.startServerMonitoring(this.serverId);
+    } this.connectionSubscription = this.realtimeService
       .getOverallConnectionStatus()
       .subscribe((status) => {
         if (status === RealtimeConnectionStatus.CONNECTED) {
@@ -121,19 +136,19 @@ export class RealtimeComponent implements OnInit, OnDestroy {
       });
 
     this.vmstatSubscription = this.realtimeService
-      .getRealtimeVmstat()
+      .getRealtimeVmstat(this.serverId)
       .subscribe((data) => this.processVmstatData(data as VmstatData));
 
     this.netstatSubscription = this.realtimeService
-      .getRealtimeNetstat()
+      .getRealtimeNetstat(this.serverId)
       .subscribe((data) => this.processNetstatData(data as WebSocketData));
 
     this.iostatSubscription = this.realtimeService
-      .getRealtimeIostat()
+      .getRealtimeIostat(this.serverId)
       .subscribe((data) => this.processIostatData(data as WebSocketData));
 
     this.processSubscription = this.realtimeService
-      .getRealtimeProcess()
+      .getRealtimeProcess(this.serverId)
       .subscribe((data) => this.processProcessData(data as ProcessData));
   }
 

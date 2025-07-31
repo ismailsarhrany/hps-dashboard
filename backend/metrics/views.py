@@ -707,7 +707,7 @@ class ServerListView(APIView):
             page_obj = paginator.get_page(page)
             
             # Prepare response
-            server_list = [model_to_dict(server) for server in page_obj]
+            server_list = [model_to_dict(server) | {"id": server.id} for server in page_obj]
             
             return JsonResponse({
                 "count": paginator.count,

@@ -1,43 +1,85 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { ServerTabsService } from '../../../../services/server-tabs.service';
+import { Router } from '@angular/router';
+import { Server } from '../../../../services/server-tabs.service'; // Add this import
 
+// Remove the local Server interface
 @Component({
-  selector: 'ngx-tab1',
+  selector: 'ngx-server-tab',
   template: `
-    <p>Early home automation began with labor-saving machines. Self-contained electric or gas powered
-      <a target="_blank" href="https://en.wikipedia.org/wiki/Home_appliances">home appliances</a>
-      became viable in the 1900s with the introduction of
-      <a target="_blank" href="https://en.wikipedia.org/wiki/Electric_power_distribution">electric power distribution
-      </a> and led to the introduction of washing machines (1904), water heaters (1889), refrigerators, sewing machines,
-      dishwashers, and clothes dryers.
-    </p>
+    <div class="server-tab-content">
+      <h3>{{ server?.hostname }}</h3>
+      <p *ngIf="server?.description">{{ server.description }}</p>
+      <div class="server-info">
+        <p><strong>OS:</strong> {{ server?.os_type }} {{ server?.os_version }}</p>
+        <p><strong>IP:</strong> {{ server?.ip_address }}</p>
+        <p><strong>Status:</strong> {{ server?.status }}</p>
+      </div>
+      <button nbButton size="small" status="primary" (click)="viewServerDetails()">
+        View Details
+      </button>
+    </div>
   `,
+  styles: [`
+    .server-tab-content {
+      padding: 1rem;
+    }
+    .server-info {
+      margin: 1rem 0;
+    }
+  `]
 })
-export class Tab1Component { }
-
-@Component({
-  selector: 'ngx-tab2',
-  template: `
-    <p>Tab 2 works!</p>
-  `,
-})
-export class Tab2Component { }
+export class ServerTabComponent implements OnInit {
+  server: Server;
+  
+  constructor(private route: ActivatedRoute) {}
+  
+  ngOnInit() {
+    // Get server data from route parameters
+    this.server = this.route.snapshot.data.server;
+  }
+  
+  viewServerDetails() {
+    // Navigate to server details page
+  }
+}
 
 @Component({
   selector: 'ngx-tabs',
   styleUrls: ['./tabs.component.scss'],
   templateUrl: './tabs.component.html',
 })
-export class TabsComponent {
+export class TabsComponent implements OnInit, OnDestroy {
+  private serverSubscription: Subscription;
+  serverTabs: any[] = [];
 
-  tabs: any[] = [
-    {
-      title: 'Route tab #1',
-      route: '/pages/layout/tabs/tab1',
-    },
-    {
-      title: 'Route tab #2',
-      route: '/pages/layout/tabs/tab2',
-    },
-  ];
+  constructor(
+    private serverTabsService: ServerTabsService,
+    private router: Router
+  ) {}
 
+  ngOnInit() {
+    this.serverSubscription = this.serverTabsService.getServers().subscribe(servers => {
+      this.generateServerTabs(servers);
+    });
+  }
+
+  ngOnDestroy() {
+    if (this.serverSubscription) {
+      this.serverSubscription.unsubscribe();
+    }
+  }
+
+  generateServerTabs(servers: Server[]) {
+    this.serverTabs = servers.map(server => ({
+      title: server.alias || server.hostname,
+      route: `/pages/layout/tabs/server/${server.id}`,
+      data: { server }  // Pass server data to the route
+    }));
+
+    // Activate the first server tab if none is active
+    if (this.serverTabs.length > 0 && !this.router.url.includes('/server/')) {
+      this.router.navigate([this.serverTabs[0].route]);
+    }
+  }
 }

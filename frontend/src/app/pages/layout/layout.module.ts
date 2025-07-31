@@ -11,9 +11,9 @@ import {
 } from '@nebular/theme';
 
 import { ThemeModule } from '../../@theme/theme.module';
-import { LayoutRoutingModule } from './layout-routing.module';
+import { LayoutRoutingModule , ServerResolver} from './layout-routing.module';
 import { LayoutComponent } from './layout.component';
-import { Tab1Component, Tab2Component, TabsComponent } from './tabs/tabs.component';
+import { ServerTabComponent } from './tabs/tabs.component';
 import { StepperComponent } from './stepper/stepper.component';
 import { ListComponent } from './list/list.component';
 import { InfiniteListComponent } from './infinite-list/infinite-list.component';
@@ -39,9 +39,8 @@ import { NewsService } from './news.service';
   ],
   declarations: [
     LayoutComponent,
-    TabsComponent,
-    Tab1Component,
-    Tab2Component,
+    ServerTabComponent,
+
     StepperComponent,
     ListComponent,
     NewsPostPlaceholderComponent,
@@ -51,6 +50,7 @@ import { NewsService } from './news.service';
   ],
   providers: [
     NewsService,
+    ServerResolver,
   ],
 })
 export class LayoutModule { }

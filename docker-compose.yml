@@ -130,38 +130,38 @@ services:
       - app-network
     restart: unless-stopped
   
-  # Optional: Oracle Database for testing (if you don't have external Oracle)
-  oracle-test:
-    image: gvenzl/oracle-xe:21-slim
-    environment:
-      ORACLE_PASSWORD: oracle_password
-      APP_USER: testuser
-      APP_USER_PASSWORD: testpass
-    ports:
-      - "1521:1521"
-    volumes:
-      - oracle_data:/opt/oracle/oradata
-      - ./oracle-init:/docker-entrypoint-initdb.d
-    networks:
-      - app-network
-
-  # --- Frontend ---
-  # frontend:
-  #   build:
-  #     context: ./frontend
-  #     dockerfile: Dockerfile
+  # # Optional: Oracle Database for testing (if you don't have external Oracle)
+  # oracle-test:
+  #   image: gvenzl/oracle-xe:21-slim
+  #   environment:
+  #     ORACLE_PASSWORD: oracle_password
+  #     APP_USER: testuser
+  #     APP_USER_PASSWORD: testpass
   #   ports:
-  #     - "4200:4200"
+  #     - "1521:1521"
   #   volumes:
-  #     - ./frontend:/app
-  #     - frontend_node_modules:/app/node_modules
-  #   depends_on:
-  #     backend:
-  #       condition: service_started
+  #     - oracle_data:/opt/oracle/oradata
+  #     - ./oracle-init:/docker-entrypoint-initdb.d
   #   networks:
   #     - app-network
-  #   command: npm start -- --host 0.0.0.0 --disable-host-check
-  #   restart: unless-stopped
+
+  # --- Frontend ---
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "4200:4200"
+    volumes:
+      - ./frontend:/app
+      - frontend_node_modules:/app/node_modules
+    depends_on:
+      backend:
+        condition: service_started
+    networks:
+      - app-network
+    command: npm start -- --host 0.0.0.0 --disable-host-check
+    restart: unless-stopped
 
   # --- Simulated servers ---
   server1:
@@ -175,27 +175,27 @@ services:
         ipv4_address: 172.20.0.101
     restart: unless-stopped
 
-  server2:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile.simulated_server
-    container_name: server2
-    hostname: server2
-    networks:
-      monitoring_network:
-        ipv4_address: 172.20.0.102
-    restart: unless-stopped
+  # server2:
+  #   build:
+  #     context: ./backend
+  #     dockerfile: Dockerfile.simulated_server
+  #   container_name: server2
+  #   hostname: server2
+  #   networks:
+  #     monitoring_network:
+  #       ipv4_address: 172.20.0.102
+  #   restart: unless-stopped
 
-  server3:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile.simulated_server
-    container_name: server3
-    hostname: server3
-    networks:
-      monitoring_network:
-        ipv4_address: 172.20.0.103
-    restart: unless-stopped
+  # server3:
+  #   build:
+  #     context: ./backend
+  #     dockerfile: Dockerfile.simulated_server
+  #   container_name: server3
+  #   hostname: server3
+  #   networks:
+  #     monitoring_network:
+  #       ipv4_address: 172.20.0.103
+  #   restart: unless-stopped
 
 volumes:
   frontend_node_modules:

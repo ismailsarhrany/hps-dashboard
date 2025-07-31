@@ -33,56 +33,20 @@ export class NetworkDataService {
    * @param range The start and end timestamps.
    * @returns Observable array of historical netstat data points.
    */
-  getHistoricalNetworkData(
-    range: DateTimeRange
-  ): Observable<HistoricalNetstatPoint[]> {
-    return this.apiService.getHistoricalNetstat(range).pipe(
-      map((response) => {
-        let unrealisticRateDetected = false;
-        // Ensure data is typed correctly and default missing IDs
-        const typedData = (response?.data || []).map((d) => {
-          const ipktsRate = d.ipkts_rate ?? 0;
-          const opktsRate = d.opkts_rate ?? 0;
-
-          // Check for potentially unrealistic rates
-          if (
-            !unrealisticRateDetected &&
-            (ipktsRate > this.UNREALISTIC_RATE_THRESHOLD ||
-              opktsRate > this.UNREALISTIC_RATE_THRESHOLD)
-          ) {
-            console.warn(
-              `NetworkDataService: Detected potentially unrealistic packet rate (` +
-                `ipkts_rate: ${ipktsRate}, opkts_rate: ${opktsRate}` +
-                `) from API for timestamp ${d.timestamp}. ` +
-                `This might indicate an issue with the source data (e.g., cumulative values instead of rates) ` +
-                `or the API endpoint returning incorrect values. The chart Y-axis scale might be affected.`
-            );
-            unrealisticRateDetected = true; // Show warning only once per fetch
-          }
-
-          return {
-            ...d,
-            interface: d.interface || "default", // Assign a default interface name if missing
-            // Ensure numeric fields are numbers, default to 0 if null/undefined
-            ipkts_rate: ipktsRate,
-            opkts_rate: opktsRate,
-            ierrs_rate: d.ierrs_rate ?? 0,
-            oerrs_rate: d.oerrs_rate ?? 0,
-          } as HistoricalNetstatPoint;
-        });
-
-        console.log(
-          `NetworkDataService: Fetched ${typedData.length} netstat points.`
-        );
-        return typedData;
-      }),
-      catchError((error) => {
-        console.error(
-          "NetworkDataService: Error loading historical netstat data:",
-          error
-        );
-        return of([]); // Return an empty array on error
-      })
+ getHistoricalNetworkData(range: DateTimeRange,serverId?: string): Observable<HistoricalNetstatPoint[]> {
+    return this.apiService.getHistoricalNetstat(range, serverId).pipe(
+      map(response => (response?.data || []).map(d => ({
+        ...d,
+        interface: d.interface || "default",
+        ipkts_rate: d.ipkts_rate ?? 0,
+        opkts_rate: d.opkts_rate ?? 0,
+        ierrs_rate: d.ierrs_rate ?? 0,
+        oerrs_rate: d.oerrs_rate ?? 0,
+        // Ensure server fields are present
+        server_hostname: d.server_hostname || d['server']?.hostname,
+        server_id: d.server_id || d['server']?.server_id
+      } as HistoricalNetstatPoint))),
+      catchError(() => of([]))
     );
   }
 }

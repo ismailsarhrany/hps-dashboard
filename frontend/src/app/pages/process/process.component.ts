@@ -1,5 +1,5 @@
 // src/app/pages/process/process.component.ts
-import { Component, OnInit, OnDestroy } from "@angular/core";
+import { Component, OnInit, OnDestroy, Input } from "@angular/core";
 import { FormBuilder, FormGroup, Validators } from "@angular/forms";
 import { Subscription, of } from "rxjs";
 import { NbThemeService } from "@nebular/theme";
@@ -39,6 +39,7 @@ export class ProcessComponent implements OnInit, OnDestroy {
   private dataSubscriptions: Subscription[] = [];
   private colors: any;
   private echartTheme: any;
+  @Input() serverId?: string;
 
   private getThemeColors(): any {
     if (!this.colors) {
@@ -65,7 +66,7 @@ export class ProcessComponent implements OnInit, OnDestroy {
       borderColor: this.colors.separator || "#e0e0e0",
     };
   }
-  
+
   connectionStatus: RealtimeConnectionStatus = RealtimeConnectionStatus.DISCONNECTED;
   lastUpdateTime = new Date();
 
@@ -102,8 +103,11 @@ export class ProcessComponent implements OnInit, OnDestroy {
       this.initializeCharts();
     });
 
-    this.startRealtimeMonitoring();
-    this.loadProcessList();
+    if (this.serverId) {
+      this.startRealtimeMonitoring(this.serverId);
+    } else {
+      console.warn('No serverId provided');
+    } this.loadProcessList();
   }
 
   ngOnDestroy() {
@@ -378,11 +382,10 @@ export class ProcessComponent implements OnInit, OnDestroy {
 
   }
 
-  startRealtimeMonitoring() {
-    this.realtimeService.connectToMetrics(["process"]);
-
+  startRealtimeMonitoring(serverId: string) {
+    this.realtimeService.connectToServerMetrics(serverId, ["process"]);
     this.dataSubscriptions.push(
-      this.realtimeService.getConnectionStatus("process").subscribe((status) => {
+      this.realtimeService.getConnectionStatus("process", serverId).subscribe((status) => {
         this.connectionStatus = status;
       })
     );

@@ -26,25 +26,19 @@ export class DiskDataService {
    * @param range The start and end timestamps.
    * @returns Observable array of historical iostat data points.
    */
-  getHistoricalDiskData(range: DateTimeRange): Observable<HistoricalIostatPoint[]> {
-    return this.apiService.getHistoricalIostat(range).pipe(
-      map(response => {
-        // Ensure data is typed correctly and default missing IDs
-        const typedData = (response?.data || []).map(d => ({
-          ...d,
-          disk: d.disk || 'default', // Assign a default disk name if missing
-          // Ensure numeric fields are numbers, default to 0 if null/undefined
-          kb_read_rate: d.kb_read ?? 0,
-          kb_wrtn_rate: d.kb_wrtn ?? 0,
-          tps: d.tps ?? 0,
-        })) as HistoricalIostatPoint[];
-        console.log(`DiskDataService: Fetched ${typedData.length} iostat points.`);
-        return typedData;
-      }),
-      catchError(error => {
-        console.error('DiskDataService: Error loading historical iostat data:', error);
-        return of([]); // Return an empty array on error to prevent downstream issues
-      })
+ getHistoricalDiskData(range: DateTimeRange, serverId?: string): Observable<HistoricalIostatPoint[]> {
+    return this.apiService.getHistoricalIostat(range,serverId).pipe(
+      map(response => (response?.data || []).map(d => ({
+        ...d,
+        disk: d.disk || 'default',
+        kb_read_rate: d.kb_read ?? 0,
+        kb_wrtn_rate: d.kb_wrtn ?? 0,
+        tps: d.tps ?? 0,
+        // Ensure server fields are present
+        server_hostname: d.server_hostname || d['server']?.hostname,
+        server_id: d.server_id || d['server']?.server_id
+      } as HistoricalIostatPoint))),
+      catchError(() => of([]))
     );
   }
 }

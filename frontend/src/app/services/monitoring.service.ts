@@ -5,7 +5,7 @@ import { Observable } from "rxjs";
 import { map, catchError, tap } from "rxjs/operators";
 import { of } from "rxjs";
 
-// Data Interfaces
+// Data Interfaces - Updated with server information
 export interface VmstatData {
   timestamp: string;
   us: number;
@@ -20,6 +20,8 @@ export interface VmstatData {
   fr: number;
   interface_in: number;
   cs: number;
+  server_hostname?: string; // Added for multi-server support
+  server_id?: string;
 }
 
 export interface NetstatData {
@@ -34,6 +36,8 @@ export interface NetstatData {
   ierrs_rate: number;
   oerrs_rate: number;
   time: string;
+  server_hostname?: string;
+  server_id?: string;
 }
 
 export interface IostatData {
@@ -43,9 +47,10 @@ export interface IostatData {
   kb_read: number;
   kb_wrtn: number;
   service_time: number;
+  server_hostname?: string;
+  server_id?: string;
 }
 
-// Updated ProcessData interface to handle both raw and aggregated data
 export interface ProcessData {
   pid: number;
   user: string;
@@ -53,6 +58,8 @@ export interface ProcessData {
   mem: number;
   command: string;
   timestamp: string;
+  server_hostname?: string;
+  server_id?: string;
   // For aggregated data
   avg_cpu?: number;
   max_cpu?: number;
@@ -70,6 +77,19 @@ export interface ProcessData {
   };
 }
 
+// New interface for server management
+export interface Server {
+  id: string;
+  hostname: string;
+  ip_address: string;
+  ssh_username: string;
+  os_type: 'linux' | 'windows' | 'aix';
+  status: 'active' | 'inactive';
+  monitoring_interval: number;
+  created_at: string;
+  updated_at: string;
+}
+
 // New interface specifically for aggregated process data
 export interface AggregatedProcessData {
   timestamp: string;
@@ -83,6 +103,8 @@ export interface AggregatedProcessData {
   max_mem: number;
   min_mem: number;
   count: number;
+  server_hostname?: string;
+  server_id?: string;
 }
 
 export interface SystemSummary {
@@ -95,6 +117,8 @@ export interface SystemSummary {
   system_load: number;
   process_count: number;
   uptime: number;
+  server_hostname?: string;
+  server_id?: string;
 }
 
 export interface ApiResponse<T> {
@@ -111,6 +135,16 @@ export interface ApiResponse<T> {
   interval_seconds?: number;
   pids_filtered?: number[];
   warning?: string;
+  start_time?: string;
+  end_time?: string;
+}
+
+// New interface for server list response
+export interface ServerListResponse {
+  count: number;
+  page: number;
+  total_pages: number;
+  servers: Server[];
 }
 
 export interface DateTimeRange {
@@ -124,11 +158,93 @@ export type MetricType = 'vmstat' | 'netstat' | 'iostat' | 'process';
   providedIn: "root",
 })
 export class ApiService {
-  private readonly baseUrl = "http://localhost:8000/api/metrics";
+  private readonly baseUrl = "http://localhost:8000/api";
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
-  // Generic method to fetch historical data
+  // Server Management Methods
+  getServers(status?: 'active' | 'inactive', page: number = 1, perPage: number = 20): Observable<ServerListResponse> {
+    let params = new HttpParams()
+      .set('page', page.toString())
+      .set('per_page', perPage.toString());
+
+    if (status) {
+      params = params.set('status', status);
+    }
+
+    return this.http
+      .get<ServerListResponse>(`${this.baseUrl}/servers/`, { params })
+      .pipe(
+        tap((response) => {
+          console.log(`Servers API response:`, response);
+        }),
+        catchError((error) => {
+          console.error('Error fetching servers:', error);
+          return of({
+            count: 0,
+            page: 1,
+            total_pages: 0,
+            servers: []
+          } as ServerListResponse);
+        })
+      );
+  }
+
+  createServer(serverData: Partial<Server>): Observable<{ status: string; server: Server }> {
+    return this.http
+      .post<{ status: string; server: Server }>(`${this.baseUrl}/servers/create/`, serverData)
+      .pipe(
+        tap((response) => {
+          console.log('Server created:', response);
+        }),
+        catchError((error) => {
+          console.error('Error creating server:', error);
+          throw error;
+        })
+      );
+  }
+
+  testServerConnection(serverId: string): Observable<{ status: string; server_id: string; hostname: string; output: string }> {
+    return this.http
+      .post<{ status: string; server_id: string; hostname: string; output: string }>(`${this.baseUrl}/servers/${serverId}/test-connection/`, {})
+      .pipe(
+        tap((response) => {
+          console.log('Connection test result:', response);
+        }),
+        catchError((error) => {
+          console.error('Error testing connection:', error);
+          throw error;
+        })
+      );
+  }
+
+  // Realtime Metrics Methods
+  getRealtimeMetrics(metric: MetricType, serverId?: string): Observable<ApiResponse<any>> {
+    let params = new HttpParams().set('metric', metric);
+
+    if (serverId) {
+      params = params.set('server_id', serverId);
+    }
+
+    return this.http
+      .get<ApiResponse<any>>(`${this.baseUrl}/metrics/realtime/`, { params })
+      .pipe(
+        tap((response) => {
+          console.log(`Realtime ${metric} API response:`, response);
+        }),
+        catchError((error) => {
+          console.error(`Error fetching realtime ${metric}:`, error);
+          return of({
+            status: "error",
+            data: [],
+            timestamp: new Date().toISOString(),
+            count: 0,
+          } as ApiResponse<any>);
+        })
+      );
+  }
+
+  // Generic method to fetch historical data with server support
   private getHistoricalData<T>(
     metric: MetricType,
     dateRange: DateTimeRange,
@@ -147,7 +263,7 @@ export class ApiService {
     }
 
     return this.http
-      .get<ApiResponse<T>>(`${this.baseUrl}/historical/`, { params })
+      .get<ApiResponse<T>>(`${this.baseUrl}/metrics/historical/`, { params })
       .pipe(
         tap((response: ApiResponse<T>) => {
           console.log(`Historical ${metric} API response:`, response);
@@ -173,6 +289,8 @@ export class ApiService {
           interval_seconds: response.interval_seconds,
           pids_filtered: response.pids_filtered,
           warning: response.warning,
+          start_time: response.start_time,
+          end_time: response.end_time,
         } as ApiResponse<T>)),
         catchError((error) => {
           console.error(`Error fetching historical ${metric}:`, error);
@@ -192,87 +310,57 @@ export class ApiService {
       );
   }
 
-  // Historical Data Methods
-  getHistoricalVmstat(dateRange: DateTimeRange): Observable<ApiResponse<VmstatData>> {
-    return this.getHistoricalData<VmstatData>('vmstat', dateRange);
+  // Historical Data Methods with server support
+  getHistoricalVmstat(dateRange: DateTimeRange, serverId?: string): Observable<ApiResponse<VmstatData>> {
+    const params = serverId ? { server_id: serverId } : undefined;
+    return this.getHistoricalData<VmstatData>('vmstat', dateRange, params);
   }
 
-  getHistoricalNetstat(dateRange: DateTimeRange): Observable<ApiResponse<NetstatData>> {
-    return this.getHistoricalData<NetstatData>('netstat', dateRange);
+  getHistoricalNetstat(dateRange: DateTimeRange, serverId?: string): Observable<ApiResponse<NetstatData>> {
+    const params = serverId ? { server_id: serverId } : undefined;
+    return this.getHistoricalData<NetstatData>('netstat', dateRange, params);
   }
 
-  getHistoricalIostat(dateRange: DateTimeRange): Observable<ApiResponse<IostatData>> {
-    return this.getHistoricalData<IostatData>('iostat', dateRange);
+  getHistoricalIostat(dateRange: DateTimeRange, serverId?: string): Observable<ApiResponse<IostatData>> {
+    const params = serverId ? { server_id: serverId } : undefined;
+    return this.getHistoricalData<IostatData>('iostat', dateRange, params);
   }
 
-  // Updated method to handle process data with aggregation support
+  // Updated method to handle process data with aggregation support and server filtering
   getHistoricalProcesses(
     dateRange: DateTimeRange,
     options?: {
       pids?: number[];
       interval?: number;
       page?: number;
+      serverId?: string;
     }
   ): Observable<ApiResponse<AggregatedProcessData>> {
     const additionalParams: { [key: string]: string } = {};
-    
+
     if (options?.pids && options.pids.length > 0) {
       additionalParams['pids'] = options.pids.join(',');
     }
-    
+
     if (options?.interval) {
       additionalParams['interval'] = options.interval.toString();
     }
-    
+
     if (options?.page) {
       additionalParams['page'] = options.page.toString();
+    }
+
+    if (options?.serverId) {
+      additionalParams['server_id'] = options.serverId;
     }
 
     return this.getHistoricalData<AggregatedProcessData>('process', dateRange, additionalParams);
   }
 
-  // Backward compatibility method for legacy ProcessData
-  getHistoricalProcessesLegacy(
-    dateRange: DateTimeRange,
-    pid?: number
-  ): Observable<ApiResponse<ProcessData>> {
-    const options = pid ? { pids: [pid] } : undefined;
-    return this.getHistoricalProcesses(dateRange, options).pipe(
-      map((response: ApiResponse<AggregatedProcessData>) => ({
-        ...response,
-        data: response.data.map(this.convertAggregatedToLegacy),
-      } as ApiResponse<ProcessData>))
-    );
-  }
-
-  // Convert aggregated process data to legacy format
-  private convertAggregatedToLegacy(aggregated: AggregatedProcessData): ProcessData {
-    return {
-      pid: aggregated.pid,
-      user: aggregated.user,
-      cpu: aggregated.avg_cpu, // Use average CPU for main cpu field
-      mem: aggregated.avg_mem, // Use average memory for main mem field
-      command: aggregated.command,
-      timestamp: aggregated.timestamp,
-      avg_cpu: aggregated.avg_cpu,
-      max_cpu: aggregated.max_cpu,
-      min_cpu: aggregated.min_cpu,
-      avg_mem: aggregated.avg_mem,
-      max_mem: aggregated.max_mem,
-      min_mem: aggregated.min_mem,
-      count: aggregated.count,
-      stats: {
-        avgCpu: aggregated.avg_cpu,
-        peakCpu: aggregated.max_cpu,
-        avgMem: aggregated.avg_mem,
-        peakMem: aggregated.max_mem,
-      },
-    };
-  }
-
-  // Get historical data for multiple metrics at once
+  // Get historical data for multiple metrics at once for a specific server
   getHistoricalMetrics(
     dateRange: DateTimeRange,
+    serverId?: string,
     metrics: MetricType[] = ['vmstat', 'netstat', 'iostat', 'process']
   ): Observable<{
     vmstat?: ApiResponse<VmstatData>;
@@ -283,16 +371,16 @@ export class ApiService {
     const requests: { [key: string]: Observable<ApiResponse<any>> } = {};
 
     if (metrics.includes('vmstat')) {
-      requests['vmstat'] = this.getHistoricalVmstat(dateRange);
+      requests['vmstat'] = this.getHistoricalVmstat(dateRange, serverId);
     }
     if (metrics.includes('netstat')) {
-      requests['netstat'] = this.getHistoricalNetstat(dateRange);
+      requests['netstat'] = this.getHistoricalNetstat(dateRange, serverId);
     }
     if (metrics.includes('iostat')) {
-      requests['iostat'] = this.getHistoricalIostat(dateRange);
+      requests['iostat'] = this.getHistoricalIostat(dateRange, serverId);
     }
     if (metrics.includes('process')) {
-      requests['process'] = this.getHistoricalProcesses(dateRange);
+      requests['process'] = this.getHistoricalProcesses(dateRange, { serverId });
     }
 
     // Use forkJoin to make parallel requests
@@ -300,75 +388,16 @@ export class ApiService {
     return forkJoin(requests);
   }
 
-  // Process Data Analysis Methods
-  getTopProcessesByCpu(
-    processData: AggregatedProcessData[],
-    limit: number = 10
-  ): AggregatedProcessData[] {
-    return processData
-      .sort((a, b) => b.avg_cpu - a.avg_cpu)
-      .slice(0, limit);
-  }
-
-  getTopProcessesByMemory(
-    processData: AggregatedProcessData[],
-    limit: number = 10
-  ): AggregatedProcessData[] {
-    return processData
-      .sort((a, b) => b.avg_mem - a.avg_mem)
-      .slice(0, limit);
-  }
-
-  getProcessStats(processData: AggregatedProcessData[]): {
-    totalProcesses: number;
-    totalCpuUsage: number;
-    totalMemUsage: number;
-    avgCpuPerProcess: number;
-    avgMemPerProcess: number;
-    peakCpuProcess: AggregatedProcessData | null;
-    peakMemProcess: AggregatedProcessData | null;
-  } {
-    if (processData.length === 0) {
-      return {
-        totalProcesses: 0,
-        totalCpuUsage: 0,
-        totalMemUsage: 0,
-        avgCpuPerProcess: 0,
-        avgMemPerProcess: 0,
-        peakCpuProcess: null,
-        peakMemProcess: null,
-      };
-    }
-
-    const totalCpuUsage = processData.reduce((sum, p) => sum + p.avg_cpu, 0);
-    const totalMemUsage = processData.reduce((sum, p) => sum + p.avg_mem, 0);
-    
-    const peakCpuProcess = processData.reduce((max, p) => 
-      p.max_cpu > (max?.max_cpu || 0) ? p : max, processData[0]);
-    
-    const peakMemProcess = processData.reduce((max, p) => 
-      p.max_mem > (max?.max_mem || 0) ? p : max, processData[0]);
-
-    return {
-      totalProcesses: processData.length,
-      totalCpuUsage,
-      totalMemUsage,
-      avgCpuPerProcess: totalCpuUsage / processData.length,
-      avgMemPerProcess: totalMemUsage / processData.length,
-      peakCpuProcess,
-      peakMemProcess,
-    };
-  }
-
-  // System Analysis Methods
-  calculateSystemSummary(
+  // Server-specific analysis methods
+  getServerSystemSummary(
+    serverId: string,
     vmstatData: VmstatData[],
     netstatData: NetstatData[],
     iostatData: IostatData[],
     processData?: AggregatedProcessData[]
   ): SystemSummary {
     if (!vmstatData.length) {
-      return this.getEmptySystemSummary();
+      return this.getEmptySystemSummary(serverId);
     }
 
     const latestVmstat = vmstatData[vmstatData.length - 1];
@@ -398,10 +427,12 @@ export class ApiService {
       system_load: latestVmstat.r,
       process_count: processData?.length || 0,
       uptime: 0,
+      server_id: serverId,
+      server_hostname: latestVmstat.server_hostname,
     };
   }
 
-  private getEmptySystemSummary(): SystemSummary {
+  private getEmptySystemSummary(serverId?: string): SystemSummary {
     return {
       cpu_usage: 0,
       memory_usage: 0,
@@ -412,115 +443,43 @@ export class ApiService {
       system_load: 0,
       process_count: 0,
       uptime: 0,
+      server_id: serverId,
     };
   }
 
-  // Data Analysis Helpers
-  getMetricTrends(data: VmstatData[]): {
-    cpuTrend: 'increasing' | 'decreasing' | 'stable';
-    memoryTrend: 'increasing' | 'decreasing' | 'stable';
-    loadTrend: 'increasing' | 'decreasing' | 'stable';
-  } {
-    if (data.length < 2) {
-      return { cpuTrend: 'stable', memoryTrend: 'stable', loadTrend: 'stable' };
-    }
-
-    const recent = data.slice(-5); // Last 5 data points
-    const older = data.slice(-10, -5); // Previous 5 data points
-
-    const getAverage = (arr: VmstatData[], field: keyof VmstatData): number => {
-      return arr.reduce((sum, item) => sum + (item[field] as number), 0) / arr.length;
-    };
-
-    const getTrend = (recentAvg: number, olderAvg: number): 'increasing' | 'decreasing' | 'stable' => {
-      const diff = Math.abs(recentAvg - olderAvg);
-      const threshold = olderAvg * 0.1; // 10% threshold
-      
-      if (diff < threshold) return 'stable';
-      return recentAvg > olderAvg ? 'increasing' : 'decreasing';
-    };
-
-    const recentCpu = 100 - getAverage(recent, 'idle');
-    const olderCpu = 100 - getAverage(older, 'idle');
-    
-    const recentMemory = getAverage(recent, 'avm');
-    const olderMemory = getAverage(older, 'avm');
-    
-    const recentLoad = getAverage(recent, 'r');
-    const olderLoad = getAverage(older, 'r');
-
-    return {
-      cpuTrend: getTrend(recentCpu, olderCpu),
-      memoryTrend: getTrend(recentMemory, olderMemory),
-      loadTrend: getTrend(recentLoad, olderLoad),
-    };
-  }
-
-  // Process Trend Analysis
-  getProcessTrends(processData: AggregatedProcessData[]): {
-    [pid: number]: {
-      pid: number;
-      command: string;
-      cpuTrend: 'increasing' | 'decreasing' | 'stable';
-      memTrend: 'increasing' | 'decreasing' | 'stable';
-      avgCpu: number;
-      avgMem: number;
-      peakCpu: number;
-      peakMem: number;
-    };
-  } {
-    const trends: { [pid: number]: any } = {};
-    
-    // Group by PID to analyze trends over time
-    const groupedByPid = processData.reduce((acc, process) => {
-      if (!acc[process.pid]) {
-        acc[process.pid] = [];
+  // Group data by server
+  groupDataByServer<T extends { server_hostname?: string; server_id?: string }>(
+    data: T[]
+  ): { [serverHostname: string]: T[] } {
+    return data.reduce((acc, item) => {
+      const hostname = item.server_hostname || 'Unknown Server';
+      if (!acc[hostname]) {
+        acc[hostname] = [];
       }
-      acc[process.pid].push(process);
+      acc[hostname].push(item);
       return acc;
-    }, {} as { [pid: number]: AggregatedProcessData[] });
+    }, {} as { [serverHostname: string]: T[] });
+  }
 
-    Object.keys(groupedByPid).forEach(pidStr => {
-      const pid = parseInt(pidStr);
-      const processes = groupedByPid[pid].sort((a, b) => 
-        new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
-      );
+  // Get available servers from data
+  getAvailableServersFromData<T extends { server_hostname?: string; server_id?: string }>(
+    data: T[]
+  ): { hostname: string; serverId?: string }[] {
+    const serverMap = new Map<string, string>();
 
-      if (processes.length >= 2) {
-        const recent = processes.slice(-Math.ceil(processes.length / 2));
-        const older = processes.slice(0, Math.floor(processes.length / 2));
-
-        const recentAvgCpu = recent.reduce((sum, p) => sum + p.avg_cpu, 0) / recent.length;
-        const olderAvgCpu = older.reduce((sum, p) => sum + p.avg_cpu, 0) / older.length;
-        
-        const recentAvgMem = recent.reduce((sum, p) => sum + p.avg_mem, 0) / recent.length;
-        const olderAvgMem = older.reduce((sum, p) => sum + p.avg_mem, 0) / older.length;
-
-        const getCpuTrend = (recent: number, older: number): 'increasing' | 'decreasing' | 'stable' => {
-          const diff = Math.abs(recent - older);
-          const threshold = older * 0.2; // 20% threshold
-          
-          if (diff < threshold) return 'stable';
-          return recent > older ? 'increasing' : 'decreasing';
-        };
-
-        trends[pid] = {
-          pid,
-          command: processes[0].command,
-          cpuTrend: getCpuTrend(recentAvgCpu, olderAvgCpu),
-          memTrend: getCpuTrend(recentAvgMem, olderAvgMem),
-          avgCpu: processes.reduce((sum, p) => sum + p.avg_cpu, 0) / processes.length,
-          avgMem: processes.reduce((sum, p) => sum + p.avg_mem, 0) / processes.length,
-          peakCpu: Math.max(...processes.map(p => p.max_cpu)),
-          peakMem: Math.max(...processes.map(p => p.max_mem)),
-        };
+    data.forEach(item => {
+      if (item.server_hostname) {
+        serverMap.set(item.server_hostname, item.server_id || '');
       }
     });
 
-    return trends;
+    return Array.from(serverMap.entries()).map(([hostname, serverId]) => ({
+      hostname,
+      serverId: serverId || undefined
+    }));
   }
 
-  // Date/Time Utility Methods
+  // Existing utility methods remain the same
   formatDateTimeForApi(date: Date, time: string = "00:00:00"): string {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -543,7 +502,6 @@ export class ApiService {
     };
   }
 
-  // Predefined date ranges for common use cases
   getCommonDateRanges(): { [key: string]: DateTimeRange } {
     const now = new Date();
     const ranges: { [key: string]: DateTimeRange } = {};
@@ -567,7 +525,6 @@ export class ApiService {
     return ranges;
   }
 
-  // Utility method to get optimal interval based on date range
   getOptimalInterval(dateRange: DateTimeRange): number {
     const start = new Date(dateRange.start);
     const end = new Date(dateRange.end);

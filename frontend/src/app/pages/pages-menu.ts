@@ -1,7 +1,14 @@
 import { NbMenuItem } from "@nebular/theme";
 
 export const MENU_ITEMS: NbMenuItem[] = [
+
   {
+    title: "Server Details",
+    icon: "file-text-outline",
+    link: "/pages/server-details",
+    home: true,
+    children: [
+        {
     title: "Realtime Dashboard",
     icon: "activity-outline", // symbolizes live activity/metrics
     link: "/pages/realtime",
@@ -19,6 +26,11 @@ export const MENU_ITEMS: NbMenuItem[] = [
     link: "/pages/process",
     home: true,
   },
+
+    ]
+  },
+
+
   {
     title: "Prediction Dashboard",
     icon: "trending-up-outline", // great for forecasting/predictions
