@@ -1,7 +1,8 @@
 // src/app/services/server-tab.service.ts
 import { Injectable } from '@angular/core';
 import { NbTabComponent } from '@nebular/theme';
-import { Server } from 'D:\\projet\\frontend\\src\\app\\services\\server.services.ts';
+import { Server } from './server.service'
+import { Subject, BehaviorSubject } from 'rxjs';
 
 export interface ServerTab {
   id: string;

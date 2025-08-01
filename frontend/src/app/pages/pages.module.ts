@@ -17,7 +17,7 @@ import { AnomalyModule } from './anomaly/anomaly.module';
 
 import { ApiService } from '../services/monitoring.service';
 import { ServerTabsComponent } from './server-tabs/server-tabs.component';
-import { ServerDashboardComponent } from './server-dashboard/server-dashboard.component';
+
 
 @NgModule({
   imports: [
@@ -37,7 +37,6 @@ import { ServerDashboardComponent } from './server-dashboard/server-dashboard.co
   declarations: [
     PagesComponent,
     ServerTabsComponent,
-    ServerDashboardComponent,
 
   ],
   providers: [

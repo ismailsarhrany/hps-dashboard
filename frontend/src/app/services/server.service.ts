@@ -71,18 +71,18 @@ export class ServerService {
         return this.selectedServerId.value || localStorage.getItem('selectedServerId');
     }
 
-  // Modify loadServers to restore selection
-  loadServers(): Observable<Server[]> {
-    return this.http.get<Server[]>(this.baseUrl).pipe(
-      tap(servers => {
-        this.serversSubject.next(servers);
-        const savedId = localStorage.getItem('selectedServerId');
-        if (savedId && servers.some(s => s.id === savedId)) {
-          this.setSelectedServer(savedId);
-        }
-      })
-    );
-  }
+    // Modify loadServers to restore selection
+    loadServers(): Observable<Server[]> {
+        return this.http.get<Server[]>(this.baseUrl).pipe(
+            tap(servers => {
+                this.serversSubject.next(servers);
+                const savedId = localStorage.getItem('selectedServerId');
+                if (savedId && servers.some(s => s.id === savedId)) {
+                    this.setSelectedServer(savedId);
+                }
+            })
+        );
+    }
 
 
     // Get server by ID
@@ -90,6 +90,11 @@ export class ServerService {
         return this.http.get<Server>(`${this.baseUrl}/${serverId}`).pipe(
             catchError(this.handleError)
         );
+    }
+
+    // server.service.ts - Add this method
+    getServerById(serverId: string): Server | undefined {
+        return this.serversSubject.value.find(s => s.id === serverId);
     }
 
     // Create new server

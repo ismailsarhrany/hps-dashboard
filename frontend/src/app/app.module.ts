@@ -21,11 +21,13 @@ import {
   NbWindowModule,
   NbThemeModule,
 } from '@nebular/theme';
-import { ServerSelectionComponent } from './server-selection/server-selection.component';
+
+import { RouterModule } from '@angular/router';
 
 @NgModule({
-  declarations: [AppComponent, ServerSelectionComponent],
+  declarations: [AppComponent],
   imports: [
+    RouterModule,
     BrowserModule,
     BrowserAnimationsModule,
     HttpClientModule,

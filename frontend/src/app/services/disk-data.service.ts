@@ -8,9 +8,9 @@ import { ApiService, DateTimeRange, IostatData } from './monitoring.service'; //
 export interface HistoricalIostatPoint extends IostatData {
   disk: string; // Ensure disk is always string
   timestamp: string; // ISO string
-  kb_read_rate: number; 
+  kb_read_rate: number;
   kb_wrtn_rate: number;
-  tps: number; 
+  tps: number;
 }
 
 @Injectable({
@@ -26,8 +26,8 @@ export class DiskDataService {
    * @param range The start and end timestamps.
    * @returns Observable array of historical iostat data points.
    */
-  getHistoricalDiskData(range: DateTimeRange): Observable<HistoricalIostatPoint[]> {
-    return this.apiService.getHistoricalIostat(range).pipe(
+  getHistoricalDiskData(serverId: string, range: DateTimeRange): Observable<HistoricalIostatPoint[]> {
+    return this.apiService.getHistoricalIostat(serverId, range).pipe(
       map(response => {
         // Ensure data is typed correctly and default missing IDs
         const typedData = (response?.data || []).map(d => ({

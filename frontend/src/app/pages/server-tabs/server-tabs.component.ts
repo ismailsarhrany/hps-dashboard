@@ -24,7 +24,7 @@ interface ServerTab {
 })
 export class ServerTabsComponent implements OnInit, OnDestroy {
   private subscriptions: Subscription[] = [];
-  
+
   serverTabs: ServerTab[] = [];
   selectedTabIndex: number = 0;
   selectedServerId: string | null = null;
@@ -44,7 +44,7 @@ export class ServerTabsComponent implements OnInit, OnDestroy {
     private router: Router,
     private route: ActivatedRoute,
     private cdr: ChangeDetectorRef
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.loadServers();
@@ -53,23 +53,26 @@ export class ServerTabsComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.serverTabs.forEach(tab => {
+      this.realtimeService.disconnectFromServer(tab.id);
+    });
     this.subscriptions.forEach(sub => sub.unsubscribe());
     this.realtimeService.disconnectAll();
   }
 
   private loadServers(): void {
     this.loading = true;
-    
+
     const serverSub = this.serverService.loadServers().subscribe({
       next: (servers) => {
         this.updateServerTabs(servers);
         this.loading = false;
-        
+
         // Auto-select first server if none selected
         if (servers.length > 0 && !this.selectedServerId) {
           this.selectServerTab(0);
         }
-        
+
         this.cdr.detectChanges();
       },
       error: (error) => {
@@ -118,10 +121,10 @@ export class ServerTabsComponent implements OnInit, OnDestroy {
   private updateServerTabs(servers: Server[]): void {
     // Keep track of existing tabs to preserve realtime connections
     const existingTabIds = new Set(this.serverTabs.map(tab => tab.id));
-    
+
     this.serverTabs = servers.map(server => {
       const existingTab = this.serverTabs.find(tab => tab.id === server.id);
-      
+
       return {
         id: server.id,
         title: this.truncateHostname(server.hostname),
@@ -153,13 +156,13 @@ export class ServerTabsComponent implements OnInit, OnDestroy {
     this.selectedTabIndex = index;
     const selectedTab = this.serverTabs[index];
     this.selectedServerId = selectedTab.id;
-    
+
     // Update server service selection
     this.serverService.selectServer(selectedTab.server);
-    
+
     // Navigate to the server's realtime page by default
     this.router.navigate(['/pages/servers', selectedTab.id, 'realtime']);
-    
+
     // Start realtime monitoring for the selected server
     this.startRealtimeMonitoring(selectedTab.id);
   }
@@ -170,14 +173,15 @@ export class ServerTabsComponent implements OnInit, OnDestroy {
 
   private startRealtimeMonitoring(serverId: string): void {
     if (!this.realtimeService.isServerConnected(serverId)) {
-      const connectionSub = this.realtimeService.connectToMetrics(serverId).subscribe(status => {
-        const tab = this.serverTabs.find(t => t.id === serverId);
-        if (tab) {
-          tab.realtimeStatus = status;
-          this.cdr.detectChanges();
-        }
-      });
-      
+      const connectionSub = this.realtimeService.connectToMetrics(serverId, ['vmstat', 'iostat', 'netstat', 'process'])
+        .subscribe(status => {
+          const tab = this.serverTabs.find(t => t.id === serverId);
+          if (tab) {
+            tab.realtimeStatus = status;
+            this.cdr.detectChanges();
+          }
+        });
+
       this.subscriptions.push(connectionSub);
     }
   }
@@ -194,7 +198,7 @@ export class ServerTabsComponent implements OnInit, OnDestroy {
   onServerAdded(server: Server): void {
     this.closeAddServerModal();
     // Server list will be updated automatically through the subscription
-    
+
     // Select the newly added server
     setTimeout(() => {
       const newTabIndex = this.serverTabs.findIndex(tab => tab.id === server.id);
@@ -280,24 +284,24 @@ export class ServerTabsComponent implements OnInit, OnDestroy {
   // Handle tab close (if you want to support closing tabs)
   closeTab(index: number, event: Event): void {
     event.stopPropagation();
-    
+
     if (this.serverTabs.length <= 1) {
       return; // Don't close the last tab
     }
 
     const tab = this.serverTabs[index];
-    
+
     // Disconnect realtime monitoring
     this.realtimeService.disconnectFromServer(tab.id);
-    
+
     // Remove from local array (don't delete from server service)
     this.serverTabs.splice(index, 1);
-    
+
     // Adjust selected index
     if (this.selectedTabIndex >= index && this.selectedTabIndex > 0) {
       this.selectedTabIndex--;
     }
-    
+
     // Select another tab
     if (this.serverTabs.length > 0) {
       this.selectServerTab(this.selectedTabIndex);

@@ -24,7 +24,7 @@ export class NetworkDataService {
   // Define a threshold for potentially unrealistic packet rates (e.g., 1 billion pps)
   private readonly UNREALISTIC_RATE_THRESHOLD = 1_000_000_000;
 
-  constructor(private apiService: ApiService) {}
+  constructor(private apiService: ApiService) { }
 
   /**
    * Fetches historical netstat data for a given time range.
@@ -33,10 +33,8 @@ export class NetworkDataService {
    * @param range The start and end timestamps.
    * @returns Observable array of historical netstat data points.
    */
-  getHistoricalNetworkData(
-    range: DateTimeRange
-  ): Observable<HistoricalNetstatPoint[]> {
-    return this.apiService.getHistoricalNetstat(range).pipe(
+  getHistoricalNetworkData(serverId: string,range: DateTimeRange ): Observable<HistoricalNetstatPoint[]> {
+    return this.apiService.getHistoricalNetstat(serverId, range).pipe(
       map((response) => {
         let unrealisticRateDetected = false;
         // Ensure data is typed correctly and default missing IDs
@@ -52,10 +50,10 @@ export class NetworkDataService {
           ) {
             console.warn(
               `NetworkDataService: Detected potentially unrealistic packet rate (` +
-                `ipkts_rate: ${ipktsRate}, opkts_rate: ${opktsRate}` +
-                `) from API for timestamp ${d.timestamp}. ` +
-                `This might indicate an issue with the source data (e.g., cumulative values instead of rates) ` +
-                `or the API endpoint returning incorrect values. The chart Y-axis scale might be affected.`
+              `ipkts_rate: ${ipktsRate}, opkts_rate: ${opktsRate}` +
+              `) from API for timestamp ${d.timestamp}. ` +
+              `This might indicate an issue with the source data (e.g., cumulative values instead of rates) ` +
+              `or the API endpoint returning incorrect values. The chart Y-axis scale might be affected.`
             );
             unrealisticRateDetected = true; // Show warning only once per fetch
           }

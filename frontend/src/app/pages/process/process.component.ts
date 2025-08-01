@@ -109,7 +109,7 @@ export class ProcessComponent implements OnInit, OnDestroy {
     });
 
     // Handle server changes
-    this.serverService.currentServerId$
+    this.serverService.selectedServerId$
       .pipe(takeUntil(this.destroy$))
       .subscribe(serverId => {
         if (serverId && serverId !== this.currentServerId) {

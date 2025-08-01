@@ -1,5 +1,3 @@
-// src/app/pages/historic/historic.component.ts (Refactored for In/Out Chart Separation & Scale Issue Diagnosis)
-// src/app/pages/historic/historic.component.ts
 import {
   Component,
   OnInit,
@@ -17,7 +15,15 @@ import {
   VmstatData,
   DateTimeRange,
 } from "../../services/monitoring.service";
-import { ServerService } from '../../services/server.service'; // Added
+import { ServerService, } from '../../services/server.service'; // Added*
+import {
+  DiskDataService,
+  HistoricalIostatPoint,
+} from "../../services/disk-data.service";
+import {
+  NetworkDataService,
+  HistoricalNetstatPoint,
+} from "../../services/network-data.service";
 
 @Component({
   selector: "ngx-historic",
@@ -76,7 +82,7 @@ export class HistoricComponent implements OnInit, OnDestroy {
       });
 
     // Handle server changes
-    this.serverService.currentServerId$
+    this.serverService.selectedServerId$
       .pipe(takeUntil(this.destroy$))
       .subscribe(serverId => {
         if (serverId && serverId !== this.currentServerId) {

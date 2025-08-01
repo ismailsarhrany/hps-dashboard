@@ -16,6 +16,28 @@ export interface VmstatData {
   sy: number;
   idle: number;
 }
+export interface NetstatData {
+  timestamp: string;
+  interface: string;
+  ipkts: number;
+  ierrs: number;
+  opkts: number;
+  oerrs: number;
+  ipkts_rate: number;
+  opkts_rate: number;
+  ierrs_rate: number;
+  oerrs_rate: number;
+  time: string;
+}
+
+export interface IostatData {
+  timestamp: string;
+  disk: string;
+  tps: number;
+  kb_read: number;
+  kb_wrtn: number;
+  service_time: number;
+}
 
 export interface ProcessData {
   pid: number;

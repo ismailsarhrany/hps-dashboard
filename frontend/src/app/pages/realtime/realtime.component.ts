@@ -5,6 +5,9 @@ import {
   RealtimeService,
   VmstatData,
   RealtimeConnectionStatus,
+  ProcessData,
+  NetstatData,
+  IostatData
 } from "../../services/realtime.service";
 import { ServerService } from '../../services/server.service';
 import { takeUntil } from 'rxjs/operators';
@@ -30,6 +33,7 @@ interface WebSocketData {
   styleUrls: ["./realtime.component.scss"],
 })
 export class RealtimeComponent implements OnInit, OnDestroy {
+  currentServerId: string | null = null;
   private vmstatSubscription: Subscription;
   private netstatSubscription: Subscription;
   private iostatSubscription: Subscription;
@@ -89,24 +93,26 @@ export class RealtimeComponent implements OnInit, OnDestroy {
     });
 
     // Server change listener
-    this.serverService.currentServerId$.pipe(
-      takeUntil(this.destroy$)
-    ).subscribe(serverId => {
-      this.resetData();
-      this.startRealtimeMonitoring();
-    });
+    this.serverService.selectedServerId$.
+      pipe(
+        takeUntil(this.destroy$)
+      ).subscribe(serverId => {
+        this.currentServerId = serverId;
+        this.resetData();
+        this.startRealtimeMonitoring();
+      });
   }
 
   ngOnDestroy() {
     this.stopAllSubscriptions();
-    this.realtimeService.stopRealtimeMonitoring();
+    this.realtimeService.disconnectAll();
     this.destroy$.next();
     this.destroy$.complete();
   }
 
   private resetData() {
     this.stopAllSubscriptions();
-    this.realtimeService.stopRealtimeMonitoring();
+    this.realtimeService.disconnectAll();
 
     // Reset all data arrays
     this.cpuData = [];
@@ -145,7 +151,10 @@ export class RealtimeComponent implements OnInit, OnDestroy {
   }
 
   private startRealtimeMonitoring() {
-    this.realtimeService.startRealtimeMonitoring();
+    if (!this.currentServerId) return;
+    this.realtimeService.connectToMetrics(this.currentServerId, [
+      'vmstat', 'iostat', 'netstat', 'process'
+    ]);
     this.connectionSubscription = this.realtimeService
       .getOverallConnectionStatus()
       .subscribe((status) => {
@@ -155,19 +164,19 @@ export class RealtimeComponent implements OnInit, OnDestroy {
       });
 
     this.vmstatSubscription = this.realtimeService
-      .getRealtimeVmstat()
+      .getRealtimeVmstat(this.currentServerId)
       .subscribe((data) => this.processVmstatData(data as VmstatData));
 
     this.netstatSubscription = this.realtimeService
-      .getRealtimeNetstat()
-      .subscribe((data) => this.processNetstatData(data as WebSocketData));
+      .getRealtimeNetstat(this.currentServerId)
+      .subscribe((data) => this.processNetstatData(data as NetstatData));
 
     this.iostatSubscription = this.realtimeService
-      .getRealtimeIostat()
-      .subscribe((data) => this.processIostatData(data as WebSocketData));
+      .getRealtimeIostat(this.currentServerId)
+      .subscribe((data) => this.processIostatData(data as IostatData));
 
     this.processSubscription = this.realtimeService
-      .getRealtimeProcess()
+      .getRealtimeProcess(this.currentServerId)
       .subscribe((data) => this.processProcessData(data as ProcessData));
   }
 
@@ -192,8 +201,7 @@ export class RealtimeComponent implements OnInit, OnDestroy {
     this.lastUpdateTime = new Date();
   }
 
-  private processNetstatData(wsData: WebSocketData) {
-    const data = wsData.values;
+  private processNetstatData(data: NetstatData) {
     const currentTimestamp = new Date(data.timestamp).getTime();
     if (isNaN(currentTimestamp)) return;
     const interfaceKey = data.interface || "default";
@@ -237,8 +245,7 @@ export class RealtimeComponent implements OnInit, OnDestroy {
     this.updateCharts();
   }
 
-  private processIostatData(wsData: WebSocketData) {
-    const data = wsData.values;
+  private processIostatData(data: IostatData) {
     const currentTimestamp = new Date(data.timestamp).getTime();
     if (isNaN(currentTimestamp)) return;
     const diskKey = data.disk || "default";

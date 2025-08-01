@@ -2,7 +2,7 @@
 import { Injectable, OnDestroy } from '@angular/core';
 import { Observable, BehaviorSubject, Subject, EMPTY } from 'rxjs';
 import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
-import { retry, catchError, filter, tap, takeUntil } from 'rxjs/operators';
+import { retry, catchError, filter, tap, takeUntil, retryWhen,delay, take } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 
 // Enums
@@ -75,17 +75,17 @@ export interface ConnectionConfig {
 })
 export class RealtimeService implements OnDestroy {
   private destroy$ = new Subject<void>();
-  
+
   // WebSocket connections per server
   private connections = new Map<string, WebSocketSubject<any>>();
   private connectionStatus = new Map<string, BehaviorSubject<RealtimeConnectionStatus>>();
-  
+
   // Data streams per server and metric
   private vmstatStreams = new Map<string, BehaviorSubject<VmstatData | null>>();
   private netstatStreams = new Map<string, BehaviorSubject<NetstatData | null>>();
   private iostatStreams = new Map<string, BehaviorSubject<IostatData | null>>();
   private processStreams = new Map<string, BehaviorSubject<ProcessData | null>>();
-  
+
   // Overall connection status
   private overallStatusSubject = new BehaviorSubject<RealtimeConnectionStatus>(
     RealtimeConnectionStatus.DISCONNECTED
@@ -98,7 +98,7 @@ export class RealtimeService implements OnDestroy {
   private readonly defaultReconnectAttempts = 5;
   private readonly defaultReconnectInterval = 3000;
 
-  constructor() {}
+  constructor() { }
 
   ngOnDestroy(): void {
     this.destroy$.next();
@@ -112,11 +112,11 @@ export class RealtimeService implements OnDestroy {
    * Connect to metrics for a specific server
    */
   connectToMetrics(
-    serverId: string, 
+    serverId: string,
     metrics: string[] = ['vmstat', 'iostat', 'netstat', 'process'],
     autoReconnect: boolean = true
   ): Observable<RealtimeConnectionStatus> {
-    
+
     const config: ConnectionConfig = {
       serverId,
       metrics,
@@ -150,7 +150,7 @@ export class RealtimeService implements OnDestroy {
 
     // Clean up config
     this.activeConfigs.delete(serverId);
-    
+
     this.updateOverallStatus();
   }
 
@@ -278,7 +278,7 @@ export class RealtimeService implements OnDestroy {
 
   private createConnection(config: ConnectionConfig): void {
     const wsUrl = this.buildWebSocketUrl(config.serverId);
-    
+
     const statusSubject = this.connectionStatus.get(config.serverId)!;
     statusSubject.next(RealtimeConnectionStatus.CONNECTING);
 
@@ -305,10 +305,11 @@ export class RealtimeService implements OnDestroy {
 
     // Subscribe to messages
     ws$.pipe(
-      retry({
-        count: config.maxReconnectAttempts || this.defaultReconnectAttempts,
-        delay: config.reconnectInterval || this.defaultReconnectInterval
-      }),
+      retryWhen(errors => errors.pipe(
+        delay(config.reconnectInterval || this.defaultReconnectInterval),
+        take(config.maxReconnectAttempts || this.defaultReconnectAttempts)
+      ))
+      ,
       catchError(error => {
         console.error(`WebSocket error for server ${config.serverId}:`, error);
         statusSubject.next(RealtimeConnectionStatus.ERROR);
@@ -324,7 +325,7 @@ export class RealtimeService implements OnDestroy {
         console.error(`WebSocket error for server ${config.serverId}:`, error);
         statusSubject.next(RealtimeConnectionStatus.ERROR);
         this.updateOverallStatus();
-        
+
         // Auto-reconnect if enabled
         if (config.autoReconnect) {
           setTimeout(() => {
@@ -335,10 +336,11 @@ export class RealtimeService implements OnDestroy {
     });
   }
 
-  private buildWebSocketUrl(serverId: string): string {
-    const protocol = environment.production ? 'wss' : 'ws';
-    const host = environment.wsUrl || environment.apiUrl.replace(/^https?:\/\//, '');
-    return `${protocol}://${host}/ws/metrics/${serverId}/`;
+  private buildWebSocketUrl(metric: string ,serverId: string): string {
+    // const protocol = environment.production ? 'wss' : 'ws';
+    // const host = environment.wsUrl || environment.apiUrl.replace(/^https?:\/\//, '');
+    // return `${protocol}://${host}/ws/metrics//${metric}/${serverId}/`;
+      return `.../ws/metrics/${metric}/${serverId}/`;
   }
 
   private handleWebSocketMessage(serverId: string, message: WebSocketMessage): void {
@@ -385,7 +387,7 @@ export class RealtimeService implements OnDestroy {
 
   private updateOverallStatus(): void {
     const statuses = Array.from(this.connectionStatus.values()).map(s => s.value);
-    
+
     if (statuses.length === 0) {
       this.overallStatusSubject.next(RealtimeConnectionStatus.DISCONNECTED);
       return;
@@ -398,8 +400,8 @@ export class RealtimeService implements OnDestroy {
     }
 
     // If any connection is connecting/reconnecting, overall status reflects that
-    if (statuses.includes(RealtimeConnectionStatus.CONNECTING) || 
-        statuses.includes(RealtimeConnectionStatus.RECONNECTING)) {
+    if (statuses.includes(RealtimeConnectionStatus.CONNECTING) ||
+      statuses.includes(RealtimeConnectionStatus.RECONNECTING)) {
       this.overallStatusSubject.next(RealtimeConnectionStatus.CONNECTING);
       return;
     }
@@ -417,44 +419,44 @@ export class RealtimeService implements OnDestroy {
   // --- Data Validation Methods ---
 
   private isValidVmstatData(data: any): boolean {
-    return data && 
-           typeof data.timestamp === 'string' &&
-           typeof data.r === 'number' &&
-           typeof data.b === 'number' &&
-           typeof data.avm === 'number' &&
-           typeof data.fre === 'number' &&
-           typeof data.us === 'number' &&
-           typeof data.sy === 'number' &&
-           typeof data.idle === 'number';
+    return data &&
+      typeof data.timestamp === 'string' &&
+      typeof data.r === 'number' &&
+      typeof data.b === 'number' &&
+      typeof data.avm === 'number' &&
+      typeof data.fre === 'number' &&
+      typeof data.us === 'number' &&
+      typeof data.sy === 'number' &&
+      typeof data.idle === 'number';
   }
 
   private isValidNetstatData(data: any): boolean {
-    return data && 
-           typeof data.timestamp === 'string' &&
-           typeof data.interface === 'string' &&
-           typeof data.ipkts_rate === 'number' &&
-           typeof data.opkts_rate === 'number' &&
-           typeof data.ierrs_rate === 'number' &&
-           typeof data.oerrs_rate === 'number';
+    return data &&
+      typeof data.timestamp === 'string' &&
+      typeof data.interface === 'string' &&
+      typeof data.ipkts_rate === 'number' &&
+      typeof data.opkts_rate === 'number' &&
+      typeof data.ierrs_rate === 'number' &&
+      typeof data.oerrs_rate === 'number';
   }
 
   private isValidIostatData(data: any): boolean {
-    return data && 
-           typeof data.timestamp === 'string' &&
-           typeof data.disk === 'string' &&
-           typeof data.kb_read_rate === 'number' &&
-           typeof data.kb_wrtn_rate === 'number' &&
-           typeof data.tps === 'number';
+    return data &&
+      typeof data.timestamp === 'string' &&
+      typeof data.disk === 'string' &&
+      typeof data.kb_read_rate === 'number' &&
+      typeof data.kb_wrtn_rate === 'number' &&
+      typeof data.tps === 'number';
   }
 
   private isValidProcessData(data: any): boolean {
-    return data && 
-           typeof data.timestamp === 'string' &&
-           typeof data.pid === 'number' &&
-           typeof data.command === 'string' &&
-           typeof data.user === 'string' &&
-           typeof data.cpu === 'number' &&
-           typeof data.mem === 'number';
+    return data &&
+      typeof data.timestamp === 'string' &&
+      typeof data.pid === 'number' &&
+      typeof data.command === 'string' &&
+      typeof data.user === 'string' &&
+      typeof data.cpu === 'number' &&
+      typeof data.mem === 'number';
   }
 
   // --- Public Utility Methods ---
@@ -518,7 +520,7 @@ export class RealtimeService implements OnDestroy {
   reconnectAll(): void {
     const configs = Array.from(this.activeConfigs.values());
     this.disconnectAll();
-    
+
     setTimeout(() => {
       configs.forEach(config => {
         this.connectToMetrics(config.serverId, config.metrics, config.autoReconnect);
@@ -528,50 +530,50 @@ export class RealtimeService implements OnDestroy {
 
   // --- Legacy Support Methods ---
 
-  /**
-   * @deprecated Use connectToMetrics with serverId instead
-   */
-  startRealtimeMonitoring(): void {
-    console.warn('startRealtimeMonitoring() is deprecated. Use connectToMetrics(serverId, metrics) instead.');
-  }
+  // /**
+  //  * @deprecated Use connectToMetrics with serverId instead
+  //  */
+  // startRealtimeMonitoring(): void {
+  //   console.warn('startRealtimeMonitoring() is deprecated. Use connectToMetrics(serverId, metrics) instead.');
+  // }
 
-  /**
-   * @deprecated Use disconnectAll() instead
-   */
-  stopRealtimeMonitoring(): void {
-    console.warn('stopRealtimeMonitoring() is deprecated. Use disconnectAll() instead.');
-    this.disconnectAll();
-  }
+  // /**
+  //  * @deprecated Use disconnectAll() instead
+  //  */
+  // stopRealtimeMonitoring(): void {
+  //   console.warn('stopRealtimeMonitoring() is deprecated. Use disconnectAll() instead.');
+  //   this.disconnectAll();
+  // }
 
-  /**
-   * @deprecated Use getRealtimeVmstat(serverId) instead
-   */
-  getRealtimeVmstatLegacy(): Observable<VmstatData> {
-    console.warn('getRealtimeVmstat() without serverId is deprecated.');
-    return EMPTY;
-  }
+  // /**
+  //  * @deprecated Use getRealtimeVmstat(serverId) instead
+  //  */
+  // getRealtimeVmstatLegacy(): Observable<VmstatData> {
+  //   console.warn('getRealtimeVmstat() without serverId is deprecated.');
+  //   return EMPTY;
+  // }
 
-  /**
-   * @deprecated Use getRealtimeNetstat(serverId) instead
-   */
-  getRealtimeNetstatLegacy(): Observable<NetstatData> {
-    console.warn('getRealtimeNetstat() without serverId is deprecated.');
-    return EMPTY;
-  }
+  // /**
+  //  * @deprecated Use getRealtimeNetstat(serverId) instead
+  //  */
+  // getRealtimeNetstatLegacy(): Observable<NetstatData> {
+  //   console.warn('getRealtimeNetstat() without serverId is deprecated.');
+  //   return EMPTY;
+  // }
 
-  /**
-   * @deprecated Use getRealtimeIostat(serverId) instead
-   */
-  getRealtimeIostatLegacy(): Observable<IostatData> {
-    console.warn('getRealtimeIostat() without serverId is deprecated.');
-    return EMPTY;
-  }
+  // /**
+  //  * @deprecated Use getRealtimeIostat(serverId) instead
+  //  */
+  // getRealtimeIostatLegacy(): Observable<IostatData> {
+  //   console.warn('getRealtimeIostat() without serverId is deprecated.');
+  //   return EMPTY;
+  // }
 
-  /**
-   * @deprecated Use getRealtimeProcess(serverId) instead
-   */
-  getRealtimeProcessLegacy(): Observable<ProcessData> {
-    console.warn('getRealtimeProcess() without serverId is deprecated.');
-    return EMPTY;
-  }
+  // /**
+  //  * @deprecated Use getRealtimeProcess(serverId) instead
+  //  */
+  // getRealtimeProcessLegacy(): Observable<ProcessData> {
+  //   console.warn('getRealtimeProcess() without serverId is deprecated.');
+  //   return EMPTY;
+  // }
 }

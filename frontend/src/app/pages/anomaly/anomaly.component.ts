@@ -7,7 +7,7 @@ import {
   ChangeDetectorRef,
 } from "@angular/core";
 import { FormBuilder, FormGroup, Validators } from "@angular/forms";
-import { Subscription, forkJoin } from "rxjs";
+import { Subscription, forkJoin,Subject, BehaviorSubject } from "rxjs";
 import { NbThemeService } from "@nebular/theme";
 import { EChartsOption } from "echarts";
 import {
@@ -23,6 +23,7 @@ import {
   NetworkDataService,
   HistoricalNetstatPoint,
 } from "../../services/network-data.service";
+import { ServerService } from '../../services/server.service'; // Added
 
 @Component({
   selector: "ngx-anomaly",
@@ -36,6 +37,8 @@ export class AnomalyComponent implements OnInit, OnDestroy {
   dateRangeForm: FormGroup;
   loading = false;
   showAnomalies = false; // Toggle for anomaly visibility
+  private destroy$ = new Subject<void>(); // For subscription cleanup
+  private currentServerId: string; // Track current server
 
   // Chart Options
   cpuChartOption: EChartsOption = {};
@@ -70,11 +73,11 @@ export class AnomalyComponent implements OnInit, OnDestroy {
     errorsIn: { [iface: string]: [number, number][] };
     errorsOut: { [iface: string]: [number, number][] };
   } = {
-    packetsIn: {},
-    packetsOut: {},
-    errorsIn: {},
-    errorsOut: {},
-  };
+      packetsIn: {},
+      packetsOut: {},
+      errorsIn: {},
+      errorsOut: {},
+    };
 
   private themeSubscription: Subscription;
   private dataSubscription: Subscription;
@@ -87,7 +90,9 @@ export class AnomalyComponent implements OnInit, OnDestroy {
     private diskDataService: DiskDataService,
     private networkDataService: NetworkDataService,
     private themeService: NbThemeService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private serverService: ServerService // Injected
+
   ) {
     this.initializeDateForm();
   }
@@ -114,6 +119,14 @@ export class AnomalyComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.themeSubscription?.unsubscribe();
     this.dataSubscription?.unsubscribe();
+  }
+
+    private resetData() {
+    this.vmstatData = [];
+    this.netstatData = [];
+    this.iostatData = [];
+    this.updateAllCharts(); // Clear charts
+    this.cdr.markForCheck();
   }
 
   // ... (All existing methods from historic.component.ts remain the same)
@@ -172,42 +185,35 @@ export class AnomalyComponent implements OnInit, OnDestroy {
   }
 
   loadHistoricalData(dateRange?: DateTimeRange): void {
+    if (!this.currentServerId) {
+      console.warn("No server selected");
+      return;
+    }
+
     this.loading = true;
     this.cdr.markForCheck();
     const range = dateRange || this.getDateTimeRange();
 
-    this.vmstatData = [];
-    this.netstatData = [];
-    this.iostatData = [];
-    this.updateAllCharts(); // Clear charts
+    this.resetData(); // Clear existing data
 
     this.dataSubscription?.unsubscribe();
 
     this.dataSubscription = forkJoin({
-      vmstat: this.apiService.getHistoricalVmstat(range),
-      netstat: this.networkDataService.getHistoricalNetworkData(range),
-      iostat: this.diskDataService.getHistoricalDiskData(range),
+      vmstat: this.apiService.getHistoricalVmstat(this.currentServerId, range),
+      netstat: this.apiService.getHistoricalNetstat(this.currentServerId, range),
+      iostat: this.apiService.getHistoricalIostat(this.currentServerId, range),
     }).subscribe({
       next: ({ vmstat, netstat, iostat }) => {
         this.vmstatData = vmstat?.data || [];
-        this.netstatData = netstat;
-        this.iostatData = iostat;
-        console.log(
-          `HistoricComponent: Received Data - vmstat=${this.vmstatData.length}, netstat=${this.netstatData.length}, iostat=${this.iostatData.length}`
-        );
+        this.netstatData = netstat?.data || [];
+        this.iostatData = iostat?.data || [];
         this.updateAllCharts();
         this.loading = false;
         this.cdr.markForCheck();
       },
       error: (error) => {
-        console.error(
-          "HistoricComponent: Error loading combined historical data:",
-          error
-        );
-        this.vmstatData = [];
-        this.netstatData = [];
-        this.iostatData = [];
-        this.updateAllCharts();
+        console.error("Error loading historical data:", error);
+        this.resetData();
         this.loading = false;
         this.cdr.markForCheck();
       },
@@ -220,65 +226,81 @@ export class AnomalyComponent implements OnInit, OnDestroy {
     }
   }
 
-  // downsamplePerEntity remains the same
-  private downsamplePerEntity<
-    T extends
-      | { timestamp: string; id?: string }
-      | VmstatData
-      | HistoricalIostatPoint
-      | HistoricalNetstatPoint
-  >(
+  // // mapToSeriesData remains the same
+  // private mapToSeriesData<
+  //   T extends
+  //     | { timestamp: string; id?: string }
+  //     | VmstatData
+  //     | HistoricalIostatPoint
+  //     | HistoricalNetstatPoint
+  // >(
+  //   data: T[],
+  //   entityId: string | null,
+  //   idField: keyof T | null,
+  //   timestampField: keyof T,
+  //   valueField: keyof T,
+  //   maxPoints: number
+  // ): [number, number][] {
+  //   const entityData =
+  //     entityId && idField
+  //       ? data.filter((item) => (item as any)[idField] === entityId)
+  //       : data;
+  //   const sortedData = entityData.sort(
+  //     (a, b) =>
+  //       new Date(a[timestampField] as string).getTime() -
+  //       new Date(b[timestampField] as string).getTime()
+  //   );
+  //   const totalPoints = sortedData.length;
+  //   if (!sortedData || totalPoints === 0) return [];
+  //   if (totalPoints <= maxPoints) {
+  //     return sortedData.map((item) => [
+  //       new Date(item[timestampField] as string).getTime(),
+  //       (item[valueField] as number) || 0,
+  //     ]);
+  //   }
+  //   const sampledData: [number, number][] = [];
+  //   const bucketSize = Math.ceil(totalPoints / maxPoints);
+  //   for (let i = 0; i < totalPoints; i += bucketSize) {
+  //     const bucket = sortedData.slice(i, i + bucketSize);
+  //     if (bucket.length === 0) continue;
+  //     const timestamp = new Date(bucket[0][timestampField] as string).getTime();
+  //     const sum = bucket.reduce(
+  //       (acc, curr) => acc + ((curr[valueField] as number) || 0),
+  //       0
+  //     );
+  //     const value = sum / bucket.length;
+  //     sampledData.push([timestamp, value]);
+  //   }
+  //   const lastOriginalPoint = sortedData[totalPoints - 1];
+  //   const lastOriginalTimestamp = new Date(
+  //     lastOriginalPoint[timestampField] as string
+  //   ).getTime();
+  //   if (
+  //     sampledData.length === 0 ||
+  //     sampledData[sampledData.length - 1][0] < lastOriginalTimestamp
+  //   ) {
+  //     sampledData.push([
+  //       lastOriginalTimestamp,
+  //       (lastOriginalPoint[valueField] as number) || 0,
+  //     ]);
+  //   }
+  //   return sampledData;
+  // }
+
+  private mapToSeriesData<T extends { timestamp: string;[key: string]: any }>(
     data: T[],
     entityId: string | null,
     idField: keyof T | null,
-    timestampField: keyof T,
-    valueField: keyof T,
-    maxPoints: number
+    valueField: keyof T
   ): [number, number][] {
-    const entityData =
-      entityId && idField
-        ? data.filter((item) => (item as any)[idField] === entityId)
-        : data;
-    const sortedData = entityData.sort(
-      (a, b) =>
-        new Date(a[timestampField] as string).getTime() -
-        new Date(b[timestampField] as string).getTime()
-    );
-    const totalPoints = sortedData.length;
-    if (!sortedData || totalPoints === 0) return [];
-    if (totalPoints <= maxPoints) {
-      return sortedData.map((item) => [
-        new Date(item[timestampField] as string).getTime(),
-        (item[valueField] as number) || 0,
-      ]);
+    let filteredData = data;
+    if (entityId && idField) {
+      filteredData = data.filter(item => item[idField] === entityId);
     }
-    const sampledData: [number, number][] = [];
-    const bucketSize = Math.ceil(totalPoints / maxPoints);
-    for (let i = 0; i < totalPoints; i += bucketSize) {
-      const bucket = sortedData.slice(i, i + bucketSize);
-      if (bucket.length === 0) continue;
-      const timestamp = new Date(bucket[0][timestampField] as string).getTime();
-      const sum = bucket.reduce(
-        (acc, curr) => acc + ((curr[valueField] as number) || 0),
-        0
-      );
-      const value = sum / bucket.length;
-      sampledData.push([timestamp, value]);
-    }
-    const lastOriginalPoint = sortedData[totalPoints - 1];
-    const lastOriginalTimestamp = new Date(
-      lastOriginalPoint[timestampField] as string
-    ).getTime();
-    if (
-      sampledData.length === 0 ||
-      sampledData[sampledData.length - 1][0] < lastOriginalTimestamp
-    ) {
-      sampledData.push([
-        lastOriginalTimestamp,
-        (lastOriginalPoint[valueField] as number) || 0,
-      ]);
-    }
-    return sampledData;
+    return filteredData.map(item => [
+      new Date(item.timestamp).getTime(),
+      item[valueField] as number
+    ]);
   }
 
   // getThemeColors remains the same
@@ -308,43 +330,7 @@ export class AnomalyComponent implements OnInit, OnDestroy {
     };
   }
 
-  // NEW: Detect anomalies in a time series
-  private detectAnomalies(
-    data: [number, number][],
-    sensitivity: number = 3
-  ): [number, number][] {
-    if (data.length < 10) return [];
-
-    // Calculate moving average and standard deviation
-    const windowSize = Math.min(10, Math.floor(data.length / 5));
-    const movingStats: { avg: number; std: number }[] = [];
-
-    for (let i = 0; i < data.length; i++) {
-      const start = Math.max(0, i - windowSize);
-      const end = i + 1;
-      const windowData = data.slice(start, end).map((d) => d[1]);
-
-      const sum = windowData.reduce((a, b) => a + b, 0);
-      const avg = sum / windowData.length;
-
-      const squareDiffs = windowData.map((v) => Math.pow(v - avg, 2));
-      const std = Math.sqrt(
-        squareDiffs.reduce((a, b) => a + b, 0) / windowData.length
-      );
-
-      movingStats.push({ avg, std });
-    }
-
-    // Detect points that are significantly different from moving average
-    return data.filter((point, i) => {
-      if (i < windowSize) return false; // Skip beginning where stats are less reliable
-      const value = point[1];
-      const { avg, std } = movingStats[i];
-      return Math.abs(value - avg) > sensitivity * std;
-    });
-  }
-
-    // Initialize all chart options, including the split network ones
+  // Initialize all chart options
   private initializeChartOptions(): void {
     const colors = this.getThemeColors();
     const baseConfig: EChartsOption = {
@@ -367,17 +353,27 @@ export class AnomalyComponent implements OnInit, OnDestroy {
           params.sort(
             (a: any, b: any) => (b.value?.[1] ?? 0) - (a.value?.[1] ?? 0)
           );
+          //     params.forEach((param: any) => {
+          //       const value =
+          //         param.value && typeof param.value[1] === "number"
+          //           ? param.value[1].toFixed(2)
+          //           : "N/A";
+          //       // Check for extremely large values potentially indicating API issues
+          //       const displayValue =
+          //         Math.abs(param.value?.[1] ?? 0) > 1e9
+          //           ? `${value} (potential API scale issue)`
+          //           : value;
+          //       tooltip += `${param.marker} ${param.seriesName}: ${displayValue}<br/>`;
+          //     });
+          //     return tooltip;
+          //   },
+          // },
+
           params.forEach((param: any) => {
-            const value =
-              param.value && typeof param.value[1] === "number"
-                ? param.value[1].toFixed(2)
-                : "N/A";
-            // Check for extremely large values potentially indicating API issues
-            const displayValue =
-              Math.abs(param.value?.[1] ?? 0) > 1e9
-                ? `${value} (potential API scale issue)`
-                : value;
-            tooltip += `${param.marker} ${param.seriesName}: ${displayValue}<br/>`;
+            const value = param.value && typeof param.value[1] === "number"
+              ? param.value[1].toFixed(2)
+              : "N/A";
+            tooltip += `${param.marker} ${param.seriesName}: ${value}<br/>`;
           });
           return tooltip;
         },
@@ -559,113 +555,7 @@ export class AnomalyComponent implements OnInit, OnDestroy {
     };
   }
 
-  // NEW: Add anomaly points to charts
-  private addAnomalySeries(
-    baseOption: EChartsOption,
-    anomalyPoints: [number, number][],
-    seriesName: string
-  ): EChartsOption {
-    if (!anomalyPoints.length) return baseOption;
-
-    const scatterSeries = {
-      name: `${seriesName} Anomalies`,
-      type: "scatter",
-      symbolSize: 10,
-      itemStyle: {
-        color: "#ff0000",
-      },
-      data: anomalyPoints,
-      zlevel: 10,
-    };
-
-    return {
-      ...baseOption,
-      series: [...((baseOption.series as any[]) || []), scatterSeries],
-    };
-  }
-
-  // MODIFIED: Update CPU chart with anomalies
-  private getUpdatedCpuChartOption(): EChartsOption {
-    const cpuUserData = this.downsamplePerEntity(
-      this.vmstatData,
-      null,
-      null,
-      "timestamp",
-      "us",
-      this.MAX_DATA_POINTS
-    );
-    const cpuSysData = this.downsamplePerEntity(
-      this.vmstatData,
-      null,
-      null,
-      "timestamp",
-      "sy",
-      this.MAX_DATA_POINTS
-    );
-
-    // Detect anomalies
-    this.cpuAnomalies.user = this.detectAnomalies(cpuUserData);
-    this.cpuAnomalies.system = this.detectAnomalies(cpuSysData);
-
-    let chartOption: EChartsOption = {
-      ...this.cpuChartOption,
-      series: [
-        { ...(this.cpuChartOption.series as any[])[0], data: cpuUserData },
-        { ...(this.cpuChartOption.series as any[])[1], data: cpuSysData },
-      ],
-    };
-
-    // Add anomaly series if enabled
-    if (this.showAnomalies) {
-      chartOption = this.addAnomalySeries(
-        chartOption,
-        this.cpuAnomalies.user,
-        "User CPU"
-      );
-      chartOption = this.addAnomalySeries(
-        chartOption,
-        this.cpuAnomalies.system,
-        "System CPU"
-      );
-    }
-
-    return chartOption;
-  }
-
-  // MODIFIED: Update Memory chart with anomalies
-  private getUpdatedMemoryChartOption(): EChartsOption {
-    const memUsedData = this.downsamplePerEntity(
-      this.vmstatData,
-      null,
-      null,
-      "timestamp",
-      "avm",
-      this.MAX_DATA_POINTS
-  ).map((p): [number, number] => [p[0], Math.round(p[1] / 1024)]); // Convert KB to MB
-
-    // Detect anomalies
-    this.memoryAnomalies = this.detectAnomalies(memUsedData);
-
-    let chartOption: EChartsOption = {
-      ...this.memoryChartOption,
-      series: [
-        { ...(this.memoryChartOption.series as any[])[0], data: memUsedData },
-      ],
-    };
-
-    // Add anomaly series if enabled
-    if (this.showAnomalies) {
-      chartOption = this.addAnomalySeries(
-        chartOption,
-        this.memoryAnomalies,
-        "Memory Usage"
-      );
-    }
-
-    return chartOption;
-  }
-
-  // MODIFIED: Update all charts to include anomalies
+  // Update all charts, separating network data into In/Out charts
   private updateAllCharts(): void {
     if (!this.theme) return;
 
@@ -677,10 +567,6 @@ export class AnomalyComponent implements OnInit, OnDestroy {
     const allDisks = [
       ...new Set(this.iostatData.map((p) => p.disk || "default")),
     ];
-
-    // Clear previous disk anomalies
-    this.diskAnomalies = { readRate: {}, writeRate: {}, ops: {} };
-
     const diskReadSeries = this.createDynamicSeries(
       this.iostatData,
       allDisks,
@@ -706,110 +592,37 @@ export class AnomalyComponent implements OnInit, OnDestroy {
       "tps"
     );
 
-    // Add anomalies to disk series if enabled
-    let finalDiskReadSeries = [...diskReadSeries];
-    let finalDiskWriteSeries = [...diskWriteSeries];
-    let finalDiskOpsSeries = [...diskOpsSeries];
-
-    if (this.showAnomalies) {
-      // Process read rates
-      diskReadSeries.forEach((series) => {
-        const diskName = series.name.split(" ")[0];
-        const dataPoints = series.data as [number, number][];
-        this.diskAnomalies.readRate[diskName] =
-          this.detectAnomalies(dataPoints);
-
-        if (this.diskAnomalies.readRate[diskName].length) {
-          finalDiskReadSeries.push({
-            name: `${diskName} Read Anomalies`,
-            type: "scatter",
-            symbolSize: 10,
-            itemStyle: { color: "#ff0000" },
-            data: this.diskAnomalies.readRate[diskName],
-            zlevel: 10,
-          });
-        }
-      });
-
-      // Process write rates
-      diskWriteSeries.forEach((series) => {
-        const diskName = series.name.split(" ")[0];
-        const dataPoints = series.data as [number, number][];
-        this.diskAnomalies.writeRate[diskName] =
-          this.detectAnomalies(dataPoints);
-
-        if (this.diskAnomalies.writeRate[diskName].length) {
-          finalDiskWriteSeries.push({
-            name: `${diskName} Write Anomalies`,
-            type: "scatter",
-            symbolSize: 10,
-            itemStyle: { color: "#ff0000" },
-            data: this.diskAnomalies.writeRate[diskName],
-            zlevel: 10,
-          });
-        }
-      });
-
-      // Process operations
-      diskOpsSeries.forEach((series) => {
-        const diskName = series.name.split(" ")[0];
-        const dataPoints = series.data as [number, number][];
-        this.diskAnomalies.ops[diskName] = this.detectAnomalies(dataPoints);
-
-        if (this.diskAnomalies.ops[diskName].length) {
-          finalDiskOpsSeries.push({
-            name: `${diskName} Ops Anomalies`,
-            type: "scatter",
-            symbolSize: 10,
-            itemStyle: { color: "#ff0000" },
-            data: this.diskAnomalies.ops[diskName],
-            zlevel: 10,
-          });
-        }
-      });
-    }
-
     this.diskReadRateChartOption = {
       ...this.diskReadRateChartOption,
       legend: {
         ...this.diskReadRateChartOption.legend,
-        data: finalDiskReadSeries.map((s) => s.name),
+        data: diskReadSeries.map((s) => s.name),
       },
-      series: finalDiskReadSeries,
+      series: diskReadSeries,
     };
-
     this.diskWriteRateChartOption = {
       ...this.diskWriteRateChartOption,
       legend: {
         ...this.diskWriteRateChartOption.legend,
-        data: finalDiskWriteSeries.map((s) => s.name),
+        data: diskWriteSeries.map((s) => s.name),
       },
-      series: finalDiskWriteSeries,
+      series: diskWriteSeries,
     };
-
     this.diskOpsChartOption = {
       ...this.diskOpsChartOption,
       legend: {
         ...this.diskOpsChartOption.legend,
-        data: finalDiskOpsSeries.map((s) => s.name),
+        data: diskOpsSeries.map((s) => s.name),
       },
-      series: finalDiskOpsSeries,
+      series: diskOpsSeries,
     };
 
-    // --- Update Network Charts ---
+    // --- Update Network Charts (Separated In/Out) ---
     const allInterfaces = [
       ...new Set(this.netstatData.map((p) => p.interface || "default")),
     ];
 
-    // Clear previous network anomalies
-    this.networkAnomalies = {
-      packetsIn: {},
-      packetsOut: {},
-      errorsIn: {},
-      errorsOut: {},
-    };
-
-    // Create base series
+    // Create series for each network metric type
     const packetsInSeries = this.createDynamicSeries(
       this.netstatData,
       allInterfaces,
@@ -843,125 +656,38 @@ export class AnomalyComponent implements OnInit, OnDestroy {
       "eps"
     );
 
-    // Add anomalies to network series if enabled
-    let finalPacketsInSeries = [...packetsInSeries];
-    let finalPacketsOutSeries = [...packetsOutSeries];
-    let finalErrorsInSeries = [...errorsInSeries];
-    let finalErrorsOutSeries = [...errorsOutSeries];
-
-    if (this.showAnomalies) {
-      // Process packets in
-      packetsInSeries.forEach((series) => {
-        const ifaceName = series.name.split(" ")[0];
-        const dataPoints = series.data as [number, number][];
-        this.networkAnomalies.packetsIn[ifaceName] =
-          this.detectAnomalies(dataPoints);
-
-        if (this.networkAnomalies.packetsIn[ifaceName].length) {
-          finalPacketsInSeries.push({
-            name: `${ifaceName} Packets In Anomalies`,
-            type: "scatter",
-            symbolSize: 10,
-            itemStyle: { color: "#ff0000" },
-            data: this.networkAnomalies.packetsIn[ifaceName],
-            zlevel: 10,
-          });
-        }
-      });
-
-      // Process packets out
-      packetsOutSeries.forEach((series) => {
-        const ifaceName = series.name.split(" ")[0];
-        const dataPoints = series.data as [number, number][];
-        this.networkAnomalies.packetsOut[ifaceName] =
-          this.detectAnomalies(dataPoints);
-
-        if (this.networkAnomalies.packetsOut[ifaceName].length) {
-          finalPacketsOutSeries.push({
-            name: `${ifaceName} Packets Out Anomalies`,
-            type: "scatter",
-            symbolSize: 10,
-            itemStyle: { color: "#ff0000" },
-            data: this.networkAnomalies.packetsOut[ifaceName],
-            zlevel: 10,
-          });
-        }
-      });
-
-      // Process errors in
-      errorsInSeries.forEach((series) => {
-        const ifaceName = series.name.split(" ")[0];
-        const dataPoints = series.data as [number, number][];
-        this.networkAnomalies.errorsIn[ifaceName] =
-          this.detectAnomalies(dataPoints);
-
-        if (this.networkAnomalies.errorsIn[ifaceName].length) {
-          finalErrorsInSeries.push({
-            name: `${ifaceName} Errors In Anomalies`,
-            type: "scatter",
-            symbolSize: 10,
-            itemStyle: { color: "#ff0000" },
-            data: this.networkAnomalies.errorsIn[ifaceName],
-            zlevel: 10,
-          });
-        }
-      });
-
-      // Process errors out
-      errorsOutSeries.forEach((series) => {
-        const ifaceName = series.name.split(" ")[0];
-        const dataPoints = series.data as [number, number][];
-        this.networkAnomalies.errorsOut[ifaceName] =
-          this.detectAnomalies(dataPoints);
-
-        if (this.networkAnomalies.errorsOut[ifaceName].length) {
-          finalErrorsOutSeries.push({
-            name: `${ifaceName} Errors Out Anomalies`,
-            type: "scatter",
-            symbolSize: 10,
-            itemStyle: { color: "#ff0000" },
-            data: this.networkAnomalies.errorsOut[ifaceName],
-            zlevel: 10,
-          });
-        }
-      });
-    }
-
-    // Update chart options with final series
+    // Update the specific chart options
     this.networkPacketsInChartOption = {
       ...this.networkPacketsInChartOption,
       legend: {
         ...this.networkPacketsInChartOption.legend,
-        data: finalPacketsInSeries.map((s) => s.name),
+        data: packetsInSeries.map((s) => s.name),
       },
-      series: finalPacketsInSeries,
+      series: packetsInSeries,
     };
-
     this.networkPacketsOutChartOption = {
       ...this.networkPacketsOutChartOption,
       legend: {
         ...this.networkPacketsOutChartOption.legend,
-        data: finalPacketsOutSeries.map((s) => s.name),
+        data: packetsOutSeries.map((s) => s.name),
       },
-      series: finalPacketsOutSeries,
+      series: packetsOutSeries,
     };
-
     this.networkErrorsInChartOption = {
       ...this.networkErrorsInChartOption,
       legend: {
         ...this.networkErrorsInChartOption.legend,
-        data: finalErrorsInSeries.map((s) => s.name),
+        data: errorsInSeries.map((s) => s.name),
       },
-      series: finalErrorsInSeries,
+      series: errorsInSeries,
     };
-
     this.networkErrorsOutChartOption = {
       ...this.networkErrorsOutChartOption,
       legend: {
         ...this.networkErrorsOutChartOption.legend,
-        data: finalErrorsOutSeries.map((s) => s.name),
+        data: errorsOutSeries.map((s) => s.name),
       },
-      series: finalErrorsOutSeries,
+      series: errorsOutSeries,
     };
 
     this.cdr.markForCheck();
@@ -977,14 +703,12 @@ export class AnomalyComponent implements OnInit, OnDestroy {
     unit: string // Unit not directly used here, but good for context
   ): any[] {
     return entities.reduce((acc, entity) => {
-      const seriesData = this.downsamplePerEntity(
+      const seriesData = this.mapToSeriesData(
         data as any, // Type assertion needed due to union type
         entity,
         entityField as any,
-        "timestamp",
-        valueField as any,
-        this.MAX_DATA_POINTS
-      );
+        // "timestamp",
+        valueField as any);
       if (seriesData.length > 0) {
         acc.push({
           name: `${entity} ${seriesNameSuffix}`,
@@ -1000,8 +724,48 @@ export class AnomalyComponent implements OnInit, OnDestroy {
     }, [] as any[]);
   }
 
+  // getUpdatedCpuChartOption and getUpdatedMemoryChartOption remain the same
+  private getUpdatedCpuChartOption(): EChartsOption {
+    const cpuUserData = this.mapToSeriesData(
+      this.vmstatData,
+      null,
+      "timestamp",
+      "us" as keyof VmstatData
+      // this.MAX_DATA_POINTS
+    );
+    const cpuSysData = this.mapToSeriesData(
+      this.vmstatData,
+      null,
+      // null,
+      "timestamp",
+      "sy" as keyof VmstatData
+      // this.MAX_DATA_POINTS
+    );
+    return {
+      ...this.cpuChartOption,
+      series: [
+        { ...(this.cpuChartOption.series as any[])[0], data: cpuUserData },
+        { ...(this.cpuChartOption.series as any[])[1], data: cpuSysData },
+      ],
+    };
+  }
 
-
+  private getUpdatedMemoryChartOption(): EChartsOption {
+    const memUsedData = this.mapToSeriesData(
+      this.vmstatData,
+      // null,
+      null,
+      "timestamp",
+      "avm" as keyof VmstatData
+      // this.MAX_DATA_POINTS
+    ).map((p) => [p[0], Math.round(p[1] / 1024)]); // Convert KB to MB
+    return {
+      ...this.memoryChartOption,
+      series: [
+        { ...(this.memoryChartOption.series as any[])[0], data: memUsedData },
+      ],
+    };
+  }
 
   // getRandomColor remains the same
   private getRandomColor(seed: string): string {
@@ -1071,8 +835,8 @@ export class AnomalyComponent implements OnInit, OnDestroy {
     const startTime =
       days === 1
         ? now.getHours().toString().padStart(2, "0") +
-          ":" +
-          now.getMinutes().toString().padStart(2, "0")
+        ":" +
+        now.getMinutes().toString().padStart(2, "0")
         : "00:00";
     const endTime = days === 1 ? startTime : "23:59";
 

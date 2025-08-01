@@ -1,0 +1,58 @@
+# .devcontainer/docker-compose.override.yml
+version: '3.8'
+
+services:
+  # Development container service
+  devcontainer:
+    build:
+      context: .
+      dockerfile: Dockerfile.devcontainer
+    volumes:
+      - ..:/workspace:cached
+      - devcontainer_node_modules:/workspace/frontend/node_modules
+      - devcontainer_vscode_extensions:/home/vscode/.vscode-server/extensions
+      - devcontainer_vscode_insiders:/home/vscode/.vscode-server-insiders/extensions
+    networks:
+      - app-network
+      - monitoring_network
+    environment:
+      - NODE_ENV=development
+      - PYTHONPATH=/workspace/backend
+      - DEBUG=True
+      - WORKSPACE_ROOT=/workspace
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    stdin_open: true
+    tty: true
+    command: sleep infinity
+
+  # Override frontend for development
+  frontend:
+    volumes:
+      - ../frontend:/app:cached
+      - devcontainer_node_modules:/app/node_modules
+    environment:
+      - NODE_ENV=development
+      - CHOKIDAR_USEPOLLING=true
+      - WATCHPACK_POLLING=true
+    command: ["npm", "start", "--", "--host", "0.0.0.0", "--disable-host-check", "--poll", "2000"]
+
+  # Override backend for development
+  backend:
+    volumes:
+      - ../backend:/app:cached
+    environment:
+      - DEBUG=True
+      - PYTHONUNBUFFERED=1
+      - DJANGO_SETTINGS_MODULE=monitoring_project.settings
+    command: ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+
+volumes:
+  devcontainer_node_modules:
+  devcontainer_vscode_extensions:
+  devcontainer_vscode_insiders:
