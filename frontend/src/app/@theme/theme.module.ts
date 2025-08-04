@@ -26,6 +26,9 @@ import {
   ThreeColumnsLayoutComponent
 
 } from './layouts';
+
+import { ServerToggleComponent } from './components/server-toggle/server-toggle.component';
+
 // import { DEFAULT_THEME } from './styles/theme.default';
 // import { COSMIC_THEME } from './styles/theme.cosmic';
 // import { CORPORATE_THEME } from './styles/theme.corporate';
@@ -63,13 +66,14 @@ const COMPONENTS = [
   // SearchInputComponent,
   OneColumnLayoutComponent,
   TwoColumnsLayoutComponent,
-  ThreeColumnsLayoutComponent
+  ThreeColumnsLayoutComponent,
+  ServerToggleComponent
 ];
 
 @NgModule({
   imports: [CommonModule, ...NB_MODULES],
-  exports: [CommonModule, ...COMPONENTS],
-  declarations: [...COMPONENTS],
+  exports: [CommonModule, ...COMPONENTS,ServerToggleComponent],
+  declarations: [...COMPONENTS,ServerToggleComponent],
 })
 export class ThemeModule {
   // static forRoot(): ModuleWithProviders<ThemeModule> {

@@ -102,8 +102,8 @@ export class ApiService {
     let params = new HttpParams()
       .set('server_id', serverId)
       .set('metric', 'vmstat')
-      .set('start_date', dateRange.start)
-      .set('end_date', dateRange.end);
+      .set('start', dateRange.start)
+      .set('end', dateRange.end);
 
     if (interval) {
       params = params.set('interval', interval.toString());
@@ -123,8 +123,8 @@ export class ApiService {
     const params = new HttpParams()
       .set('server_id', serverId)
       .set('metric', 'process')
-      .set('start_date', dateRange.start)
-      .set('end_date', dateRange.end);
+      .set('start', dateRange.start)
+      .set('end', dateRange.end);
 
     return this.http.get<ApiResponse<AggregatedProcessData[]>>(`${this.baseUrl}/historical/`, { params })
       .pipe(catchError(this.handleError));
@@ -140,8 +140,8 @@ export class ApiService {
     const params = new HttpParams()
       .set('server_id', serverId)
       .set('metric', 'iostat')
-      .set('start_date', dateRange.start)
-      .set('end_date', dateRange.end);
+      .set('start', dateRange.start)
+      .set('end', dateRange.end);
 
     return this.http.get<ApiResponse<any[]>>(`${this.baseUrl}/historical/`, { params })
       .pipe(catchError(this.handleError));
@@ -157,8 +157,8 @@ export class ApiService {
     const params = new HttpParams()
       .set('server_id', serverId)
       .set('metric', 'netstat')
-      .set('start_date', dateRange.start)  
-      .set('end_date', dateRange.end);
+      .set('start', dateRange.start)  
+      .set('end', dateRange.end);
 
     return this.http.get<ApiResponse<any[]>>(`${this.baseUrl}/historical/`, { params })
       .pipe(catchError(this.handleError));
@@ -180,8 +180,8 @@ export class ApiService {
     let params = new HttpParams()
       .set('server_id', serverId)
       .set('metric', metric)
-      .set('start_date', dateRange.start)
-      .set('end_date', dateRange.end);
+      .set('start', dateRange.start)
+      .set('end', dateRange.end);
 
     if (options?.interval) {
       params = params.set('interval', options.interval.toString());

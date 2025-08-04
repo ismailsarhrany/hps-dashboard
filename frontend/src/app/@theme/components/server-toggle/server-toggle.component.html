@@ -1,0 +1,109 @@
+<div class="server-toggle-container">
+  <div class="btn-group" role="group" *ngIf="servers && servers.length > 0">
+    <button 
+      *ngFor="let server of servers; trackBy: trackByServerId"
+      nbButton
+      size="small"
+      [status]="getStatusClass(server.status)"
+      [class.active]="selectedServerId === server.id"
+      [title]="getTooltipText(server)"
+      (click)="selectServer(server.id)"
+      class="server-button">
+      
+      <nb-icon [icon]="getStatusIcon(server.status)" class="status-icon"></nb-icon>
+      <span class="server-name">{{ getDisplayName(server) }}</span>
+      <small class="server-status" *ngIf="server.status !== 'active'">
+        ({{ server.status }})
+      </small>
+    </button>
+  </div>
+  
+  <!-- Loading state -->
+  <div class="loading-state" *ngIf="!servers || servers.length === 0">
+    <nb-spinner size="small"></nb-spinner>
+    <span>Loading servers...</span>
+  </div>
+</div>
+
+<style>
+.server-toggle-container {
+  width: 100%;
+}
+
+.btn-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.server-button {
+  flex: 1 0 auto;
+  min-width: 120px;
+  max-width: 200px;
+  transition: transform 0.2s, box-shadow 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+
+  &.active {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    font-weight: 600;
+  }
+
+  &:hover {
+    transform: translateY(-1px);
+  }
+}
+
+.status-icon {
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.server-name {
+  flex: 1;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.server-status {
+  font-size: 0.75rem;
+  opacity: 0.8;
+  flex-shrink: 0;
+}
+
+.loading-state {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem;
+  color: #6c757d;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .server-button {
+    min-width: 100px;
+    font-size: 0.875rem;
+  }
+  
+  .server-status {
+    display: none;
+  }
+}
+
+@media (max-width: 576px) {
+  .btn-group {
+    flex-direction: column;
+  }
+  
+  .server-button {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}
+</style>

@@ -1,176 +1,116 @@
-<!-- src/app/pages/server-tabs/server-tabs.component.html -->
-<div class="server-tabs-container">
+<!-- src/app/pages/server-selection/server-selection.component.html -->
+<div class="server-selection-container">
   <!-- Loading State -->
   <div *ngIf="loading" class="loading-container">
     <nb-spinner size="large"></nb-spinner>
     <p>Loading servers...</p>
   </div>
 
-  <!-- No Servers State -->
-  <div *ngIf="!loading && serverTabs.length === 0" class="no-servers-container">
-    <nb-card>
-      <nb-card-header>
-        <h5>No Servers Configured</h5>
-      </nb-card-header>
-      <nb-card-body>
-        <p>
-          You haven't configured any servers yet. Add a server to start
-          monitoring.
-        </p>
-        <button nbButton status="primary" (click)="openAddServerModal()">
-          <nb-icon icon="plus-outline"></nb-icon>
-          Add Server
-        </button>
-      </nb-card-body>
-    </nb-card>
-  </div>
-
-  <!-- Server Tabs -->
-  <div *ngIf="!loading && serverTabs.length > 0" class="tabs-container">
-    <!-- Tab Headers with Add Button -->
-    <div class="tab-header-container">
-      <nb-tabset
-        [selectedIndex]="selectedTabIndex"
-        (selectedIndexChange)="selectServerTab($event)"
-        class="server-tabs"
+  <!-- Server Selection -->
+  <div *ngIf="!loading" class="selection-container">
+    <!-- Server Dropdown -->
+    <div class="server-dropdown">
+      <nb-select
+        [(selected)]="selectedServerId"
+        (selectedChange)="onServerChange($event)"
+        placeholder="Select a server"
+        size="medium"
       >
-        <nb-tab
-          *ngFor="let tab of serverTabs; let i = index"
-          [tabTitle]="tab.title"
-          [disabled]="!tab.isActive"
-          class="server-tab"
-        >
-          <!-- Custom tab title template -->
-          <ng-template nbTabTitle>
-            <div class="tab-title-content">
-              <nb-icon
-                [icon]="getTabIcon(tab)"
-                [status]="getTabStatus(tab)"
-                class="tab-icon"
-              >
-              </nb-icon>
-              <span class="tab-text">{{ tab.title }}</span>
-              <nb-badge
-                *ngIf="tab.realtimeStatus === 'connected'"
-                status="success"
-                size="tiny"
-                class="connection-badge"
-              >
-              </nb-badge>
-              <nb-badge
-                *ngIf="tab.hasError"
-                status="danger"
-                size="tiny"
-                class="connection-badge"
-              >
-              </nb-badge>
-              <!-- Close tab button (optional) -->
-              <button
-                *ngIf="serverTabs.length > 1"
-                nbButton
-                ghost
-                size="tiny"
-                class="close-tab-btn"
-                (click)="closeTab(i, $event)"
-                title="Close tab"
-              >
-                <nb-icon icon="close-outline" size="small"></nb-icon>
-              </button>
-            </div>
-          </ng-template>
-
-          <!-- Tab Content -->
-          <div class="tab-content">
-            <!-- Server Info Header -->
-            <div class="server-info-header">
-              <div class="server-details">
-                <h6>{{ tab.hostname }}</h6>
-                <small class="text-hint"
-                  >{{ tab.server.ip_address }}:{{ tab.server.ssh_port }}</small
-                >
-              </div>
-
-              <div class="server-status">
-                <div class="status-item">
-                  <span class="status-label">Connection:</span>
-                  <nb-badge
-                    [status]="getTabStatus(tab)"
-                    [text]="getConnectionStatusText(tab)"
-                  >
-                  </nb-badge>
-                </div>
-
-                <div class="server-actions">
-                  <button
-                    nbButton
-                    ghost
-                    size="small"
-                    status="info"
-                    (click)="refreshServer(tab.id)"
-                    title="Refresh connection"
-                  >
-                    <nb-icon icon="refresh-outline"></nb-icon>
-                  </button>
-
-                  <button
-                    nbButton
-                    ghost
-                    size="small"
-                    status="danger"
-                    (click)="removeServer(tab.id)"
-                    title="Remove server"
-                  >
-                    <nb-icon icon="trash-2-outline"></nb-icon>
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <!-- Sub-navigation -->
-            <nb-card class="sub-navigation-card">
-              <nb-card-body>
-                <nav class="sub-navigation">
-                  <button
-                    *ngFor="let route of subRoutes"
-                    [routerLink]="['/pages/servers', tab.id, route.path]"
-                    routerLinkActive="active"
-                    nbButton
-                    [status]="
-                      isSubRouteActive(tab.id, route.path) ? 'primary' : 'basic'
-                    "
-                    [ghost]="!isSubRouteActive(tab.id, route.path)"
-                    size="small"
-                    class="sub-nav-btn"
-                    (click)="navigateToSubRoute(tab.id, route.path)"
-                  >
-                    <nb-icon [icon]="route.icon"></nb-icon>
-                    {{ route.title }}
-                  </button>
-                </nav>
-              </nb-card-body>
-            </nb-card>
-
-            <!-- Router Outlet for Server Pages -->
-            <div class="server-content">
-              <router-outlet></router-outlet>
-            </div>
-          </div>
-        </nb-tab>
-      </nb-tabset>
+        <nb-option *ngFor="let server of servers" [value]="server.id">
+          {{ server.hostname }} ({{ server.ip_address }})
+        </nb-option>
+      </nb-select>
 
       <!-- Add Server Button -->
-      <div class="add-server-section">
-        <button
-          nbButton
-          status="success"
-          size="small"
-          (click)="openAddServerModal()"
-          title="Add new server"
-        >
-          <nb-icon icon="plus-outline"></nb-icon>
-          Add Server
-        </button>
+      <button
+        nbButton
+        status="success"
+        size="medium"
+        (click)="openAddServerModal()"
+      >
+        <nb-icon icon="plus-outline"></nb-icon>
+        Add Server
+      </button>
+    </div>
+
+    <!-- Server Info and Actions -->
+    <div *ngIf="selectedServer" class="server-info-actions">
+      <div class="server-details">
+        <h4>{{ selectedServer.hostname }}</h4>
+        <small class="text-hint">
+          {{ selectedServer.ip_address }}:{{ selectedServer.ssh_port }}
+        </small>
       </div>
+
+      <div class="server-status">
+        <div class="status-item">
+          <span class="status-label">Status:</span>
+          <nb-badge
+            [status]="getConnectionStatusBadge()"
+            [text]="getConnectionStatusText()"
+          ></nb-badge>
+        </div>
+
+        <div class="server-actions">
+          <button
+            nbButton
+            ghost
+            size="small"
+            status="info"
+            (click)="refreshServer()"
+            title="Refresh connection"
+          >
+            <nb-icon icon="refresh-outline"></nb-icon>
+          </button>
+
+          <button
+            nbButton
+            ghost
+            size="small"
+            status="danger"
+            (click)="removeServer()"
+            title="Remove server"
+          >
+            <nb-icon icon="trash-2-outline"></nb-icon>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sub-navigation -->
+    <nb-card *ngIf="selectedServer" class="sub-navigation-card">
+      <nb-card-body>
+        <nav class="sub-navigation">
+          <button
+            *ngFor="let route of subRoutes"
+            [routerLink]="['/pages/servers', selectedServerId, route.path]"
+            routerLinkActive="active"
+            nbButton
+            [status]="isSubRouteActive(route.path) ? 'primary' : 'basic'"
+            [ghost]="!isSubRouteActive(route.path)"
+            size="small"
+            class="sub-nav-btn"
+          >
+            <nb-icon [icon]="route.icon"></nb-icon>
+            {{ route.title }}
+          </button>
+        </nav>
+      </nb-card-body>
+    </nb-card>
+
+    <!-- Router Outlet for Server Pages -->
+    <div *ngIf="selectedServer" class="server-content">
+      <router-outlet></router-outlet>
+    </div>
+
+    <!-- No Server Selected -->
+    <div *ngIf="!selectedServer && !loading" class="no-server-container">
+      <nb-card>
+        <nb-card-body>
+          <h5>No Server Selected</h5>
+          <p>Please select a server from the dropdown above</p>
+        </nb-card-body>
+      </nb-card>
     </div>
   </div>
 
@@ -186,8 +126,7 @@
       <ngx-add-server-form
         (serverAdded)="onServerAdded($event)"
         (cancelled)="closeAddServerModal()"
-      >
-      </ngx-add-server-form>
+      ></ngx-add-server-form>
     </nb-card-body>
   </nb-card>
 
@@ -197,16 +136,4 @@
     class="modal-backdrop"
     (click)="closeAddServerModal()"
   ></div>
-</div>
-
-<div
-  *ngIf="!loading && selectedServerId === 'no-server'"
-  class="no-server-container"
->
-  <nb-card>
-    <nb-card-body>
-      <h5>No Server Selected</h5>
-      <p>Please select a server from the tabs above</p>
-    </nb-card-body>
-  </nb-card>
 </div>

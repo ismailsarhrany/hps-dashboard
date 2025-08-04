@@ -1,0 +1,28 @@
+{
+  "name": "Development Environment",
+  "dockerComposeFile": "../docker-compose.dev.yml",
+  "service": "dev",
+  "workspaceFolder": "/workspace",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.black-formatter",
+        "esbenp.prettier-vscode",
+        "usernamehw.errorlens",
+        "angular.ng-template",
+        "ms-vscode.vscode-typescript-next",
+        "ms-azuretools.vscode-docker"
+      ],
+      "settings": {
+        "python.defaultInterpreterPath": "/usr/local/bin/python",
+        "python.formatting.provider": "black",
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "editor.formatOnSave": true
+      }
+    }
+  },
+  "forwardPorts": [4200, 8000, 5433, 8080, 6379],
+  "postCreateCommand": "pip install -r backend/requirements.txt || echo 'Backend requirements not found, skipping...'",
+  "remoteUser": "vscode"
+}

@@ -1,4 +1,18 @@
 <!-- src/app/pages/historic/historic.component.html - Updated for Split Network Charts & Loading Overlay -->
+
+<div class="row">
+  <div class="col-12">
+    <nb-card>
+      <nb-card-header>
+        <h5>Select Server</h5>
+      </nb-card-header>
+      <nb-card-body>
+        <ngx-server-toggle [servers]="servers"></ngx-server-toggle>
+      </nb-card-body>
+    </nb-card>
+  </div>
+</div>
+
 <div class="row">
   <div class="col-12">
     <nb-card>
@@ -127,7 +141,7 @@
   </div>
 </div>
 
-  <div class="row mt-3" *ngIf="loading">
+<div class="row mt-3" *ngIf="loading">
   <div class="col-12">
     <nb-card>
       <nb-card-body class="loading-state">
@@ -138,33 +152,33 @@
   </div>
 </div>
 
-  <!-- No Data State -->
-  <div
-    class="no-data-container-wrapper"
-    *ngIf="
-      !loading &&
-      vmstatData.length === 0 &&
-      netstatData.length === 0 &&
-      iostatData.length === 0
-    "
-  >
-    <nb-card>
-      <nb-card-body class="no-data-container">
-        <nb-icon
-          icon="bar-chart-outline"
-          status="info"
-          [options]="{ width: '64px', height: '64px' }"
-          class="no-data-icon"
-        ></nb-icon>
-        <h6 class="no-data-title">No Data Available</h6>
-        <p class="no-data-message">
-          No monitoring data found for the selected time range.<br />
-          Please try selecting a different date range or check if monitoring is
-          active.
-        </p>
-      </nb-card-body>
-    </nb-card>
-  </div>
+<!-- No Data State -->
+<div
+  class="no-data-container-wrapper"
+  *ngIf="
+    !loading &&
+    vmstatData.length === 0 &&
+    netstatData.length === 0 &&
+    iostatData.length === 0
+  "
+>
+  <nb-card>
+    <nb-card-body class="no-data-container">
+      <nb-icon
+        icon="bar-chart-outline"
+        status="info"
+        [options]="{ width: '64px', height: '64px' }"
+        class="no-data-icon"
+      ></nb-icon>
+      <h6 class="no-data-title">No Data Available</h6>
+      <p class="no-data-message">
+        No monitoring data found for the selected time range.<br />
+        Please try selecting a different date range or check if monitoring is
+        active.
+      </p>
+    </nb-card-body>
+  </nb-card>
+</div>
 
 <!-- Main Content Area (Charts + Loading Overlay) -->
 <div class="content-area">
@@ -359,9 +373,5 @@
     <nb-spinner size="large"></nb-spinner>
     <p>Please wait while we fetch your system metrics.</p>
   </div> -->
-
-
-
-
 </div>
 <!-- End content-area -->

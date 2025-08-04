@@ -15,7 +15,7 @@ import {
   VmstatData,
   DateTimeRange,
 } from "../../services/monitoring.service";
-import { ServerService, } from '../../services/server.service'; // Added*
+import { ServerService, Server } from '../../services/server.service';
 import {
   DiskDataService,
   HistoricalIostatPoint,
@@ -34,8 +34,9 @@ import {
 export class HistoricComponent implements OnInit, OnDestroy {
   dateRangeForm: FormGroup;
   loading = false;
-  private destroy$ = new Subject<void>(); // For subscription cleanup
-  private currentServerId: string; // Track current server
+  private destroy$ = new Subject<void>();
+  private currentServerId: string | null = null;
+  currentServer: Server | null = null;
 
   // Chart Options
   cpuChartOption: EChartsOption = {};
@@ -50,8 +51,9 @@ export class HistoricComponent implements OnInit, OnDestroy {
 
   // Data Arrays
   vmstatData: VmstatData[] = [];
-  netstatData: any[] = []; // Changed to any[] since we're using ApiService directly
-  iostatData: any[] = [];  // Changed to any[] since we're using ApiService directly
+  netstatData: any[] = [];
+  iostatData: any[] = [];
+  servers: Server[] = [];
 
   private themeSubscription: Subscription;
   private dataSubscription: Subscription;
@@ -63,7 +65,7 @@ export class HistoricComponent implements OnInit, OnDestroy {
     private apiService: ApiService,
     private themeService: NbThemeService,
     private cdr: ChangeDetectorRef,
-    private serverService: ServerService // Injected
+    private serverService: ServerService
   ) {
     this.initializeDateForm();
   }
@@ -81,15 +83,39 @@ export class HistoricComponent implements OnInit, OnDestroy {
         this.cdr.markForCheck();
       });
 
-    // Handle server changes
+    // Initialize and fetch servers
+    this.serverService.fetchServers();
+    
+    // Subscribe to servers list
+    this.serverService.servers$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(servers => {
+        this.servers = servers || [];
+        this.cdr.markForCheck();
+      });
+
+    // Handle server selection changes
     this.serverService.selectedServerId$
       .pipe(takeUntil(this.destroy$))
       .subscribe(serverId => {
-        if (serverId && serverId !== this.currentServerId) {
+        if (serverId !== this.currentServerId) {
           this.currentServerId = serverId;
+          this.updateCurrentServer();
           this.resetData();
-          this.loadHistoricalData();
+          
+          // Only load data if we have a valid server ID
+          if (serverId) {
+            this.loadHistoricalData();
+          }
         }
+      });
+
+    // Subscribe to current server details
+    this.serverService.getSelectedServer()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(server => {
+        this.currentServer = server;
+        this.cdr.markForCheck();
       });
   }
 
@@ -100,6 +126,14 @@ export class HistoricComponent implements OnInit, OnDestroy {
     this.dataSubscription?.unsubscribe();
   }
 
+  private updateCurrentServer(): void {
+    if (this.currentServerId) {
+      this.currentServer = this.servers.find(s => s.id === this.currentServerId) || null;
+    } else {
+      this.currentServer = null;
+    }
+  }
+
   private resetData() {
     this.vmstatData = [];
     this.netstatData = [];
@@ -108,7 +142,12 @@ export class HistoricComponent implements OnInit, OnDestroy {
     this.cdr.markForCheck();
   }
 
-  // initializeDateForm, formatDateForInput, getDateTimeRange remain the same
+  onServerChange(serverId: string): void {
+    // This is handled automatically by the ServerService
+    console.log('Server changed to:', serverId);
+  }
+
+  // Rest of your existing methods remain the same...
   private initializeDateForm(): void {
     const now = new Date();
     const yesterday = new Date();
@@ -196,66 +235,10 @@ export class HistoricComponent implements OnInit, OnDestroy {
     }
   }
 
-  // // mapToSeriesData remains the same
-  // private mapToSeriesData<
-  //   T extends
-  //     | { timestamp: string; id?: string }
-  //     | VmstatData
-  //     | HistoricalIostatPoint
-  //     | HistoricalNetstatPoint
-  // >(
-  //   data: T[],
-  //   entityId: string | null,
-  //   idField: keyof T | null,
-  //   timestampField: keyof T,
-  //   valueField: keyof T,
-  //   maxPoints: number
-  // ): [number, number][] {
-  //   const entityData =
-  //     entityId && idField
-  //       ? data.filter((item) => (item as any)[idField] === entityId)
-  //       : data;
-  //   const sortedData = entityData.sort(
-  //     (a, b) =>
-  //       new Date(a[timestampField] as string).getTime() -
-  //       new Date(b[timestampField] as string).getTime()
-  //   );
-  //   const totalPoints = sortedData.length;
-  //   if (!sortedData || totalPoints === 0) return [];
-  //   if (totalPoints <= maxPoints) {
-  //     return sortedData.map((item) => [
-  //       new Date(item[timestampField] as string).getTime(),
-  //       (item[valueField] as number) || 0,
-  //     ]);
-  //   }
-  //   const sampledData: [number, number][] = [];
-  //   const bucketSize = Math.ceil(totalPoints / maxPoints);
-  //   for (let i = 0; i < totalPoints; i += bucketSize) {
-  //     const bucket = sortedData.slice(i, i + bucketSize);
-  //     if (bucket.length === 0) continue;
-  //     const timestamp = new Date(bucket[0][timestampField] as string).getTime();
-  //     const sum = bucket.reduce(
-  //       (acc, curr) => acc + ((curr[valueField] as number) || 0),
-  //       0
-  //     );
-  //     const value = sum / bucket.length;
-  //     sampledData.push([timestamp, value]);
-  //   }
-  //   const lastOriginalPoint = sortedData[totalPoints - 1];
-  //   const lastOriginalTimestamp = new Date(
-  //     lastOriginalPoint[timestampField] as string
-  //   ).getTime();
-  //   if (
-  //     sampledData.length === 0 ||
-  //     sampledData[sampledData.length - 1][0] < lastOriginalTimestamp
-  //   ) {
-  //     sampledData.push([
-  //       lastOriginalTimestamp,
-  //       (lastOriginalPoint[valueField] as number) || 0,
-  //     ]);
-  //   }
-  //   return sampledData;
-  // }
+  // Add trackBy function for better performance
+  trackByServerId(index: number, server: Server): string {
+    return server.id;
+  }
 
   private mapToSeriesData<T extends { timestamp: string;[key: string]: any }>(
     data: T[],
@@ -273,7 +256,8 @@ export class HistoricComponent implements OnInit, OnDestroy {
     ]);
   }
 
-  // getThemeColors remains the same
+  // ... (rest of your existing chart methods remain unchanged)
+  
   private getThemeColors(): any {
     if (!this.theme) {
       return {
@@ -319,25 +303,9 @@ export class HistoricComponent implements OnInit, OnDestroy {
           if (!params || params.length === 0) return "";
           const time = new Date(params[0].axisValue).toLocaleString();
           let tooltip = `${time}<br/>`;
-          // Sort tooltip entries by value, descending
           params.sort(
             (a: any, b: any) => (b.value?.[1] ?? 0) - (a.value?.[1] ?? 0)
           );
-          //     params.forEach((param: any) => {
-          //       const value =
-          //         param.value && typeof param.value[1] === "number"
-          //           ? param.value[1].toFixed(2)
-          //           : "N/A";
-          //       // Check for extremely large values potentially indicating API issues
-          //       const displayValue =
-          //         Math.abs(param.value?.[1] ?? 0) > 1e9
-          //           ? `${value} (potential API scale issue)`
-          //           : value;
-          //       tooltip += `${param.marker} ${param.seriesName}: ${displayValue}<br/>`;
-          //     });
-          //     return tooltip;
-          //   },
-          // },
 
           params.forEach((param: any) => {
             const value = param.value && typeof param.value[1] === "number"
@@ -371,7 +339,7 @@ export class HistoricComponent implements OnInit, OnDestroy {
       yAxis: {
         type: "value",
         axisLine: { show: true, lineStyle: { color: colors.borderColor } },
-        axisLabel: { color: colors.textColor, fontSize: 11 }, // Formatter added per chart type
+        axisLabel: { color: colors.textColor, fontSize: 11 },
         splitLine: {
           lineStyle: {
             color: colors.borderColor,
@@ -379,7 +347,6 @@ export class HistoricComponent implements OnInit, OnDestroy {
             opacity: 0.3,
           },
         },
-        // --- Add scale: true to allow ECharts internal scaling ---
         scale: true,
       },
       legend: {
@@ -404,7 +371,7 @@ export class HistoricComponent implements OnInit, OnDestroy {
       animation: false,
     };
 
-    // --- CPU Chart ---
+ // --- CPU Chart ---
     this.cpuChartOption = {
       ...baseConfig,
       color: [colors.primary, colors.success],
