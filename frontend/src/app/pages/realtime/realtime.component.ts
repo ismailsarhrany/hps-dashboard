@@ -9,7 +9,7 @@ import {
   NetstatData,
   IostatData
 } from "../../services/realtime.service";
-import { ServerService } from '../../services/server.service';
+import { ServerService, Server } from '../../services/server.service';
 import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 
@@ -33,7 +33,12 @@ interface WebSocketData {
   styleUrls: ["./realtime.component.scss"],
 })
 export class RealtimeComponent implements OnInit, OnDestroy {
+  // Server management
   currentServerId: string | null = null;
+  currentServer: Server | null = null;
+  servers: Server[] = [];
+
+  // Existing properties
   private vmstatSubscription: Subscription;
   private netstatSubscription: Subscription;
   private iostatSubscription: Subscription;
@@ -89,17 +94,43 @@ export class RealtimeComponent implements OnInit, OnDestroy {
       this.colors = config.variables;
       this.echartTheme = config.name;
       this.initializeCharts();
-      this.startRealtimeMonitoring();
+      // Only start monitoring if we have a selected server
+      if (this.currentServerId) {
+        this.startRealtimeMonitoring();
+      }
     });
 
-    // Server change listener
-    this.serverService.selectedServerId$.
-      pipe(
-        takeUntil(this.destroy$)
-      ).subscribe(serverId => {
-        this.currentServerId = serverId;
-        this.resetData();
-        this.startRealtimeMonitoring();
+    // Initialize and fetch servers
+    this.serverService.fetchServers();
+
+    // Subscribe to servers list
+    this.serverService.servers$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(servers => {
+        this.servers = servers || [];
+      });
+
+    // Handle server selection changes
+    this.serverService.selectedServerId$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(serverId => {
+        if (serverId !== this.currentServerId) {
+          this.currentServerId = serverId;
+          this.updateCurrentServer();
+          this.resetData();
+
+          // Only start monitoring if we have a valid server ID
+          if (serverId) {
+            this.startRealtimeMonitoring();
+          }
+        }
+      });
+
+    // Subscribe to current server details
+    this.serverService.getSelectedServer()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(server => {
+        this.currentServer = server;
       });
   }
 
@@ -108,6 +139,25 @@ export class RealtimeComponent implements OnInit, OnDestroy {
     this.realtimeService.disconnectAll();
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  // Server management methods
+  private updateCurrentServer(): void {
+    if (this.currentServerId) {
+      this.currentServer = this.servers.find(s => s.id === this.currentServerId) || null;
+    } else {
+      this.currentServer = null;
+    }
+  }
+
+  onServerChange(serverId: string): void {
+    // This is handled automatically by the ServerService
+    console.log('Server changed to:', serverId);
+  }
+
+  // Add trackBy function for better performance
+  trackByServerId(index: number, server: Server): string {
+    return server.id;
   }
 
   private resetData() {
@@ -151,10 +201,17 @@ export class RealtimeComponent implements OnInit, OnDestroy {
   }
 
   private startRealtimeMonitoring() {
-    if (!this.currentServerId) return;
+    if (!this.currentServerId) {
+      console.warn("No server selected for realtime monitoring");
+      return;
+    }
+
+    console.log(`Starting realtime monitoring for server: ${this.currentServerId}`);
+
     this.realtimeService.connectToMetrics(this.currentServerId, [
       'vmstat', 'iostat', 'netstat', 'process'
     ]);
+
     this.connectionSubscription = this.realtimeService
       .getOverallConnectionStatus()
       .subscribe((status) => {
@@ -180,6 +237,7 @@ export class RealtimeComponent implements OnInit, OnDestroy {
       .subscribe((data) => this.processProcessData(data as ProcessData));
   }
 
+  // Rest of your existing methods remain unchanged...
   private processProcessData(data: ProcessData) {
     this.processCount++;
   }

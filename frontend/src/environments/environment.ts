@@ -12,6 +12,6 @@
 export const environment = {
   production: false,
   apiUrl: 'http://localhost:8000', // Added missing apiUrl
-  wsUrl: 'ws://localhost:8000/ws', // Added missing wsUrl
+  wsUrl: 'localhost:8000/ws', // Added missing wsUrl
 };
 

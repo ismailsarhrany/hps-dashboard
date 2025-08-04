@@ -340,7 +340,7 @@ export class RealtimeService implements OnDestroy {
   private buildWebSocketUrl(metric: string, serverId: string): string {
     const protocol = environment.production ? 'wss' : 'ws';
     const host = environment.wsUrl || window.location.host;
-    return `${protocol}://${host}/ws/metrics/${metric}/${serverId}/`;
+    return `${protocol}://${host}/metrics/${metric}/${serverId}/`;
   }
 
   private handleWebSocketMessage(serverId: string, message: WebSocketMessage): void {
