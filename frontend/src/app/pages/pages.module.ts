@@ -5,29 +5,22 @@ import { HttpClientModule } from '@angular/common/http';
 
 import { ThemeModule } from '../@theme/theme.module';
 import { PagesComponent } from './pages.component';
-
 import { PagesRoutingModule } from './pages-routing.module';
-import { MiscellaneousModule } from './miscellaneous/miscellaneous.module';
 import { RealtimeModule } from './realtime/realtime.module';
 import { HistoricModule } from './historic/historic.module';
 import { ProcessModule } from './process/process.module';
 import { PredictionModule } from './prediction/prediction.module';
 import { AnomalyModule } from './anomaly/anomaly.module';
-
-
 import { ApiService } from '../services/monitoring.service';
 import { ServerTabsComponent } from './server-tabs/server-tabs.component';
-
 
 @NgModule({
   imports: [
     PagesRoutingModule,
     ThemeModule,
     NbMenuModule,
-    MiscellaneousModule,
     CommonModule,
     HttpClientModule,
-    PagesRoutingModule,
     RealtimeModule,
     HistoricModule,
     ProcessModule,
@@ -37,11 +30,9 @@ import { ServerTabsComponent } from './server-tabs/server-tabs.component';
   declarations: [
     PagesComponent,
     ServerTabsComponent,
-
   ],
   providers: [
     ApiService
   ]
 })
-export class PagesModule {
-}
+export class PagesModule {}

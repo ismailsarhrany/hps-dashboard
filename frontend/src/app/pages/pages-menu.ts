@@ -3,32 +3,28 @@ import { NbMenuItem } from "@nebular/theme";
 export const MENU_ITEMS: NbMenuItem[] = [
   {
     title: "Realtime Dashboard",
-    icon: "activity-outline", // symbolizes live activity/metrics
+    icon: "activity-outline",
     link: "/pages/realtime",
     home: true,
   },
   {
     title: "Historic Dashboard",
-    icon: "clock-outline", // fits for past/historical data
+    icon: "clock-outline",
     link: "/pages/historic",
-    home: true,
   },
   {
     title: "Process Dashboard",
-    icon: "settings-2-outline", // better for detailed or nested settings
+    icon: "settings-2-outline",
     link: "/pages/process",
-    home: true,
   },
   {
     title: "Prediction Dashboard",
-    icon: "trending-up-outline", // great for forecasting/predictions
+    icon: "trending-up-outline",
     link: "/pages/prediction",
-    home: true,
   },
   {
     title: "Anomaly Dashboard",
     icon: "alert-triangle-outline",
     link: "/pages/anomaly",
-    home: true,
   },
 ];
