@@ -1,4 +1,23 @@
+<!-- Updated server-toggle.component.html with Add button -->
 <div class="server-toggle-container">
+  <div class="server-toggle-header" *ngIf="showAddButton">
+    <div class="toggle-title">
+      <!-- <h6>Servers</h6> -->
+    </div>
+    <div class="toggle-actions">
+      <button 
+        nbButton 
+        size="small" 
+        status="primary" 
+        (click)="onAddServerClick()"
+        title="Add New Server"
+        class="add-server-btn">
+        <nb-icon icon="plus-outline"></nb-icon>
+        <span class="btn-text">Add</span>
+      </button>
+    </div>
+  </div>
+
   <div class="btn-group" role="group" *ngIf="servers && servers.length > 0">
     <button 
       *ngFor="let server of servers; trackBy: trackByServerId"
@@ -20,14 +39,63 @@
   
   <!-- Loading state -->
   <div class="loading-state" *ngIf="!servers || servers.length === 0">
-    <nb-spinner size="small"></nb-spinner>
-    <span>Loading servers...</span>
+    <div class="empty-servers" *ngIf="servers && servers.length === 0; else loadingTemplate">
+      <nb-icon icon="server-outline" class="empty-icon"></nb-icon>
+      <span>No servers configured</span>
+      <button 
+        nbButton 
+        size="small" 
+        status="primary" 
+        (click)="onAddServerClick()"
+        class="add-first-server">
+        <nb-icon icon="plus-outline"></nb-icon>
+        Add First Server
+      </button>
+    </div>
+    
+    <ng-template #loadingTemplate>
+      <nb-spinner size="small"></nb-spinner>
+      <span>Loading servers...</span>
+    </ng-template>
   </div>
 </div>
 
 <style>
 .server-toggle-container {
   width: 100%;
+}
+
+.server-toggle-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+  padding: 0 0.25rem;
+
+  .toggle-title h6 {
+    margin: 0;
+    font-weight: 600;
+    color: var(--text-basic-color);
+  }
+
+  .toggle-actions {
+    .add-server-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+      transition: transform 0.2s ease;
+
+      &:hover {
+        transform: translateY(-1px);
+      }
+
+      .btn-text {
+        @media (max-width: 768px) {
+          display: none;
+        }
+      }
+    }
+  }
 }
 
 .btn-group {
@@ -79,9 +147,31 @@
 .loading-state {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
   padding: 1rem;
   color: #6c757d;
+  flex-direction: column;
+  text-align: center;
+
+  .empty-servers {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    
+    .empty-icon {
+      font-size: 2rem;
+      opacity: 0.5;
+    }
+
+    .add-first-server {
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+      margin-top: 0.5rem;
+    }
+  }
 }
 
 /* Responsive design */
@@ -94,6 +184,10 @@
   .server-status {
     display: none;
   }
+
+  .server-toggle-header {
+    margin-bottom: 0.5rem;
+  }
 }
 
 @media (max-width: 576px) {
@@ -104,6 +198,24 @@
   .server-button {
     width: 100%;
     justify-content: flex-start;
+    max-width: none;
+  }
+
+  .server-toggle-header {
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: stretch;
+
+    .toggle-actions {
+      align-self: center;
+    }
+  }
+}
+
+/* Dark theme support */
+:host-context(.dark-theme) {
+  .server-button.active {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
   }
 }
 </style>

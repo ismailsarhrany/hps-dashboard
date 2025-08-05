@@ -22,6 +22,8 @@ export interface Server {
   description?: string;
   location?: string;
   environment?: string;
+  ssh_password?: string;
+  ssh_key_path?: string;
 }
 
 export interface ServerApiResponse {
@@ -44,16 +46,28 @@ export class ServerService {
   constructor(private http: HttpClient) { }
 
   fetchServers(): void {
-    this.http.get<ServerApiResponse>(`${environment.apiUrl}/api/servers/`).subscribe({
+    this.http.get<any>(`${environment.apiUrl}/api/servers/`).subscribe({
       next: (response) => {
-        // Extract servers from the response object
-        const servers = response.servers || [];
+        // Handle both array response and paginated response
+        let servers: Server[] = [];
+
+        if (Array.isArray(response)) {
+          // Direct array response
+          servers = response;
+        } else if (response.servers && Array.isArray(response.servers)) {
+          // Paginated response
+          servers = response.servers;
+        } else {
+          console.warn('Unexpected server response format:', response);
+          servers = [];
+        }
+
         const mappedServers = servers.map(s => ({
           ...s,
           status: s.status || 'active',
           last_seen: s.last_seen ? new Date(s.last_seen) : undefined
         }));
-        
+
         this.serversSubject.next(mappedServers);
 
         // Auto-select first server if none selected
@@ -101,5 +115,15 @@ export class ServerService {
 
   refreshServers(): void {
     this.fetchServers();
+  }
+
+  createServer(serverData: any): Observable<any> {
+    const url = `${environment.apiUrl}/api/servers/create/`;
+    return this.http.post<any>(url, serverData);
+  }
+
+  updateServer(serverId: string, serverData: any): Observable<any> {
+    const url = `${environment.apiUrl}/api/servers/${serverId}/`;  // Added trailing slash
+    return this.http.put<any>(url, serverData);
   }
 }

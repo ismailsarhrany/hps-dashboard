@@ -6,7 +6,13 @@ import datetime
 import json
 from collections import defaultdict
 import time
+import logging
 
+# # Configure the basic logging settings (optional, but good for quick setup)
+# logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
+# # Get a logger instance
+# logger = logging.getLogger(__name__)
 class Command(BaseCommand):
     help = 'Start unified Kafka consumer for all metric types from all servers'
     
@@ -28,6 +34,7 @@ class Command(BaseCommand):
         consumer = MetricConsumer()
         
         # Subscribe to all topics for all active servers
+        # self.active_servers = set()
         topics = self.get_all_topics()
         consumer.consumer.subscribe(topics)
         
@@ -36,13 +43,14 @@ class Command(BaseCommand):
         
         try:
             while self.running:
-                # Periodically resync topics (every 5 minutes)
-                if time.time() - self.last_sync > 300:
+                # Periodically resync topics (every minute)
+                if time.time() - self.last_sync > 60:
                     new_topics = self.get_all_topics()
                     if set(new_topics) != set(topics):
                         consumer.consumer.subscribe(new_topics)
                         topics = new_topics
                         self.stdout.write(f"Topics updated: now monitoring {len(topics)} topics")
+                    # self.refresh_servers(consumer)
                     self.last_sync = time.time()
                 
                 msg = consumer.consumer.poll(1.0)
@@ -105,6 +113,27 @@ class Command(BaseCommand):
         except Exception as e:
             self.stderr.write(f"Error getting topics: {e}")
             return []
+        
+    # def refresh_servers(self, consumer):
+    #     """Refresh server connections and topics"""
+    #     try:
+    #         from metrics.models import Server
+    #         new_topics = self.get_all_topics()
+            
+    #         # Get current active servers
+    #         current_servers = {s.split('_')[-1] for s in new_topics}
+            
+    #         # Find servers that changed status
+    #         added = current_servers - self.active_servers
+    #         removed = self.active_servers - current_servers
+            
+    #         if added or removed:
+    #             logger.info(f"Server status changed: +{len(added)} -{len(removed)}")
+    #             consumer.consumer.subscribe(new_topics)
+    #             self.active_servers = current_servers
+                
+    #     except Exception as e:
+    #         logger.error(f"Error refreshing servers: {e}")
     
     def show_stats(self):
         """Show current processing statistics"""

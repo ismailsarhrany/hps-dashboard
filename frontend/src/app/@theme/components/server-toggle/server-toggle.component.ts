@@ -1,4 +1,6 @@
+// Updated server-toggle.component.ts with Add button
 import { Component, Input, Output, EventEmitter, OnInit, OnDestroy } from '@angular/core';
+import { Router } from '@angular/router';
 import { ServerService, Server } from '../../../services/server.service';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
@@ -10,12 +12,17 @@ import { takeUntil } from 'rxjs/operators';
 })
 export class ServerToggleComponent implements OnInit, OnDestroy {
   @Input() servers: Server[] = [];
+  @Input() showAddButton: boolean = true;
   @Output() serverChange = new EventEmitter<string>();
+  @Output() addServerClick = new EventEmitter<void>();
   
   selectedServerId: string | null = null;
   private destroy$ = new Subject<void>();
 
-  constructor(private serverService: ServerService) {}
+  constructor(
+    private serverService: ServerService,
+    private router: Router
+  ) {}
 
   ngOnInit() {
     // Subscribe to selected server changes
@@ -43,6 +50,12 @@ export class ServerToggleComponent implements OnInit, OnDestroy {
   selectServer(serverId: string) {
     this.serverService.setSelectedServerId(serverId);
     this.serverChange.emit(serverId);
+  }
+
+  onAddServerClick() {
+    this.addServerClick.emit();
+    // Navigate to server configuration page
+    this.router.navigate(['/pages/server-configuration']);
   }
 
   getStatusClass(status: string): string {

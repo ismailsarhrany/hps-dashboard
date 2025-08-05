@@ -1,11 +1,23 @@
 import { NbMenuItem } from "@nebular/theme";
 
 export const MENU_ITEMS: NbMenuItem[] = [
+    {
+    title: 'Configuration',
+    group: true,
+  },
   {
-    title: "Realtime Dashboard",
-    icon: "activity-outline",
-    link: "/pages/realtime",
-    home: true,
+    title: 'Server Management',
+    icon: 'settings-outline',
+    link: '/pages/server-configuration',
+  },
+  {
+    title: 'Monitoring',
+    group: true,
+  },
+  {
+    title: 'Real-time',
+    icon: 'activity-outline',
+    link: '/pages/realtime',
   },
   {
     title: "Historic Dashboard",
@@ -13,18 +25,18 @@ export const MENU_ITEMS: NbMenuItem[] = [
     link: "/pages/historic",
   },
   {
-    title: "Process Dashboard",
-    icon: "settings-2-outline",
-    link: "/pages/process",
+    title: 'Processes',
+    icon: 'list-outline',
+    link: '/pages/process',
   },
   {
-    title: "Prediction Dashboard",
-    icon: "trending-up-outline",
-    link: "/pages/prediction",
+    title: 'Prediction',
+    icon: 'trending-up-outline',
+    link: '/pages/prediction',
   },
   {
-    title: "Anomaly Dashboard",
-    icon: "alert-triangle-outline",
-    link: "/pages/anomaly",
-  },
+    title: 'Anomaly Detection',
+    icon: 'alert-triangle-outline',
+    link: '/pages/anomaly',
+  }
 ];

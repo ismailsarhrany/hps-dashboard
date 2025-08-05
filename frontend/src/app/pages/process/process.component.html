@@ -1,9 +1,27 @@
 <!-- src/app/pages/process/process.component.html -->
+
+<!-- Add server toggle at the top -->
 <div class="row">
   <div class="col-12">
     <nb-card>
       <nb-card-header>
-        <div class="d-flex justify-content-between align-items-center flex-wrap">
+        <h5>Servers</h5>
+      </nb-card-header>
+      <nb-card-body>
+        <ngx-server-toggle [servers]="servers"></ngx-server-toggle>
+      </nb-card-body>
+    </nb-card>
+  </div>
+</div>
+
+<!-- ... rest of existing template ... -->
+<div class="row">
+  <div class="col-12">
+    <nb-card>
+      <nb-card-header>
+        <div
+          class="d-flex justify-content-between align-items-center flex-wrap"
+        >
           <div class="header-content">
             <h1>Process Monitoring</h1>
             <p class="text-hint mb-0">
@@ -31,7 +49,9 @@
   <div class="col-12">
     <nb-card>
       <nb-card-header>
-        <div class="d-flex justify-content-between align-items-center flex-wrap">
+        <div
+          class="d-flex justify-content-between align-items-center flex-wrap"
+        >
           <div>
             <span class="chart-title">Active Processes</span>
             <small class="text-hint d-block"
@@ -58,7 +78,9 @@
               </tr>
             </thead>
             <tbody>
-              <ng-container *ngIf="activeProcesses.length > 0; else noProcesses">
+              <ng-container
+                *ngIf="activeProcesses.length > 0; else noProcesses"
+              >
                 <tr
                   *ngFor="let process of activeProcesses"
                   [class.high-usage]="process.cpu > 50 || process.mem > 50"
@@ -121,7 +143,9 @@
   <div class="col-lg-6 col-md-12 mb-3">
     <nb-card>
       <nb-card-header>
-        <div class="d-flex justify-content-between align-items-center flex-wrap">
+        <div
+          class="d-flex justify-content-between align-items-center flex-wrap"
+        >
           <div>
             <span class="chart-title">Top CPU Consumers</span>
             <small class="text-hint d-block"
@@ -143,7 +167,9 @@
   <div class="col-lg-6 col-md-12 mb-3">
     <nb-card>
       <nb-card-header>
-        <div class="d-flex justify-content-between align-items-center flex-wrap">
+        <div
+          class="d-flex justify-content-between align-items-center flex-wrap"
+        >
           <div>
             <span class="chart-title">Top Memory Consumers</span>
             <small class="text-hint d-block"
@@ -325,7 +351,9 @@
         <nb-card>
           <nb-card-header>
             <h5>Process Summary</h5>
-            <small class="text-hint">Average resource usage during selected period</small>
+            <small class="text-hint"
+              >Average resource usage during selected period</small
+            >
           </nb-card-header>
           <div class="table-responsive">
             <table class="table">
@@ -358,7 +386,7 @@
         </nb-card>
       </div>
     </div>
-    
+
     <!-- CPU and Memory Charts -->
     <div class="row mt-3">
       <div class="col-12 mb-3">
@@ -368,10 +396,16 @@
               <nb-icon icon="cpu-outline" class="mr-2"></nb-icon>
               CPU Usage History
             </h6>
-            <small class="text-hint">All processes during selected period</small>
+            <small class="text-hint"
+              >All processes during selected period</small
+            >
           </nb-card-header>
           <nb-card-body>
-            <div echarts [options]="processCpuHeatmapOption" class="echart"></div>
+            <div
+              echarts
+              [options]="processCpuHeatmapOption"
+              class="echart"
+            ></div>
           </nb-card-body>
         </nb-card>
       </div>
@@ -383,10 +417,16 @@
               <nb-icon icon="hard-drive-outline" class="mr-2"></nb-icon>
               Memory Usage History
             </h6>
-            <small class="text-hint">All processes during selected period</small>
+            <small class="text-hint"
+              >All processes during selected period</small
+            >
           </nb-card-header>
           <nb-card-body>
-            <div echarts [options]="processMemHeatmapOption" class="echart"></div>
+            <div
+              echarts
+              [options]="processMemHeatmapOption"
+              class="echart"
+            ></div>
           </nb-card-body>
         </nb-card>
       </div>
@@ -407,7 +447,8 @@
           ></nb-icon>
           <h3>No Process Data</h3>
           <p class="text-hint">
-            Select a time range and click "Load Data" to analyze historical process metrics
+            Select a time range and click "Load Data" to analyze historical
+            process metrics
           </p>
         </nb-card-body>
       </nb-card>

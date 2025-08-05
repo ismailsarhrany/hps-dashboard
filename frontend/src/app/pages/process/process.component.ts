@@ -1,3 +1,4 @@
+
 // src/app/pages/process/process.component.ts
 import { Component, OnInit, OnDestroy } from "@angular/core";
 import { FormBuilder, FormGroup, Validators } from "@angular/forms";
@@ -15,7 +16,8 @@ import {
   RealtimeService,
   RealtimeConnectionStatus,
 } from "../../services/realtime.service";
-import { ServerService } from '../../services/server.service'; // Added
+import { ServerService, Server } from '../../services/server.service';
+
 interface ProcessStatistics {
   command: string;
   user: string;
@@ -38,11 +40,14 @@ interface ProcessStatistics {
 export class ProcessComponent implements OnInit, OnDestroy {
   private themeSubscription: Subscription;
   private dataSubscriptions: Subscription[] = [];
-  private destroy$ = new Subject<void>(); // Added for cleanup
-  private currentServerId: string; // Added to track current server
+  private destroy$ = new Subject<void>();
+  private currentServerId: string | null = null;
   private colors: any;
   private echartTheme: any;
 
+  // Server management
+  servers: Server[] = [];
+  currentServer: Server | null = null;
 
   private getThemeColors(): any {
     if (!this.colors) {
@@ -95,7 +100,7 @@ export class ProcessComponent implements OnInit, OnDestroy {
     private monitoringService: ApiService,
     private realtimeService: RealtimeService,
     private fb: FormBuilder,
-    private serverService: ServerService // Injected
+    private serverService: ServerService
   ) {
     this.initializeForm();
   }
@@ -108,16 +113,34 @@ export class ProcessComponent implements OnInit, OnDestroy {
       this.initializeCharts();
     });
 
-    // Handle server changes
+    // Initialize and fetch servers
+    this.serverService.fetchServers();
+    
+    // Subscribe to servers list
+    this.serverService.servers$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(servers => {
+        this.servers = servers || [];
+      });
+
+    // Handle server selection changes
     this.serverService.selectedServerId$
       .pipe(takeUntil(this.destroy$))
       .subscribe(serverId => {
         if (serverId && serverId !== this.currentServerId) {
           this.currentServerId = serverId;
+          this.updateCurrentServer();
           this.resetData();
           this.startRealtimeMonitoring();
           this.loadProcessList();
         }
+      });
+
+    // Subscribe to current server details
+    this.serverService.getSelectedServer()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(server => {
+        this.currentServer = server;
       });
   }
 
@@ -128,6 +151,24 @@ export class ProcessComponent implements OnInit, OnDestroy {
     this.dataSubscriptions.forEach((sub) => sub.unsubscribe());
     this.dataSubscriptions = [];
     this.stopRealtimeMonitoring();
+  }
+
+  private updateCurrentServer(): void {
+    if (this.currentServerId) {
+      this.currentServer = this.servers.find(s => s.id === this.currentServerId) || null;
+    } else {
+      this.currentServer = null;
+    }
+  }
+
+  onServerChange(serverId: string): void {
+    // This is handled automatically by the ServerService
+    console.log('Server changed to:', serverId);
+  }
+
+  // Add trackBy function for better performance
+  trackByServerId(index: number, server: Server): string {
+    return server.id;
   }
 
   private resetData() {
@@ -248,19 +289,14 @@ export class ProcessComponent implements OnInit, OnDestroy {
     this.initializeHeatmapOptions();
   }
 
-
-
-
   private initializeHeatmapOptions() {
-
-    const colors = this.getThemeColors(); // Use the method from historic or create similar
+    const colors = this.getThemeColors();
 
     const tooltipFormatter = (params: any) => {
       const date = new Date(params.data[0]);
       const value = params.data[2];
       const metric = params.seriesName.includes('CPU') ? 'CPU' : 'Memory';
 
-      // Status color logic
       let valueColor;
       if (value > 75) {
         valueColor = colors.danger;
@@ -301,6 +337,7 @@ export class ProcessComponent implements OnInit, OnDestroy {
     </div>
   `;
     };
+
     const baseHeatmapOption = {
       backgroundColor: this.echartTheme === "transparent" ? this.colors.bg2 : this.colors.white,
       tooltip: {
@@ -404,8 +441,6 @@ export class ProcessComponent implements OnInit, OnDestroy {
         emphasis: { itemStyle: { shadowBlur: 10, shadowColor: 'rgba(0, 0, 0, 0.5)' } }
       }]
     };
-
-
   }
 
   startRealtimeMonitoring() {
@@ -429,6 +464,7 @@ export class ProcessComponent implements OnInit, OnDestroy {
       })
     );
   }
+
   stopRealtimeMonitoring() {
     this.realtimeService.disconnectAll();
     this.dataSubscriptions.forEach((sub) => sub.unsubscribe());
@@ -459,6 +495,8 @@ export class ProcessComponent implements OnInit, OnDestroy {
   }
 
   private loadProcessList() {
+    if (!this.currentServerId) return;
+
     this.processListLoading = true;
 
     if (this.activeProcesses.length > 0) {
@@ -472,7 +510,7 @@ export class ProcessComponent implements OnInit, OnDestroy {
     const recentRange = this.monitoringService.getDateRange(0.1);
 
     this.dataSubscriptions.push(
-      this.monitoringService.getHistoricalProcesses(this.currentServerId, recentRange) // Added serverId
+      this.monitoringService.getHistoricalProcesses(this.currentServerId, recentRange)
         .pipe(
           map(response => response.data || []),
           map(processes => {
@@ -756,8 +794,10 @@ export class ProcessComponent implements OnInit, OnDestroy {
   }
 
   loadHistoricalProcessData(): void {
-    if (!this.validateForm() || !this.currentServerId) return; // Added server check
-
+    if (!this.currentServerId) {
+      console.warn("No server selected");
+      return;
+    }
     this.loading = true;
     this.hasError = false;
     this.errorMessage = '';
@@ -770,7 +810,7 @@ export class ProcessComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.monitoringService.getHistoricalProcesses(this.currentServerId, range) // Added serverId
+    this.monitoringService.getHistoricalProcesses(this.currentServerId, range)
       .pipe(
         tap(res => {
           this.historicalProcesses = res.data || [];

@@ -307,19 +307,33 @@ class ServerManager:
                 logger.exception(f"Cache refresh failed: {str(e)}")
 
     def get_server_by_id(self, server_id: str) -> Optional[ServerConfig]:
-        """Get server config by ID with cache support."""
+        """Get server config by ID with cache support and forced refresh on miss."""
         logger.debug(f"Requesting server config by ID: {server_id}")
         self._refresh_cache()
         config = self._cache.get(server_id)
+        if not config:
+            # Force refresh if server not found
+            logger.debug(f"Server {server_id} not found in cache, forcing refresh")
+            with self._lock:
+                self._last_refresh = 0  # Reset cache expiry
+            self._refresh_cache()
+            config = self._cache.get(server_id)
         if not config:
             logger.warning(f"No configuration found for server ID: {server_id}")
         return config
 
     def get_server_by_hostname(self, hostname: str) -> Optional[ServerConfig]:
-        """Get server config by hostname with cache support."""
+        """Get server config by hostname with cache support and forced refresh on miss."""
         logger.debug(f"Requesting server config by hostname: {hostname}")
         self._refresh_cache()
         config = self._cache.get(hostname)
+        if not config:
+            # Force refresh if server not found
+            logger.debug(f"Hostname {hostname} not found in cache, forcing refresh")
+            with self._lock:
+                self._last_refresh = 0  # Reset cache expiry
+            self._refresh_cache()
+            config = self._cache.get(hostname)
         if not config:
             logger.warning(f"No configuration found for hostname: {hostname}")
         return config

@@ -1,0 +1,366 @@
+<!-- server-configuration.component.html -->
+<div class="server-configuration-container">
+  <!-- Header with Add Button -->
+  <div class="config-header">
+    <h2>Server Configuration</h2>
+    <button nbButton status="primary" (click)="startAddNew()" [disabled]="loading">
+      <nb-icon icon="plus-outline"></nb-icon>
+      Add Server
+    </button>
+  </div>
+
+  <div class="config-content">
+    <!-- Server List Panel -->
+    <div class="server-list-panel">
+      <nb-card>
+        <nb-card-header>
+          <h6>Servers</h6>
+          <button nbButton ghost size="small" (click)="loadServers()" [disabled]="loading">
+            <nb-icon icon="refresh-outline" [class.rotating]="loading"></nb-icon>
+          </button>
+        </nb-card-header>
+        <nb-card-body>
+          <div class="server-list" *ngIf="!loading; else loadingTemplate">
+            <div 
+              *ngFor="let server of servers; trackBy: trackByServerId"
+              class="server-item"
+              [class.selected]="selectedServer?.id === server.id"
+              (click)="selectServer(server)">
+              
+              <div class="server-info">
+                <div class="server-name">
+                  <nb-icon [icon]="server.status === 'active' ? 'checkmark-circle-outline' : 
+                                   server.status === 'error' ? 'alert-circle-outline' : 
+                                   'clock-outline'" 
+                           [status]="server.status === 'active' ? 'success' : 
+                                    server.status === 'error' ? 'danger' : 'warning'">
+                  </nb-icon>
+                  <span class="name">{{ server.alias || server.hostname }}</span>
+                </div>
+                <div class="server-details">
+                  <small>{{ server.ip_address }}</small>
+                  <small *ngIf="server.environment" class="environment">{{ server.environment }}</small>
+                </div>
+              </div>
+              
+              <div class="server-status">
+                <nb-badge [status]="server.status === 'active' ? 'success' : 
+                                   server.status === 'error' ? 'danger' : 'warning'">
+                  {{ server.status }}
+                </nb-badge>
+              </div>
+            </div>
+            
+            <div *ngIf="servers.length === 0" class="no-servers">
+              <nb-icon icon="server-outline" class="empty-icon"></nb-icon>
+              <p>No servers configured</p>
+              <button nbButton status="primary" size="small" (click)="startAddNew()">
+                Add First Server
+              </button>
+            </div>
+          </div>
+          
+          <ng-template #loadingTemplate>
+            <div class="loading-state">
+              <nb-spinner size="medium"></nb-spinner>
+              <p>Loading servers...</p>
+            </div>
+          </ng-template>
+        </nb-card-body>
+      </nb-card>
+    </div>
+
+    <!-- Server Details Panel -->
+    <div class="server-details-panel">
+      <nb-card *ngIf="selectedServer || isAddingNew; else noSelectionTemplate">
+        <nb-card-header>
+          <div class="details-header">
+            <h6 *ngIf="isAddingNew">Add New Server</h6>
+            <h6 *ngIf="!isAddingNew">{{ selectedServer?.alias || selectedServer?.hostname }}</h6>
+            
+            <div class="action-buttons">
+              <button *ngIf="!isEditing && selectedServer" 
+                      nbButton status="info" size="small" 
+                      (click)="testConnection()" 
+                      [disabled]="testing">
+                <nb-icon icon="flash-outline" *ngIf="!testing"></nb-icon>
+                <nb-spinner size="tiny" *ngIf="testing"></nb-spinner>
+                Test Connection
+              </button>
+              
+              <button *ngIf="!isEditing && selectedServer" 
+                      nbButton status="primary" size="small" 
+                      (click)="startEdit()">
+                <nb-icon icon="edit-outline"></nb-icon>
+                Edit
+              </button>
+              
+              <button *ngIf="!isEditing && selectedServer" 
+                      nbButton status="danger" size="small" 
+                      (click)="deleteServer()">
+                <nb-icon icon="trash-2-outline"></nb-icon>
+                Delete
+              </button>
+            </div>
+          </div>
+        </nb-card-header>
+        
+        <nb-card-body>
+          <form [formGroup]="serverForm" (ngSubmit)="saveServer()">
+            <div class="form-grid">
+              <!-- Basic Information -->
+              <div class="form-section">
+                <h6 class="section-title">Basic Information</h6>
+                
+                <div class="form-row">
+                  <div class="form-field">
+                    <label class="label">Alias (Display Name)</label>
+                    <input nbInput 
+                           fullWidth 
+                           placeholder="e.g., Production Web Server"
+                           formControlName="alias">
+                  </div>
+                  
+                  <div class="form-field">
+                    <label class="label">Hostname *</label>
+                    <input nbInput 
+                           fullWidth 
+                           placeholder="e.g., web-server-01"
+                           formControlName="hostname"
+                           [status]="isFieldInvalid('hostname') ? 'danger' : 'basic'">
+                    <div *ngIf="isFieldInvalid('hostname')" class="error-message">
+                      {{ getFieldError('hostname') }}
+                    </div>
+                  </div>
+                </div>
+
+                <div class="form-row">
+                  <div class="form-field">
+                    <label class="label">IP Address *</label>
+                    <input nbInput 
+                           fullWidth 
+                           placeholder="e.g., 192.168.1.100"
+                           formControlName="ip_address"
+                           [status]="isFieldInvalid('ip_address') ? 'danger' : 'basic'">
+                    <div *ngIf="isFieldInvalid('ip_address')" class="error-message">
+                      {{ getFieldError('ip_address') }}
+                    </div>
+                  </div>
+                  
+                  <div class="form-field">
+                    <label class="label">SSH Port *</label>
+                    <input nbInput 
+                           fullWidth 
+                           type="number"
+                           placeholder="22"
+                           formControlName="ssh_port"
+                           [status]="isFieldInvalid('ssh_port') ? 'danger' : 'basic'">
+                    <div *ngIf="isFieldInvalid('ssh_port')" class="error-message">
+                      {{ getFieldError('ssh_port') }}
+                    </div>
+                  </div>
+                </div>
+
+                <div class="form-row">
+                  <div class="form-field">
+                    <label class="label">Status</label>
+                    <nb-select fullWidth formControlName="status">
+                      <nb-option *ngFor="let option of statusOptions" [value]="option.value">
+                        {{ option.label }}
+                      </nb-option>
+                    </nb-select>
+                  </div>
+                  
+                  <div class="form-field">
+                    <label class="label">Environment</label>
+                    <input nbInput 
+                           fullWidth 
+                           placeholder="e.g., Production, Staging, Development"
+                           formControlName="environment">
+                  </div>
+                </div>
+              </div>
+
+              <!-- SSH Configuration -->
+              <div class="form-section">
+                <h6 class="section-title">SSH Configuration</h6>
+                
+                <div class="form-row">
+                  <div class="form-field">
+                    <label class="label">SSH Username *</label>
+                    <input nbInput 
+                           fullWidth 
+                           placeholder="e.g., root, admin"
+                           formControlName="ssh_username"
+                           [status]="isFieldInvalid('ssh_username') ? 'danger' : 'basic'">
+                    <div *ngIf="isFieldInvalid('ssh_username')" class="error-message">
+                      {{ getFieldError('ssh_username') }}
+                    </div>
+                  </div>
+                </div>
+
+                <div class="form-row">
+                  <div class="form-field">
+                    <label class="label">SSH Password</label>
+                    <div class="password-input">
+                      <input nbInput 
+                             fullWidth 
+                             [type]="showPassword ? 'text' : 'password'"
+                             placeholder="Leave empty to use SSH key"
+                             formControlName="ssh_password">
+                      <button type="button" 
+                              nbButton 
+                              ghost 
+                              size="small"
+                              class="toggle-visibility"
+                              (click)="togglePasswordVisibility()">
+                        <nb-icon [icon]="showPassword ? 'eye-off-outline' : 'eye-outline'"></nb-icon>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="form-row">
+                  <div class="form-field">
+                    <label class="label">SSH Key Path</label>
+                    <div class="password-input">
+                      <input nbInput 
+                             fullWidth 
+                             [type]="showSshKey ? 'text' : 'password'"
+                             placeholder="e.g., /home/user/.ssh/id_rsa"
+                             formControlName="ssh_key_path">
+                      <button type="button" 
+                              nbButton 
+                              ghost 
+                              size="small"
+                              class="toggle-visibility"
+                              (click)="toggleSshKeyVisibility()">
+                        <nb-icon [icon]="showSshKey ? 'eye-off-outline' : 'eye-outline'"></nb-icon>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- System Information -->
+              <div class="form-section">
+                <h6 class="section-title">System Information</h6>
+                
+                <div class="form-row">
+                  <div class="form-field">
+                    <label class="label">Operating System</label>
+                    <nb-select fullWidth formControlName="os_type">
+                      <nb-option *ngFor="let option of osTypeOptions" [value]="option.value">
+                        {{ option.label }}
+                      </nb-option>
+                    </nb-select>
+                  </div>
+                  
+                  <div class="form-field">
+                    <label class="label">OS Version</label>
+                    <input nbInput 
+                           fullWidth 
+                           placeholder="e.g., Ubuntu 20.04, CentOS 8"
+                           formControlName="os_version">
+                  </div>
+                </div>
+
+                <div class="form-row">
+                  <div class="form-field">
+                    <label class="label">Architecture</label>
+                    <input nbInput 
+                           fullWidth 
+                           placeholder="e.g., x86_64, arm64"
+                           formControlName="architecture">
+                  </div>
+                  
+                  <div class="form-field">
+                    <label class="label">Location</label>
+                    <input nbInput 
+                           fullWidth 
+                           placeholder="e.g., Data Center A, Cloud Region"
+                           formControlName="location">
+                  </div>
+                </div>
+              </div>
+
+              <!-- Monitoring Configuration -->
+              <div class="form-section">
+                <h6 class="section-title">Monitoring Configuration</h6>
+                
+                <div class="form-row">
+                  <div class="form-field checkbox-field">
+                    <nb-checkbox formControlName="monitoring_enabled">
+                      Enable Monitoring
+                    </nb-checkbox>
+                  </div>
+                  
+                  <div class="form-field">
+                    <label class="label">Monitoring Interval (seconds)</label>
+                    <input nbInput 
+                           fullWidth 
+                           type="number"
+                           placeholder="60"
+                           formControlName="monitoring_interval"
+                           [status]="isFieldInvalid('monitoring_interval') ? 'danger' : 'basic'">
+                    <div *ngIf="isFieldInvalid('monitoring_interval')" class="error-message">
+                      {{ getFieldError('monitoring_interval') }}
+                    </div>
+                  </div>
+                </div>
+
+                <div class="form-row">
+                  <div class="form-field full-width">
+                    <label class="label">Description</label>
+                    <textarea nbInput 
+                              fullWidth 
+                              rows="3"
+                              placeholder="Optional description of this server"
+                              formControlName="description">
+                    </textarea>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="form-actions" *ngIf="isEditing">
+              <button type="button" 
+                      nbButton 
+                      ghost 
+                      (click)="cancelEdit()"
+                      [disabled]="saving">
+                Cancel
+              </button>
+              
+              <button type="submit" 
+                      nbButton 
+                      status="primary"
+                      [disabled]="!serverForm.valid || saving">
+                <nb-spinner size="tiny" *ngIf="saving"></nb-spinner>
+                <nb-icon icon="save-outline" *ngIf="!saving"></nb-icon>
+                {{ isAddingNew ? 'Create Server' : 'Save Changes' }}
+              </button>
+            </div>
+          </form>
+        </nb-card-body>
+      </nb-card>
+      
+      <ng-template #noSelectionTemplate>
+        <nb-card class="no-selection">
+          <nb-card-body>
+            <div class="empty-state">
+              <nb-icon icon="settings-outline" class="empty-icon"></nb-icon>
+              <h6>No Server Selected</h6>
+              <p>Select a server from the list to view and edit its configuration, or add a new server.</p>
+              <button nbButton status="primary" (click)="startAddNew()">
+                <nb-icon icon="plus-outline"></nb-icon>
+                Add New Server
+              </button>
+            </div>
+          </nb-card-body>
+        </nb-card>
+      </ng-template>
+    </div>
+  </div>
+</div>

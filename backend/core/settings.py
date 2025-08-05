@@ -65,9 +65,13 @@ MIDDLEWARE = [
 #     'django.contrib.auth.backends.ModelBackend',
 # ]
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:4200",
-]
+# CORS_ALLOWED_ORIGINS = [
+#     "http://localhost:4200",
+#     "http://192.168.240.1:4200"
+# ]
+
+CORS_ALLOW_ALL_ORIGINS = True
+
 
 # REST_FRAMEWORK = {
 #     'DEFAULT_AUTHENTICATION_CLASSES': [

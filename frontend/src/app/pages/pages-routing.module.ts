@@ -32,10 +32,16 @@ const routes: Routes = [{
       loadChildren: () => import('./anomaly/anomaly.module')
         .then(m => m.AnomalyModule)
     },
+    {
+      path: 'server-configuration',
+      loadChildren: () => import('./server-configuration/server-configuration.module')
+        .then(m => m.ServerConfigurationModule),
+    },
     { path: '', redirectTo: 'realtime', pathMatch: 'full' },
     { path: '**', redirectTo: 'realtime' }
   ],
-}];
+},
+{ path: 'server-configuration', loadChildren: () => import('./server-configuration/server-configuration.module').then(m => m.ServerConfigurationModule) }];
 
 @NgModule({
   imports: [RouterModule.forChild(routes)],

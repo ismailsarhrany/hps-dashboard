@@ -7,7 +7,8 @@ import {
   ChangeDetectorRef,
 } from "@angular/core";
 import { FormBuilder, FormGroup, Validators } from "@angular/forms";
-import { Subscription, forkJoin,Subject, BehaviorSubject } from "rxjs";
+import { Subscription, forkJoin, Subject, BehaviorSubject } from "rxjs";
+import { takeUntil } from "rxjs/operators";
 import { NbThemeService } from "@nebular/theme";
 import { EChartsOption } from "echarts";
 import {
@@ -23,7 +24,7 @@ import {
   NetworkDataService,
   HistoricalNetstatPoint,
 } from "../../services/network-data.service";
-import { ServerService } from '../../services/server.service'; // Added
+import { ServerService, Server } from '../../services/server.service';
 
 @Component({
   selector: "ngx-anomaly",
@@ -38,7 +39,8 @@ export class AnomalyComponent implements OnInit, OnDestroy {
   loading = false;
   showAnomalies = false; // Toggle for anomaly visibility
   private destroy$ = new Subject<void>(); // For subscription cleanup
-  private currentServerId: string; // Track current server
+  private currentServerId: string | null = null;
+  currentServer: Server | null = null;
 
   // Chart Options
   cpuChartOption: EChartsOption = {};
@@ -55,6 +57,7 @@ export class AnomalyComponent implements OnInit, OnDestroy {
   vmstatData: VmstatData[] = [];
   netstatData: HistoricalNetstatPoint[] = [];
   iostatData: HistoricalIostatPoint[] = [];
+  servers: Server[] = [];
 
   // Anomaly data storage
   cpuAnomalies: { user: [number, number][]; system: [number, number][] } = {
@@ -112,8 +115,42 @@ export class AnomalyComponent implements OnInit, OnDestroy {
         }
         this.cdr.markForCheck();
       });
+    // Add server selection handling
+    // Initialize and fetch servers
+    this.serverService.fetchServers();
 
-    this.loadDefaultData();
+    // Subscribe to servers list
+    this.serverService.servers$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(servers => {
+        this.servers = servers || [];
+        this.cdr.markForCheck();
+      });
+
+    // Handle server selection changes
+    this.serverService.selectedServerId$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(serverId => {
+        if (serverId !== this.currentServerId) {
+          this.currentServerId = serverId;
+          this.updateCurrentServer();
+          this.resetData();
+
+          // Only load data if we have a valid server ID
+          if (serverId) {
+            this.loadHistoricalData();
+          }
+        }
+      });
+
+    // Subscribe to current server details
+    this.serverService.getSelectedServer()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(server => {
+        this.currentServer = server;
+        this.cdr.markForCheck();
+      });
+    // this.loadDefaultData();
   }
 
   ngOnDestroy(): void {
@@ -121,15 +158,25 @@ export class AnomalyComponent implements OnInit, OnDestroy {
     this.dataSubscription?.unsubscribe();
   }
 
-    private resetData() {
+    private updateCurrentServer(): void {
+    if (this.currentServerId) {
+      this.currentServer = this.servers.find(s => s.id === this.currentServerId) || null;
+    } else {
+      this.currentServer = null;
+    }
+  }
+
+  private resetData() {
     this.vmstatData = [];
     this.netstatData = [];
     this.iostatData = [];
     this.updateAllCharts(); // Clear charts
     this.cdr.markForCheck();
   }
-
-  // ... (All existing methods from historic.component.ts remain the same)
+  onServerChange(serverId: string): void {
+    // This is handled automatically by the ServerService
+    console.log('Server changed to:', serverId);
+  }
 
   // NEW: Toggle anomaly visibility
   toggleAnomalies(): void {
