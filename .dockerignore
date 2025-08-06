@@ -1,0 +1,27 @@
+# Exclude large/unnecessary directories
+System Volume Information/
+$RECYCLE.BIN/
+.git
+.vscode
+.devcontainer
+node_modules
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.python-version
+
+# Exclude frontend build artifacts
+frontend/dist/
+frontend/.angular/
+frontend/node_modules/
+
+# Exclude backend virtual environments
+backend/venv/
+backend/.venv/
+
+# Exclude large files
+*.log
+*.sqlite3
+*.db
+*.dump
