@@ -147,10 +147,61 @@
 
 
 
-from cryptography.fernet import Fernet
+# import cx_Oracle
 
-# Generate a secure key
-key = Fernet.generate_key()
+# # Connection parameters
+# host = "oracle-test"  # Docker service name, if connecting from another container
+# port = 1521
+# sid = "XE"  # Using SID here
+# username = "testuser"
+# password = "testpass"
 
-# Print or store your FIELD_ENCRYPTION_KEY
-print(key.decode())
+# # Correct DSN string
+# dsn = f"(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST={host})(PORT={port}))(CONNECT_DATA=(SID={sid})))"
+
+# Connect
+# try:
+#     conn = cx_Oracle.connect(user=username, password=password, dsn=dsn)
+#     print("✅ Connected to Oracle DB!")
+#     conn.close()
+# except cx_Oracle.DatabaseError as e:
+#     print("❌ Connection failed:", e)
+
+import oracledb
+
+try:
+    # For connections from HOST machine
+    dsn = oracledb.makedsn("localhost", 1521, sid="XE")
+    
+    # For connections from OTHER CONTAINERS
+    # dsn = oracledb.makedsn("oracle-test", 1521, sid="XE")
+    
+    conn = oracledb.connect(
+        user="testuser",
+        password="testpass",
+        dsn=dsn
+    )
+    print("✅ Connected to Oracle using SID!")
+    
+    # Test query
+    cursor = conn.cursor()
+    cursor.execute("SELECT 'Success!' FROM DUAL")
+    result, = cursor.fetchone()
+    print(f"Query result: {result}")
+    
+except oracledb.Error as e:
+    print(f"Oracle connection failed: {e}")
+except Exception as e:
+    print(f"General error: {e}")
+finally:
+    if 'conn' in locals():
+        conn.close()
+
+import oracledb
+
+# Simplest possible connection
+conn = oracledb.connect("testuser/testpass@localhost:1521/XE")
+print("✅ Connected!")
+cursor = conn.cursor()
+cursor.execute("SELECT 'DBeaver Test' FROM DUAL")
+print(cursor.fetchone()[0])

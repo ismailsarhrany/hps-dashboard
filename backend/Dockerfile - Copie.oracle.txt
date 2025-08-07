@@ -1,0 +1,241 @@
+# backend/Dockerfile.oracle
+
+FROM python:3.11-slim
+
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    DEBIAN_FRONTEND=noninteractive
+
+# Fix repository sources
+RUN echo 'deb http://deb.debian.org/debian bookworm main' > /etc/apt/sources.list && \
+    echo 'deb http://deb.debian.org/debian bookworm-updates main' >> /etc/apt/sources.list
+
+# Install system dependencies including Oracle requirements
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    gcc \
+    g++ \
+    curl \
+    wget \
+    unzip \
+    libaio1 \
+    postgresql-client \
+    cron \
+    libpq-dev \
+    supervisor \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create app user
+RUN groupadd -r app_group && useradd -r -g app_group -m -d /home/app_user -s /sbin/nologin app_user
+
+# Install Oracle Instant Client
+WORKDIR /tmp
+RUN wget https://download.oracle.com/otn_software/linux/instantclient/211000/instantclient-basic-linux.x64-21.1.0.0.0.zip && \
+    wget https://download.oracle.com/otn_software/linux/instantclient/211000/instantclient-sdk-linux.x64-21.1.0.0.0.zip && \
+    unzip instantclient-basic-linux.x64-21.1.0.0.0.zip && \
+    unzip instantclient-sdk-linux.x64-21.1.0.0.0.zip && \
+    mkdir -p /opt/oracle && \
+    mv instantclient_21_1 /opt/oracle/ && \
+    rm -f instantclient-*.zip
+
+# Set Oracle environment variables
+ENV LD_LIBRARY_PATH=/opt/oracle/instantclient_21_1:$LD_LIBRARY_PATH
+ENV TNS_ADMIN=/opt/oracle/instantclient_21_1/network/admin
+
+# Create TNS_ADMIN directory
+RUN mkdir -p /opt/oracle/instantclient_21_1/network/admin
+
+# Set working directory
+WORKDIR /app
+
+# Copy requirements file first for better caching
+COPY requirements.txt .
+
+# Upgrade pip first
+RUN python -m pip install --no-cache-dir --upgrade pip
+
+# Install Python dependencies (including cx_Oracle)
+RUN python -m pip install --no-cache-dir -r requirements.txt
+
+# Copy the rest of the application code
+COPY . .
+
+# Copy supervisord configuration
+COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
+# Create supervisor log directory
+RUN mkdir -p /var/log/supervisor && chown -R app_user:app_group /var/log/supervisor
+
+# Change ownership of the app directory
+RUN chown -R app_user:app_group /app
+
+# Expose the application port
+EXPOSE 8000
+
+# Run supervisord
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+
+# backend/Dockerfile.oracle (Enhanced for development)
+
+# FROM python:3.11-slim as base
+
+# # Set environment variables
+# ENV PYTHONDONTWRITEBYTECODE=1 \
+#     PYTHONUNBUFFERED=1 \
+#     DEBIAN_FRONTEND=noninteractive
+
+# # Fix repository sources
+# RUN echo 'deb http://deb.debian.org/debian bookworm main' > /etc/apt/sources.list && \
+#     echo 'deb http://deb.debian.org/debian bookworm-updates main' >> /etc/apt/sources.list
+
+# # Install system dependencies including Oracle requirements
+# RUN apt-get update && apt-get install -y --no-install-recommends \
+#     build-essential \
+#     gcc \
+#     g++ \
+#     curl \
+#     wget \
+#     unzip \
+#     libaio1 \
+#     postgresql-client \
+#     cron \
+#     libpq-dev \
+#     supervisor \
+#     git \
+#     vim \
+#     nano \
+#     htop \
+#     tree \
+#     jq \
+#     && rm -rf /var/lib/apt/lists/*
+
+# # Create app user with specific UID/GID for consistency with host
+# RUN groupadd -r app_group --gid=1000 && \
+#     useradd -r -g app_group -m -d /home/app_user -s /bin/bash --uid=1000 app_user
+
+# # Install Oracle Instant Client
+# WORKDIR /tmp
+# RUN wget https://download.oracle.com/otn_software/linux/instantclient/211000/instantclient-basic-linux.x64-21.1.0.0.0.zip && \
+#     wget https://download.oracle.com/otn_software/linux/instantclient/211000/instantclient-sdk-linux.x64-21.1.0.0.0.zip && \
+#     unzip instantclient-basic-linux.x64-21.1.0.0.0.zip && \
+#     unzip instantclient-sdk-linux.x64-21.1.0.0.0.zip && \
+#     mkdir -p /opt/oracle && \
+#     mv instantclient_21_1 /opt/oracle/ && \
+#     rm -f instantclient-*.zip
+
+# # Set Oracle environment variables
+# ENV LD_LIBRARY_PATH=/opt/oracle/instantclient_21_1:$LD_LIBRARY_PATH
+# ENV TNS_ADMIN=/opt/oracle/instantclient_21_1/network/admin
+
+# # Create TNS_ADMIN directory
+# RUN mkdir -p /opt/oracle/instantclient_21_1/network/admin
+
+# # Production stage
+# FROM base as production
+
+# WORKDIR /app
+# COPY requirements.txt .
+# RUN python -m pip install --no-cache-dir --upgrade pip
+# RUN python -m pip install --no-cache-dir -r requirements.txt
+
+# COPY . .
+# COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+# RUN mkdir -p /var/log/supervisor && chown -R app_user:app_group /var/log/supervisor
+# RUN chown -R app_user:app_group /app
+
+# EXPOSE 8000
+# CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+
+# # Development stage
+# FROM base as development
+
+# # Install additional development tools
+# RUN apt-get update && apt-get install -y --no-install-recommends \
+#     zsh \
+#     fish \
+#     sudo \
+#     ssh-client \
+#     && rm -rf /var/lib/apt/lists/*
+
+# # Add app_user to sudo group
+# RUN usermod -aG sudo app_user && \
+#     echo 'app_user ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+
+# # Install Oh My Zsh for app_user
+# USER app_user
+# RUN sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended || true
+
+# # Switch back to root for package installation
+# USER root
+
+# WORKDIR /app
+
+# # Copy requirements and install Python packages
+# COPY requirements.txt .
+# RUN python -m pip install --no-cache-dir --upgrade pip
+
+# # Install requirements with development dependencies
+# RUN python -m pip install --no-cache-dir -r requirements.txt
+
+# # Install development-specific packages
+# RUN python -m pip install --no-cache-dir \
+#     watchdog \
+#     django-extensions \
+#     ipython \
+#     jupyter \
+#     pytest \
+#     pytest-django \
+#     pytest-cov \
+#     black \
+#     isort \
+#     pylint \
+#     flake8 \
+#     mypy \
+#     pre-commit \
+#     django-debug-toolbar \
+#     django-cors-headers
+
+# # Create necessary directories and set permissions
+# RUN mkdir -p /app/logs /app/media /app/static /var/log/supervisor
+# RUN chown -R app_user:app_group /app /var/log/supervisor
+
+# # Setup development environment
+# COPY --chown=app_user:app_group . .
+
+# # Switch to app_user for running the application
+# USER app_user
+
+# # Set up git safe directory
+# RUN git config --global --add safe.directory /app
+
+# # Create a development startup script
+# RUN echo '#!/bin/bash\n\
+# set -e\n\
+# echo "🚀 Starting development server..."\n\
+# \n\
+# # Wait for database\n\
+# echo "⏳ Waiting for database..."\n\
+# while ! pg_isready -h ${POSTGRES_HOST:-postgres} -p ${POSTGRES_PORT:-5432} -U ${POSTGRES_USER:-postgres} > /dev/null 2>&1; do\n\
+#   echo "Database is unavailable - sleeping"\n\
+#   sleep 2\n\
+# done\n\
+# echo "✅ Database is ready!"\n\
+# \n\
+# # Run migrations\n\
+# echo "🗃️ Running migrations..."\n\
+# python manage.py makemigrations --noinput || true\n\
+# python manage.py migrate --noinput || true\n\
+# \n\
+# # Collect static files (if needed)\n\
+# # python manage.py collectstatic --noinput || true\n\
+# \n\
+# # Start development server with auto-reload\n\
+# echo "🌟 Starting development server with hot reload..."\n\
+# exec python manage.py runserver 0.0.0.0:8000\n\
+# ' > /app/dev-entrypoint.sh && chmod +x /app/dev-entrypoint.sh
+
+# EXPOSE 8000
+
+# # Default command for development
+# CMD ["/app/dev-entrypoint.sh"]

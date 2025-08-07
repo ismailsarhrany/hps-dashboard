@@ -1,3 +1,5 @@
+# Add these fixes to your existing serializers.py
+
 from rest_framework import serializers
 from .models import Server, OracleDatabase, OracleTable, OracleTableData, OracleMonitoringTask
 
@@ -5,7 +7,17 @@ class ServerSerializer(serializers.ModelSerializer):
     """Serializer for Server model"""
     class Meta:
         model = Server
-        fields = ['id', 'hostname', 'ip_address', 'ssh_port', 'ssh_username', 'is_active', 'created_at', 'updated_at']
+        fields = [
+            'id', 
+            'hostname', 
+            'ip_address', 
+            'ssh_port', 
+            'ssh_username', 
+            'status', 
+            'monitoring_enabled',  # Use this instead of is_active
+            'created_at', 
+            'updated_at'
+        ]
         extra_kwargs = {
             'ssh_password': {'write_only': True}
         }
@@ -22,7 +34,7 @@ class OracleDatabaseSerializer(serializers.ModelSerializer):
         model = OracleDatabase
         fields = [
             'id', 'server', 'server_id', 'server_name', 'name', 'host', 'port', 
-            'sid', 'username', 'connection_timeout', 'is_active',  # Changed service_name to sid
+            'sid', 'username', 'connection_timeout', 'is_active',
             'created_at', 'updated_at', 'last_connection_test', 'connection_status',
             'connection_status_display', 'monitored_tables_count'
         ]
@@ -38,7 +50,7 @@ class OracleTableSerializer(serializers.ModelSerializer):
     database = OracleDatabaseSerializer(read_only=True)
     database_id = serializers.IntegerField(write_only=True)
     database_name = serializers.CharField(source='database.name', read_only=True)
-    server_name = serializers.CharField(source='database.server.hostname', read_only=True)  # Fixed
+    server_name = serializers.CharField(source='database.server.hostname', read_only=True)
     full_table_name = serializers.CharField(source='get_full_table_name', read_only=True)
     latest_snapshot = serializers.SerializerMethodField()
     monitoring_status = serializers.SerializerMethodField()
@@ -95,7 +107,7 @@ class OracleTableDataSerializer(serializers.ModelSerializer):
     table_id = serializers.IntegerField(write_only=True)
     table_name = serializers.CharField(source='table.table_name', read_only=True)
     database_name = serializers.CharField(source='table.database.name', read_only=True)
-    server_name = serializers.CharField(source='table.database.server.hostname', read_only=True)  # Fixed
+    server_name = serializers.CharField(source='table.database.server.hostname', read_only=True)
     data_preview = serializers.SerializerMethodField()
     
     class Meta:
@@ -120,7 +132,7 @@ class OracleTableDataSerializer(serializers.ModelSerializer):
         # If this is a list view, don't include full data to reduce payload size
         request = self.context.get('request')
         if request and hasattr(request, 'resolver_match'):
-            if request.resolver_match.url_name.endswith('-list'):
+            if request.resolver_match.url_name and request.resolver_match.url_name.endswith('-list'):
                 data.pop('data', None)  # Remove full data from list views
         
         return data
@@ -131,7 +143,7 @@ class OracleMonitoringTaskSerializer(serializers.ModelSerializer):
     table_id = serializers.IntegerField(write_only=True)
     table_name = serializers.CharField(source='table.table_name', read_only=True)
     database_name = serializers.CharField(source='table.database.name', read_only=True)
-    server_name = serializers.CharField(source='table.database.server.hostname', read_only=True)  # Fixed
+    server_name = serializers.CharField(source='table.database.server.hostname', read_only=True)
     status_display = serializers.CharField(source='get_status_display', read_only=True)
     duration_formatted = serializers.SerializerMethodField()
     
@@ -167,7 +179,7 @@ class OracleMonitoringTaskSerializer(serializers.ModelSerializer):
 class OracleTableSummarySerializer(serializers.ModelSerializer):
     """Lightweight serializer for table summaries"""
     database_name = serializers.CharField(source='database.name', read_only=True)
-    server_name = serializers.CharField(source='database.server.hostname', read_only=True)  # Fixed
+    server_name = serializers.CharField(source='database.server.hostname', read_only=True)
     full_table_name = serializers.CharField(source='get_full_table_name', read_only=True)
     last_update = serializers.DateTimeField(source='last_poll_time', read_only=True)
     
@@ -187,7 +199,7 @@ class OracleDatabaseSummarySerializer(serializers.ModelSerializer):
     class Meta:
         model = OracleDatabase
         fields = [
-            'id', 'name', 'server_name', 'host', 'port', 'sid',  # Changed service_name to sid
+            'id', 'name', 'server_name', 'host', 'port', 'sid',
             'connection_status', 'last_connection_test', 'table_count', 'is_active'
         ]
     

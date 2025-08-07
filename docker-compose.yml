@@ -45,14 +45,12 @@ services:
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      # Simplified configuration for better reliability
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
       KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
-      # Reduce startup time and resource usage
       KAFKA_LOG_RETENTION_HOURS: 1
       KAFKA_LOG_RETENTION_BYTES: 104857600
       KAFKA_LOG_SEGMENT_BYTES: 104857600
@@ -61,8 +59,7 @@ services:
     networks:
       - app-network
     healthcheck:
-      test:
-        ["CMD", "kafka-topics", "--bootstrap-server", "localhost:9092", "--list"]
+      test: ["CMD", "kafka-topics", "--bootstrap-server", "localhost:9092", "--list"]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -82,6 +79,26 @@ services:
       retries: 3
       start_period: 20s
 
+  # --- Oracle Database ---
+  oracle-test:
+    image: gvenzl/oracle-xe:21-slim
+    environment:
+      ORACLE_PASSWORD: oracle_password
+    ports:
+      - "1521:1521"
+    volumes:
+      - oracle_data:/opt/oracle/oradata
+      - ./oracle-init:/docker-entrypoint-initdb.d
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "sqlplus -s testuser/testpass@localhost:1521/XE <<< 'SELECT 1 FROM DUAL;'"]      
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 120s  # Oracle takes time to start
+    restart: unless-stopped
+
   # --- Backend ---
   backend:
     build:
@@ -96,9 +113,11 @@ services:
       postgres:
         condition: service_healthy
       kafka:
-        condition: service_healthy  # Changed to healthy
+        condition: service_healthy
       redis:
         condition: service_healthy
+      oracle-test:
+        condition: service_healthy  # Wait for Oracle to be ready
     env_file:
       - ./.env
     environment:
@@ -108,10 +127,13 @@ services:
       PYTHONPATH: /app
       LD_LIBRARY_PATH: /opt/oracle/instantclient_21_1
       TNS_ADMIN: /opt/oracle/instantclient_21_1/network/admin
+      # Oracle connection environment variables
+      ORACLE_HOST: oracle-test
+      ORACLE_PORT: 1521
+      ORACLE_SID: XE
     networks:
       - app-network
       - monitoring_network
-    # Add restart policy for stability
     restart: unless-stopped
 
   # --- Kafka UI ---
@@ -129,23 +151,8 @@ services:
     networks:
       - app-network
     restart: unless-stopped
-  
-  # Optional: Oracle Database for testing (if you don't have external Oracle)
-  oracle-test:
-    image: gvenzl/oracle-xe:21-slim
-    environment:
-      ORACLE_PASSWORD: oracle_password
-      APP_USER: testuser
-      APP_USER_PASSWORD: testpass
-    ports:
-      - "1521:1521"
-    volumes:
-      - oracle_data:/opt/oracle/oradata
-      - ./oracle-init:/docker-entrypoint-initdb.d
-    networks:
-      - app-network
 
-  # # --- Frontend ---
+  # --- Frontend ---
   frontend:
     build:
       context: ./frontend
@@ -211,4 +218,4 @@ networks:
     driver: bridge
     ipam:
       config:
-        - subnet: 172.20.0.0/24 
+        - subnet: 172.20.0.0/24

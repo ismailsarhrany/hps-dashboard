@@ -16,6 +16,7 @@
 # ]
 
 # metrics/consumers/routing.py
+# metrics/consumers/routing.py
 from django.urls import re_path
 from . import consumers
 
@@ -28,6 +29,7 @@ websocket_urlpatterns = [
     
     # General metrics URL
     re_path(r'ws/metrics/(?P<server_id>[^/]+)/$', consumers.MetricConsumer.as_asgi()),
-    # Oracle data
-re_path(r'ws/oracle_updates_{server_id}/$', consumers.OracleDataConsumer.as_asgi())
+    
+    # Oracle data WebSocket - FIXED: Use proper parameter name
+    re_path(r'ws/oracle_updates/(?P<server_id>[^/]+)/$', consumers.OracleDataConsumer.as_asgi()),
 ]

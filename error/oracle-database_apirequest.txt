@@ -1,0 +1,75 @@
+backend-1  | Internal Server Error: /api/oracle-databases/
+backend-1  | Traceback (most recent call last):
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 489, in thread_handler
+backend-1  |     raise exc_info[1]
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/django/core/handlers/exception.py", line 42, in inner
+backend-1  |     response = await get_response(request)
+backend-1  |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 489, in thread_handler
+backend-1  |     raise exc_info[1]
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/django/core/handlers/base.py", line 253, in _get_response_async
+backend-1  |     response = await wrapped_callback(
+backend-1  |                ^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 439, in __call__
+backend-1  |     ret = await asyncio.shield(exec_coro)
+backend-1  |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/usr/local/lib/python3.11/concurrent/futures/thread.py", line 58, in run
+backend-1  |     result = self.fn(*self.args, **self.kwargs)
+backend-1  |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 493, in thread_handler
+backend-1  |     return func(*args, **kwargs)
+backend-1  |            ^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/django/views/decorators/csrf.py", line 65, in _view_wrapper
+backend-1  |     return view_func(request, *args, **kwargs)
+backend-1  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/rest_framework/viewsets.py", line 125, in view
+backend-1  |     return self.dispatch(request, *args, **kwargs)
+backend-1  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 515, in dispatch
+backend-1  |     response = self.handle_exception(exc)
+backend-1  |                ^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 475, in handle_exception
+backend-1  |     self.raise_uncaught_exception(exc)
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 486, in raise_uncaught_exception
+backend-1  |     raise exc
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 512, in dispatch
+backend-1  |     response = handler(request, *args, **kwargs)
+backend-1  |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/rest_framework/mixins.py", line 43, in list
+backend-1  |     return self.get_paginated_response(serializer.data)
+backend-1  |                                        ^^^^^^^^^^^^^^^
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/rest_framework/serializers.py", line 797, in data
+backend-1  |     ret = super().data
+backend-1  |           ^^^^^^^^^^^^
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/rest_framework/serializers.py", line 251, in data
+backend-1  |     self._data = self.to_representation(self.instance)
+backend-1  |                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/rest_framework/serializers.py", line 715, in to_representation
+backend-1  |     return [
+backend-1  |            ^
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/rest_framework/serializers.py", line 716, in <listcomp>
+backend-1  |     self.child.to_representation(item) for item in iterable
+backend-1  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/rest_framework/serializers.py", line 540, in to_representation
+backend-1  |     ret[field.field_name] = field.to_representation(attribute)
+backend-1  |                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/rest_framework/serializers.py", line 525, in to_representation
+backend-1  |     for field in fields:
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/rest_framework/serializers.py", line 386, in _readable_fields
+backend-1  |     for field in self.fields.values():
+backend-1  |                  ^^^^^^^^^^^
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/django/utils/functional.py", line 47, in __get__
+backend-1  |     res = instance.__dict__[self.name] = self.func(instance)
+backend-1  |                                          ^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/rest_framework/serializers.py", line 374, in fields
+backend-1  |     for key, value in self.get_fields().items():
+backend-1  |                       ^^^^^^^^^^^^^^^^^
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/rest_framework/serializers.py", line 1105, in get_fields
+backend-1  |     field_class, field_kwargs = self.build_field(
+backend-1  |                                 ^^^^^^^^^^^^^^^^^
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/rest_framework/serializers.py", line 1251, in build_field
+backend-1  |     return self.build_unknown_field(field_name, model_class)
+backend-1  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/rest_framework/serializers.py", line 1369, in build_unknown_field
+backend-1  |     raise ImproperlyConfigured(
+backend-1  | django.core.exceptions.ImproperlyConfigured: Field name `is_active` is not valid for model `Server` in `metrics.serializers.ServerSerializer`.
