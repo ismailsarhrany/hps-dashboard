@@ -96,6 +96,10 @@ export class ServerService {
     );
   }
 
+  getServers(): Observable<{ servers: Server[] }> {
+    return this.http.get<{ servers: Server[] }>(`${environment.apiUrl}/api/servers/`);
+  }
+
   // Add new methods required by server-tabs
   loadServers(): Observable<Server[]> {
     return this.servers$;

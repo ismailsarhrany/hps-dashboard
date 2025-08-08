@@ -15632,3 +15632,135 @@
 2025-08-07 15:35:52,079 INFO stopped: unified_collector (exit status 0)
 2025-08-07 15:35:52,080 INFO waiting for gunicorn to die
 2025-08-07 15:35:52,395 INFO stopped: gunicorn (exit status 0)
+2025-08-08 08:12:58,909 INFO Set uid to user 0 succeeded
+2025-08-08 08:12:58,923 INFO supervisord started with pid 1
+2025-08-08 08:12:59,930 INFO spawned: 'gunicorn' with pid 7
+2025-08-08 08:13:00,934 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-08-08 08:23:21,423 WARN received SIGTERM indicating exit request
+2025-08-08 08:23:21,434 INFO waiting for gunicorn to die
+2025-08-08 08:23:24,643 INFO waiting for gunicorn to die
+2025-08-08 08:23:27,646 INFO waiting for gunicorn to die
+2025-08-08 08:23:30,650 INFO waiting for gunicorn to die
+2025-08-08 08:23:37,150 INFO Set uid to user 0 succeeded
+2025-08-08 08:23:37,166 INFO supervisord started with pid 1
+2025-08-08 08:23:38,171 INFO spawned: 'gunicorn' with pid 7
+2025-08-08 08:23:39,590 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-08-08 08:53:37,426 WARN received SIGTERM indicating exit request
+2025-08-08 08:53:37,438 INFO waiting for gunicorn to die
+2025-08-08 08:53:38,194 INFO stopped: gunicorn (exit status 0)
+2025-08-08 08:53:47,024 INFO Set uid to user 0 succeeded
+2025-08-08 08:53:47,037 INFO supervisord started with pid 1
+2025-08-08 08:53:48,040 INFO spawned: 'gunicorn' with pid 7
+2025-08-08 08:53:49,046 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-08-08 08:57:14,496 WARN received SIGTERM indicating exit request
+2025-08-08 08:57:14,507 INFO waiting for gunicorn to die
+2025-08-08 08:57:14,977 INFO stopped: gunicorn (exit status 0)
+2025-08-08 08:57:21,496 INFO Set uid to user 0 succeeded
+2025-08-08 08:57:21,507 INFO supervisord started with pid 1
+2025-08-08 08:57:22,515 INFO spawned: 'gunicorn' with pid 7
+2025-08-08 08:57:23,510 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-08-08 09:00:01,903 WARN received SIGTERM indicating exit request
+2025-08-08 09:00:01,909 INFO waiting for gunicorn to die
+2025-08-08 09:00:02,230 INFO stopped: gunicorn (exit status 0)
+2025-08-08 09:00:08,803 INFO Set uid to user 0 succeeded
+2025-08-08 09:00:08,818 INFO supervisord started with pid 1
+2025-08-08 09:00:09,824 INFO spawned: 'gunicorn' with pid 7
+2025-08-08 09:00:11,604 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-08-08 09:31:27,493 WARN received SIGTERM indicating exit request
+2025-08-08 09:31:27,508 INFO waiting for gunicorn to die
+2025-08-08 09:31:28,003 INFO stopped: gunicorn (exit status 0)
+2025-08-08 09:31:35,051 INFO Set uid to user 0 succeeded
+2025-08-08 09:31:35,062 INFO supervisord started with pid 1
+2025-08-08 09:31:36,069 INFO spawned: 'gunicorn' with pid 7
+2025-08-08 09:31:37,076 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-08-08 09:48:35,837 WARN received SIGTERM indicating exit request
+2025-08-08 09:48:35,844 INFO waiting for gunicorn to die
+2025-08-08 09:48:37,238 INFO stopped: gunicorn (exit status 0)
+2025-08-08 09:48:43,688 INFO Set uid to user 0 succeeded
+2025-08-08 09:48:43,701 INFO supervisord started with pid 1
+2025-08-08 09:48:44,705 INFO spawned: 'gunicorn' with pid 7
+2025-08-08 09:48:46,650 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-08-08 09:59:01,449 WARN received SIGTERM indicating exit request
+2025-08-08 09:59:01,468 INFO waiting for gunicorn to die
+2025-08-08 09:59:03,118 INFO stopped: gunicorn (exit status 0)
+2025-08-08 09:59:10,580 INFO Set uid to user 0 succeeded
+2025-08-08 09:59:10,596 INFO supervisord started with pid 1
+2025-08-08 09:59:11,606 INFO spawned: 'gunicorn' with pid 7
+2025-08-08 09:59:12,621 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-08-08 10:04:08,842 WARN received SIGTERM indicating exit request
+2025-08-08 10:04:08,859 INFO waiting for gunicorn to die
+2025-08-08 10:04:09,645 INFO stopped: gunicorn (exit status 0)
+2025-08-08 10:04:16,920 INFO Set uid to user 0 succeeded
+2025-08-08 10:04:16,933 INFO supervisord started with pid 1
+2025-08-08 10:04:17,936 INFO spawned: 'gunicorn' with pid 7
+2025-08-08 10:04:18,938 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-08-08 10:19:17,865 WARN received SIGTERM indicating exit request
+2025-08-08 10:19:17,872 INFO waiting for gunicorn to die
+2025-08-08 10:19:18,381 INFO stopped: gunicorn (exit status 0)
+2025-08-08 10:19:25,566 INFO Set uid to user 0 succeeded
+2025-08-08 10:19:25,577 INFO supervisord started with pid 1
+2025-08-08 10:19:26,585 INFO spawned: 'gunicorn' with pid 7
+2025-08-08 10:19:27,593 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-08-08 10:37:12,585 WARN received SIGTERM indicating exit request
+2025-08-08 10:37:12,600 INFO waiting for gunicorn to die
+2025-08-08 10:37:14,155 INFO stopped: gunicorn (exit status 0)
+2025-08-08 10:37:22,862 INFO Set uid to user 0 succeeded
+2025-08-08 10:37:22,875 INFO supervisord started with pid 1
+2025-08-08 10:37:23,881 INFO spawned: 'gunicorn' with pid 7
+2025-08-08 10:37:24,886 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-08-08 10:41:42,574 WARN received SIGTERM indicating exit request
+2025-08-08 10:41:42,585 INFO waiting for gunicorn to die
+2025-08-08 10:41:43,021 INFO stopped: gunicorn (exit status 0)
+2025-08-08 10:41:49,370 INFO Set uid to user 0 succeeded
+2025-08-08 10:41:49,381 INFO supervisord started with pid 1
+2025-08-08 10:41:50,387 INFO spawned: 'gunicorn' with pid 7
+2025-08-08 10:41:51,390 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-08-08 10:45:51,209 WARN received SIGTERM indicating exit request
+2025-08-08 10:45:51,219 INFO waiting for gunicorn to die
+2025-08-08 10:45:51,578 INFO stopped: gunicorn (exit status 0)
+2025-08-08 10:45:58,271 INFO Set uid to user 0 succeeded
+2025-08-08 10:45:58,285 INFO supervisord started with pid 1
+2025-08-08 10:45:59,288 INFO spawned: 'gunicorn' with pid 7
+2025-08-08 10:46:01,252 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-08-08 10:55:30,081 WARN received SIGTERM indicating exit request
+2025-08-08 10:55:30,085 INFO waiting for gunicorn to die
+2025-08-08 10:55:30,514 INFO stopped: gunicorn (exit status 0)
+2025-08-08 10:55:37,059 INFO Set uid to user 0 succeeded
+2025-08-08 10:55:37,067 INFO supervisord started with pid 1
+2025-08-08 10:55:38,071 INFO spawned: 'gunicorn' with pid 7
+2025-08-08 10:55:40,000 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-08-08 11:03:25,578 INFO Set uid to user 0 succeeded
+2025-08-08 11:03:25,686 INFO supervisord started with pid 1
+2025-08-08 11:03:26,717 INFO spawned: 'gunicorn' with pid 6
+2025-08-08 11:03:27,738 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-08-08 11:03:52,045 WARN received SIGTERM indicating exit request
+2025-08-08 11:03:52,049 INFO waiting for gunicorn to die
+2025-08-08 11:03:52,637 INFO stopped: gunicorn (exit status 0)
+2025-08-08 11:32:13,045 INFO Set uid to user 0 succeeded
+2025-08-08 11:32:13,063 INFO supervisord started with pid 1
+2025-08-08 11:32:14,070 INFO spawned: 'gunicorn' with pid 7
+2025-08-08 11:32:15,077 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-08-08 13:40:48,384 WARN received SIGTERM indicating exit request
+2025-08-08 13:40:48,453 INFO waiting for gunicorn to die
+2025-08-08 13:40:49,266 INFO stopped: gunicorn (exit status 0)
+2025-08-08 13:40:59,123 INFO Set uid to user 0 succeeded
+2025-08-08 13:40:59,134 INFO supervisord started with pid 1
+2025-08-08 13:41:00,140 INFO spawned: 'gunicorn' with pid 7
+2025-08-08 13:41:01,146 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-08-08 14:22:59,157 WARN received SIGTERM indicating exit request
+2025-08-08 14:22:59,168 INFO waiting for gunicorn to die
+2025-08-08 14:22:59,719 INFO stopped: gunicorn (exit status 0)
+2025-08-08 14:23:07,046 INFO Set uid to user 0 succeeded
+2025-08-08 14:23:07,063 INFO supervisord started with pid 1
+2025-08-08 14:23:08,067 INFO spawned: 'gunicorn' with pid 7
+2025-08-08 14:23:09,070 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-08-08 14:49:12,708 WARN received SIGTERM indicating exit request
+2025-08-08 14:49:12,723 INFO waiting for gunicorn to die
+2025-08-08 14:49:14,209 INFO stopped: gunicorn (exit status 0)
+2025-08-08 14:49:20,846 INFO Set uid to user 0 succeeded
+2025-08-08 14:49:20,856 INFO supervisord started with pid 1
+2025-08-08 14:49:21,859 INFO spawned: 'gunicorn' with pid 7
+2025-08-08 14:49:22,862 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-08-08 14:54:52,880 WARN received SIGTERM indicating exit request
+2025-08-08 14:54:52,884 INFO waiting for gunicorn to die
+2025-08-08 14:54:54,303 INFO stopped: gunicorn (exit status 0)

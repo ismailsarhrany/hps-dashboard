@@ -1,0 +1,914 @@
+<!-- src/app/pages/oracle/oracle.component.html -->
+
+<div class="oracle-monitoring">
+  <!-- Enhanced Header with System Health -->
+  <div class="row">
+    <div class="col-12">
+      <nb-card>
+        <nb-card-header class="d-flex justify-content-between align-items-center">
+          <div class="d-flex align-items-center">
+            <h4 class="mb-0">Oracle Database Monitoring</h4>
+            <nb-badge *ngIf="autoRefresh" status="success" text="Auto: {{refreshCountdown}}s" class="ms-3"></nb-badge>
+            <nb-badge 
+              [status]="systemStatistics.overallHealth >= 80 ? 'success' : systemStatistics.overallHealth >= 60 ? 'warning' : 'danger'"
+              text="Health: {{systemStatistics.overallHealth}}%" 
+              class="ms-2">
+            </nb-badge>
+          </div>
+          <div class="header-actions">
+            <button nbButton status="basic" size="small" (click)="toggleFilters()"
+              [status]="showFilters ? 'info' : 'basic'">
+              <nb-icon icon="funnel-outline"></nb-icon>
+              Filters
+            </button>
+            <button nbButton status="basic" size="small" (click)="toggleViewMode()">
+              <nb-icon [icon]="viewMode === 'grid' ? 'list-outline' : 'grid-outline'"></nb-icon>
+              {{viewMode === 'grid' ? 'List' : 'Grid'}}
+            </button>
+            <button nbButton status="basic" size="small" (click)="exportConfiguration()">
+              <nb-icon icon="download-outline"></nb-icon>
+              Export Config
+            </button>
+            <button nbButton status="basic" size="small" (click)="refreshData()" [disabled]="loading.dashboard">
+              <nb-icon icon="refresh-outline"></nb-icon>
+              Refresh
+            </button>
+            <button nbButton size="small" (click)="toggleAutoRefresh()"
+              [status]="autoRefresh ? 'success' : 'basic'">
+              <nb-icon [icon]="autoRefresh ? 'checkmark-circle-outline' : 'pause-circle-outline'"></nb-icon>
+              Auto Refresh
+            </button>
+          </div>
+        </nb-card-header>
+
+        <nb-card-body>
+          <!-- Auto-refresh Progress Bar -->
+          <div class="progress-container mb-3" *ngIf="autoRefresh">
+            <div class="progress">
+              <div class="progress-bar bg-primary" [style.width.%]="refreshProgressPercentage"></div>
+            </div>
+            <small class="text-muted">Next refresh in {{refreshCountdown}}s</small>
+          </div>
+
+          <!-- Enhanced Dashboard Stats -->
+          <div class="dashboard-stats" *ngIf="dashboardData" [nbSpinner]="loading.dashboard">
+            <div class="row">
+              <div class="col-md-3 col-sm-6">
+                <div class="stat-card databases">
+                  <div class="stat-number">{{ dashboardData.databases.total }}</div>
+                  <div class="stat-label">Databases</div>
+                  <div class="stat-sublabel">
+                    {{ dashboardData.databases.connected }} connected
+                    ({{ dashboardData.databases.connection_rate | number:'1.1-1' }}%)
+                  </div>
+                  <div class="stat-trend">
+                    <nb-icon icon="trending-up-outline" *ngIf="dashboardData.databases.connection_rate >= 90"></nb-icon>
+                    <nb-icon icon="trending-down-outline" *ngIf="dashboardData.databases.connection_rate < 50"></nb-icon>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-3 col-sm-6">
+                <div class="stat-card tables">
+                  <div class="stat-number">{{ dashboardData.tables.total }}</div>
+                  <div class="stat-label">Tables</div>
+                  <div class="stat-sublabel">{{ dashboardData.tables.actively_monitored }} monitored</div>
+                  <div class="stat-progress">
+                    <div class="progress-mini">
+                      <div class="progress-bar bg-info" 
+                           [style.width.%]="getProgressPercentage(dashboardData.tables.actively_monitored, dashboardData.tables.total)">
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-3 col-sm-6">
+                <div class="stat-card activity">
+                  <div class="stat-number">{{ dashboardData.activity.recent_snapshots }}</div>
+                  <div class="stat-label">Recent Snapshots</div>
+                  <div class="stat-sublabel">Last hour</div>
+                  <div class="stat-actions">
+                    <button nbButton ghost size="tiny" (click)="refreshData()">
+                      <nb-icon icon="refresh-outline"></nb-icon>
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-3 col-sm-6">
+                <div class="stat-card tasks">
+                  <div class="stat-number">
+                    {{ (dashboardData.activity.recent_tasks.completed || 0) +
+                        (dashboardData.activity.recent_tasks.failed || 0) }}
+                  </div>
+                  <div class="stat-label">Recent Tasks</div>
+                  <div class="stat-sublabel">
+                    {{ dashboardData.activity.recent_tasks.failed || 0 }} failed
+                  </div>
+                  <nb-badge *ngIf="dashboardData.activity.recent_tasks.failed > 0" 
+                            status="danger" 
+                            text="!" 
+                            class="stat-alert">
+                  </nb-badge>
+                </div>
+              </div>
+            </div>
+
+            <!-- System Performance Metrics -->
+            <div class="row mt-3" *ngIf="performanceMetrics.lastUpdate">
+              <div class="col-12">
+                <div class="performance-metrics">
+                  <small class="text-muted">
+                    <nb-icon icon="activity-outline"></nb-icon>
+                    Load time: {{ performanceMetrics.loadTime | number:'1.0-0' }}ms |
+                    Last update: {{ performanceMetrics.lastUpdate | date:'short' }} |
+                    Data points: {{ performanceMetrics.totalDataPoints | number }} |
+                    Refresh success: {{ ((refreshStats.totalRefreshes - refreshStats.failedRefreshes) / refreshStats.totalRefreshes * 100) | number:'1.0-0' }}%
+                  </small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </nb-card-body>
+      </nb-card>
+    </div>
+  </div>
+
+  <!-- Enhanced Filters with Advanced Options -->
+  <div class="row" *ngIf="showFilters">
+    <div class="col-12">
+      <nb-card>
+        <nb-card-header>
+          <div class="d-flex justify-content-between align-items-center">
+            <h6 class="mb-0">
+              <nb-icon icon="funnel-outline"></nb-icon>
+              Advanced Filters & Controls
+            </h6>
+            <div class="filter-actions">
+              <button nbButton ghost size="small" (click)="clearFilters()">
+                <nb-icon icon="close-outline"></nb-icon>
+                Clear All
+              </button>
+              <button nbButton status="basic" size="small" (click)="testAllDatabaseConnections()" 
+                      [disabled]="loading.bulkOperations">
+                <nb-icon icon="flash-outline"></nb-icon>
+                Test All Connections
+              </button>
+            </div>
+          </div>
+        </nb-card-header>
+        <nb-card-body>
+          <div class="filters">
+            <!-- Primary Filters -->
+            <div class="row">
+              <div class="col-md-3">
+                <label class="label">Server:</label>
+                <nb-select placeholder="All Servers" [selected]="filters.server_id" (selectedChange)="onServerFilterChange($event)">
+                  <nb-option value="">All Servers ({{ servers.length }})</nb-option>
+                  <nb-option *ngFor="let server of servers; trackBy: trackByServerId" [value]="server.id">
+                    {{ server.hostname }} ({{ server.alias || 'No alias' }})
+                  </nb-option>
+                </nb-select>
+                <small class="text-muted">
+                  <nb-icon icon="server-outline"></nb-icon>
+                  {{ systemStatistics.connectedDatabases }} connected databases
+                </small>
+              </div>
+              <div class="col-md-3">
+                <label class="label">Database:</label>
+                <nb-select placeholder="All Databases" [selected]="filters.database_id" 
+                          (selectedChange)="onDatabaseFilterChange($event)"
+                          [disabled]="!filters.server_id">
+                  <nb-option [value]="null">All Databases</nb-option>
+                  <nb-option *ngFor="let db of filteredDatabases; trackBy: trackByDatabaseId" [value]="db.id">
+                    {{ db.name }} 
+                    <nb-badge [status]="getConnectionStatusBadgeStatus(db.connection_status)" 
+                              [text]="db.connection_status" 
+                              size="tiny">
+                    </nb-badge>
+                  </nb-option>
+                </nb-select>
+                <small class="text-muted">
+                  <nb-icon icon="database-outline"></nb-icon>
+                  {{ filteredDatabases.length }} available, {{ systemStatistics.totalTables }} tables
+                </small>
+              </div>
+              <div class="col-md-3">
+                <label class="label">Status:</label>
+                <nb-select placeholder="All Statuses" [selected]="filters.status" (selectedChange)="onStatusFilterChange($event)">
+                  <nb-option value="">All Statuses</nb-option>
+                  <nb-option *ngFor="let status of uniqueStatuses" [value]="status">
+                    {{ status | titlecase }} ({{ tableStatusCounts[status] || 0 }})
+                  </nb-option>
+                </nb-select>
+                <small class="text-muted">
+                  <nb-icon icon="checkmark-circle-outline"></nb-icon>
+                  {{ systemStatistics.activeTables }} active, {{ systemStatistics.healthyTables }} healthy
+                </small>
+              </div>
+              <div class="col-md-3">
+                <label class="label">Search:</label>
+                <input nbInput fullWidth placeholder="Search tables, schemas..." 
+                       [value]="filters.search"
+                       (input)="onSearchChange($event.target.value)">
+                <small class="text-muted">
+                  <nb-icon icon="search-outline"></nb-icon>
+                  {{ filteredTables.length }} of {{ tables.length }} tables
+                </small>
+              </div>
+            </div>
+
+            <!-- Bulk Operations -->
+            <div class="row mt-3">
+              <div class="col-md-8">
+                <div class="bulk-operations">
+                  <label class="label">Bulk Operations:</label>
+                  <div class="d-flex gap-2 align-items-center">
+                    <nb-checkbox [checked]="isAllTablesSelected"
+                                [indeterminate]="isSomeTablesSelected"
+                                (checkedChange)="selectAllTables($event)">
+                      Select All ({{ selectedTableCount }} selected)
+                    </nb-checkbox>
+                    <div class="btn-group">
+                      <button nbButton status="success" size="small" 
+                              (click)="bulkActivateTables(true)"
+                              [disabled]="selectedTableCount === 0 || loading.bulkOperations">
+                        <nb-icon icon="play-outline"></nb-icon> Activate
+                      </button>
+                      <button nbButton status="warning" size="small" 
+                              (click)="bulkActivateTables(false)"
+                              [disabled]="selectedTableCount === 0 || loading.bulkOperations">
+                        <nb-icon icon="pause-outline"></nb-icon> Deactivate
+                      </button>
+                      <button nbButton status="info" size="small" 
+                              (click)="bulkMonitorTables()"
+                              [disabled]="selectedTableCount === 0 || loading.bulkOperations">
+                        <nb-icon icon="refresh-outline"></nb-icon> Monitor Now
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4 text-end">
+                <div class="quick-actions">
+                  <button nbButton status="primary" size="small" (click)="openDatabaseConfigDialog()">
+                    <nb-icon icon="plus-outline"></nb-icon> Add Database
+                  </button>
+                  <nb-actions size="small" class="ms-2">
+                    <nb-action icon="settings-2-outline">
+                      <nb-menu [items]="[
+                        { title: 'Refresh Interval' },
+                        { title: '15 seconds', data: { action: 'setRefreshInterval', value: 15 } },
+                        { title: '30 seconds', data: { action: 'setRefreshInterval', value: 30 } },
+                        { title: '1 minute', data: { action: 'setRefreshInterval', value: 60 } },
+                        { title: '5 minutes', data: { action: 'setRefreshInterval', value: 300 } },
+                        { title: 'Clear Cache', data: { action: 'clearCache' } },
+                        { title: 'Reset Component', data: { action: 'resetComponent' } }
+                      ]" (itemClick)="handleMenuAction($event)">
+                      </nb-menu>
+                    </nb-action>
+                  </nb-actions>
+                </div>
+              </div>
+            </div>
+          </div>
+        </nb-card-body>
+      </nb-card>
+    </div>
+  </div>
+
+  <!-- Enhanced Tables List with Sorting -->
+  <div class="row">
+    <div class="col-12">
+      <nb-card>
+        <nb-card-header>
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <h6 class="mb-0">
+                <nb-icon icon="database-outline"></nb-icon>
+                Monitored Tables ({{ filteredTables.length }})
+              </h6>
+              <small class="text-muted">
+                {{ tableStatusCounts['active'] || 0 }} active, 
+                {{ tableStatusCounts['inactive'] || 0 }} inactive,
+                {{ selectedTableCount }} selected
+              </small>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+              <!-- Sorting Controls -->
+              <nb-select placeholder="Sort by" size="tiny" [selected]="sortConfig.field" (selectedChange)="sortTables($event)">
+                <nb-option value="full_table_name">
+                  <nb-icon [icon]="getSortIcon('full_table_name')"></nb-icon>
+                  Table Name
+                </nb-option>
+                <nb-option value="monitoring_status">
+                  <nb-icon [icon]="getSortIcon('monitoring_status')"></nb-icon>
+                  Status
+                </nb-option>
+                <nb-option value="last_poll_time">
+                  <nb-icon [icon]="getSortIcon('last_poll_time')"></nb-icon>
+                  Last Poll
+                </nb-option>
+                <nb-option value="last_record_count">
+                  <nb-icon [icon]="getSortIcon('last_record_count')"></nb-icon>
+                  Record Count
+                </nb-option>
+              </nb-select>
+              <button nbButton ghost size="tiny" (click)="sortTables(sortConfig.field)">
+                <nb-icon [icon]="sortConfig.direction === 'asc' ? 'arrow-up-outline' : 'arrow-down-outline'"></nb-icon>
+              </button>
+            </div>
+          </div>
+        </nb-card-header>
+
+        <nb-card-body>
+          <div class="tables-container" [nbSpinner]="loading.tables">
+            <!-- Tables List -->
+            <div class="table-list" [ngClass]="viewMode">
+              <div *ngFor="let table of filteredTables; trackBy: trackByTableId" 
+                   class="table-item"
+                   [class.expanded]="table.expanded"
+                   [class.selected]="isTableSelected(table)"
+                   [class.inactive]="!table.is_active">
+
+                <!-- Table Header -->
+                <div class="table-header" (click)="toggleTableExpansion(table)">
+                  <!-- Selection Checkbox -->
+                  <div class="table-selection">
+                    <nb-checkbox [checked]="isTableSelected(table)"
+                                (checkedChange)="toggleTableSelection(table)"
+                                (click)="$event.stopPropagation()">
+                    </nb-checkbox>
+                  </div>
+
+                  <!-- Table Info -->
+                  <div class="table-info">
+                    <div class="table-name">
+                      <strong>{{ table.full_table_name }}</strong>
+                      <nb-icon icon="chevron-right-outline" class="expand-icon"></nb-icon>
+                      <nb-badge [status]="getStatusBadgeStatus(table.monitoring_status)" 
+                                [text]="table.monitoring_status" 
+                                size="tiny" 
+                                class="ms-2">
+                      </nb-badge>
+                    </div>
+                    <div class="table-meta">
+                      <span class="server-name">{{ table.server_name }}</span>
+                      <span class="divider">•</span>
+                      <span class="database-name">{{ table.database_name }}</span>
+                      <span class="divider">•</span>
+                      <span class="schema-name">{{ table.schema_name }}</span>
+                    </div>
+                  </div>
+
+                  <!-- Table Status -->
+                  <div class="table-status">
+                    <div class="last-update" *ngIf="table.last_poll_time">
+                      <small>Last Poll: {{ formatTimestamp(table.last_poll_time) }}</small>
+                    </div>
+                    <div class="record-count">
+                      <small>Records: {{ table.last_record_count | number }}</small>
+                    </div>
+                    <div class="health-score">
+                      <small>Health: 
+                        <span [class]="'health-' + (getTableHealthScore(table) >= 80 ? 'good' : 
+                                                   getTableHealthScore(table) >= 60 ? 'fair' : 'poor')">
+                          {{ getTableHealthScore(table) }}%
+                        </span>
+                      </small>
+                    </div>
+                  </div>
+
+                  <!-- Table Actions -->
+                  <div class="table-actions" (click)="$event.stopPropagation()">
+                    <button nbButton ghost size="tiny" 
+                            (click)="monitorTableNow(table)"
+                            [disabled]="loading.monitoring.has(table.id)"
+                            nbTooltip="Monitor Now">
+                      <nb-icon icon="refresh-outline"></nb-icon>
+                    </button>
+                    <button nbButton ghost size="tiny" 
+                            (click)="testDatabaseConnection(table)"
+                            [disabled]="loading.testing.has(table.id)"
+                            nbTooltip="Test Connection">
+                      <nb-icon icon="flash-outline"></nb-icon>
+                    </button>
+                    <button nbButton ghost size="tiny" 
+                            (click)="openTableConfigDialog(table)"
+                            nbTooltip="Configure">
+                      <nb-icon icon="settings-2-outline"></nb-icon>
+                    </button>
+                    <nb-actions size="tiny">
+                      <nb-action icon="more-vertical-outline">
+                        <nb-menu [items]="[
+                          { title: 'View Data', data: { action: 'viewData', table: table } },
+                          { title: 'Task History', data: { action: 'taskHistory', table: table } },
+                          { title: 'Export Data', data: { action: 'exportData', table: table } },
+                          { title: 'Analyze', data: { action: 'analyze', table: table } },
+                          { title: 'Delete', data: { action: 'delete', table: table } }
+                        ]" (itemClick)="handleTableAction($event)">
+                        </nb-menu>
+                      </nb-action>
+                    </nb-actions>
+                  </div>
+                </div>
+
+                <!-- Expanded Details -->
+                <div class="table-details" *ngIf="table.expanded" [@slideDown]>
+                  <div class="details-container" [nbSpinner]="table.loading">
+                    <!-- Table Configuration -->
+                    <div class="row">
+                      <div class="col-md-6">
+                        <h6>Configuration</h6>
+                        <div class="config-section">
+                          <div class="config-item">
+                            <strong>Polling Interval:</strong>
+                            <code>{{ table.polling_interval }}s</code>
+                          </div>
+                          <div class="config-item">
+                            <strong>Monitored Columns:</strong>
+                            <span class="columns-list">
+                              {{ Array.isArray(table.columns_to_monitor) ? 
+                                 table.columns_to_monitor.join(', ') : 
+                                 table.columns_to_monitor || 'All columns' }}
+                            </span>
+                          </div>
+                          <div class="config-item" *ngIf="table.where_clause">
+                            <strong>Where Clause:</strong>
+                            <code>{{ table.where_clause }}</code>
+                          </div>
+                          <div class="config-item" *ngIf="table.order_by">
+                            <strong>Order By:</strong>
+                            <code>{{ table.order_by }}</code>
+                          </div>
+                          <div class="config-item" *ngIf="table.timestamp_column">
+                            <strong>Timestamp Column:</strong>
+                            <code>{{ table.timestamp_column }}</code>
+                          </div>
+                          <div class="config-item">
+                            <strong>Primary Keys:</strong>
+                            <span class="columns-list">
+                              {{ Array.isArray(table.primary_key_columns) ? 
+                                 table.primary_key_columns.join(', ') : 
+                                 table.primary_key_columns || 'Not specified' }}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="col-md-6">
+                        <h6>Latest Snapshot</h6>
+                        <div class="snapshot-section">
+                          <div class="snapshot-item" *ngIf="table.latest_snapshot">
+                            <strong>Record Count:</strong>
+                            <span>{{ table.latest_snapshot.record_count | number }}</span>
+                          </div>
+                          <div class="snapshot-item" *ngIf="table.latest_snapshot">
+                            <strong>Collection Time:</strong>
+                            <span>{{ formatDuration(table.latest_snapshot.collection_duration) }}</span>
+                          </div>
+                          <div class="snapshot-item" *ngIf="table.latest_snapshot">
+                            <strong>Timestamp:</strong>
+                            <span>{{ formatTimestamp(table.latest_snapshot.timestamp) }}</span>
+                          </div>
+                          <div class="snapshot-item" *ngIf="!table.latest_snapshot">
+                            <span class="text-muted">No snapshots available</span>
+                          </div>
+                        </div>
+
+                        <!-- Data Preview -->
+                        <div class="data-preview mt-3" *ngIf="table.currentData">
+                          <div class="d-flex justify-content-between align-items-center">
+                            <h6>Data Preview</h6>
+                            <button nbButton size="tiny" status="basic" 
+                                    (click)="openDataViewDialog(table.currentData.data, table.full_table_name)">
+                              <nb-icon icon="eye-outline"></nb-icon>
+                              View All
+                            </button>
+                          </div>
+                          <div class="data-sample" *ngIf="table.currentData.data && table.currentData.data.length > 0">
+                            <div class="sample-keys">
+                              <strong>Sample Record:</strong><br>
+                              <span *ngFor="let key of getObjectKeys(table.currentData.data[0]); let i = index" class="key">
+                                {{ key }}<span *ngIf="i < getObjectKeys(table.currentData.data[0]).length - 1">, </span>
+                              </span>
+                            </div>
+                          </div>
+                          <div class="no-data" *ngIf="!table.currentData.data || table.currentData.data.length === 0">
+                            No data available
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Recent Tasks -->
+                    <div class="row mt-3" *ngIf="table.tasks && table.tasks.length > 0">
+                      <div class="col-12">
+                        <h6>Recent Monitoring Tasks</h6>
+                        <div class="tasks-list">
+                          <div *ngFor="let task of table.tasks.slice(0, 5)" class="task-item">
+                            <nb-badge [status]="getStatusBadgeStatus(task.status)" 
+                                      [text]="task.status_display" 
+                                      size="tiny">
+                            </nb-badge>
+                            <span class="task-time">{{ formatTimestamp(task.started_at) }}</span>
+                            <span class="task-duration">{{ task.duration_formatted }}</span>
+                            <span class="task-records" *ngIf="task.records_processed">
+                              {{ task.records_processed | number }} records
+                            </span>
+                            <span class="task-error" *ngIf="task.error_message">
+                              {{ task.error_message }}
+                            </span>
+                          </div>
+                        </div>
+                        <button nbButton size="tiny" status="basic" 
+                                (click)="openTaskHistoryDialog(table)" 
+                                class="mt-2">
+                          <nb-icon icon="clock-outline"></nb-icon>
+                          View Full History
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Empty State -->
+            <div class="empty-state" *ngIf="filteredTables.length === 0 && !loading.tables">
+              <div class="empty-icon">
+                <nb-icon icon="database-outline"></nb-icon>
+              </div>
+              <h6>No Tables Found</h6>
+              <p *ngIf="filters.search || filters.status || filters.database_id">
+                Try adjusting your filters or search criteria
+              </p>
+              <p *ngIf="!filters.search && !filters.status && !filters.database_id">
+                No Oracle tables are currently configured for monitoring
+              </p>
+              <button nbButton status="primary" (click)="openDatabaseConfigDialog()">
+                <nb-icon icon="plus-outline"></nb-icon>
+                Add Database
+              </button>
+            </div>
+          </div>
+        </nb-card-body>
+      </nb-card>
+    </div>
+  </div>
+</div>
+
+<!-- Database Configuration Dialog -->
+<ng-template #databaseConfigDialog let-data let-ref="dialogRef">
+  <nb-card class="dialog-card">
+    <nb-card-header>
+      <h5>{{ dialogData.database?.id ? 'Edit' : 'Add' }} Database Configuration</h5>
+      <button nbButton ghost size="small" (click)="ref.close()">
+        <nb-icon icon="close-outline"></nb-icon>
+      </button>
+    </nb-card-header>
+    <nb-card-body>
+      <form *ngIf="dialogData.database">
+        <div class="row">
+          <div class="col-md-6">
+            <div class="form-group">
+              <label class="label">Database Name *</label>
+              <input nbInput fullWidth placeholder="Production DB" [(ngModel)]="dialogData.database.name" name="name">
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-group">
+              <label class="label">Server *</label>
+              <nb-select placeholder="Select Server" [(selected)]="dialogData.database.server_id" name="server_id">
+                <nb-option *ngFor="let server of servers" [value]="server.id">
+                  {{ server.hostname }} ({{ server.alias || 'No alias' }})
+                </nb-option>
+              </nb-select>
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-8">
+            <div class="form-group">
+              <label class="label">Host *</label>
+              <input nbInput fullWidth placeholder="192.168.1.100" [(ngModel)]="dialogData.database.host" name="host">
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="form-group">
+              <label class="label">Port *</label>
+              <input nbInput fullWidth type="number" placeholder="1521" [(ngModel)]="dialogData.database.port" name="port">
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-6">
+            <div class="form-group">
+              <label class="label">SID *</label>
+              <input nbInput fullWidth placeholder="ORCL" [(ngModel)]="dialogData.database.sid" name="sid">
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-group">
+              <label class="label">Connection Timeout</label>
+              <input nbInput fullWidth type="number" placeholder="30" [(ngModel)]="dialogData.database.connection_timeout" name="connection_timeout">
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-6">
+            <div class="form-group">
+              <label class="label">Username *</label>
+              <input nbInput fullWidth placeholder="monitor_user" [(ngModel)]="dialogData.database.username" name="username">
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-group">
+              <label class="label">Password *</label>
+              <input nbInput fullWidth type="password" placeholder="••••••••" [(ngModel)]="dialogData.database.password" name="password">
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-12">
+            <div class="form-group">
+              <label class="label">Description</label>
+              <textarea nbInput fullWidth rows="3" placeholder="Database description..." [(ngModel)]="dialogData.database.description" name="description"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-6">
+            <div class="form-group">
+              <nb-checkbox [(checked)]="dialogData.database.is_active" name="is_active">
+                Active
+              </nb-checkbox>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="connection-test" *ngIf="dialogData.database.id">
+              <button nbButton status="info" size="small" 
+                      (click)="testDatabaseConnection(dialogData.database)"
+                      [disabled]="loading.testing.has(dialogData.database.id)">
+                <nb-icon icon="flash-outline"></nb-icon>
+                Test Connection
+              </button>
+              <nb-badge *ngIf="dialogData.database.connection_status" 
+                        [status]="getConnectionStatusBadgeStatus(dialogData.database.connection_status)"
+                        [text]="dialogData.database.connection_status_display"
+                        class="ms-2">
+              </nb-badge>
+            </div>
+          </div>
+        </div>
+      </form>
+    </nb-card-body>
+    <nb-card-footer class="d-flex justify-content-end">
+      <button nbButton ghost (click)="ref.close()" class="me-2">Cancel</button>
+      <button nbButton status="primary" 
+              (click)="saveDatabaseConfig(); ref.close()" 
+              [disabled]="!isDatabaseFormValid() || loading.savingDatabase">
+        <nb-icon icon="save-outline"></nb-icon>
+        {{ dialogData.database?.id ? 'Update' : 'Create' }}
+      </button>
+    </nb-card-footer>
+  </nb-card>
+</ng-template>
+
+<!-- Table Configuration Dialog -->
+<ng-template #tableConfigDialog let-data let-ref="dialogRef">
+  <nb-card class="dialog-card">
+    <nb-card-header>
+      <h5>Configure Table Monitoring: {{ dialogData.table?.full_table_name }}</h5>
+      <button nbButton ghost size="small" (click)="ref.close()">
+        <nb-icon icon="close-outline"></nb-icon>
+      </button>
+    </nb-card-header>
+    <nb-card-body>
+      <form *ngIf="dialogData.table">
+        <div class="row">
+          <div class="col-md-6">
+            <div class="form-group">
+              <label class="label">Polling Interval (seconds) *</label>
+              <input nbInput fullWidth type="number" min="10" placeholder="60" 
+                     [(ngModel)]="dialogData.table.polling_interval" name="polling_interval">
+              <small class="text-muted">Minimum 10 seconds</small>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-group">
+              <label class="label">Timestamp Column</label>
+              <input nbInput fullWidth placeholder="CREATED_DATE" 
+                     [(ngModel)]="dialogData.table.timestamp_column" name="timestamp_column">
+              <small class="text-muted">Column for ordering records</small>
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-12">
+            <div class="form-group">
+              <label class="label">Columns to Monitor</label>
+              <input nbInput fullWidth placeholder="ID, NAME, EMAIL (leave empty for all)" 
+                     [(ngModel)]="dialogData.table.columns_to_monitor" name="columns_to_monitor">
+              <small class="text-muted">Comma-separated list of columns, or leave empty to monitor all</small>
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-12">
+            <div class="form-group">
+              <label class="label">Primary Key Columns</label>
+              <input nbInput fullWidth placeholder="ID, USER_ID" 
+                     [(ngModel)]="dialogData.table.primary_key_columns" name="primary_key_columns">
+              <small class="text-muted">Comma-separated list of primary key columns</small>
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-12">
+            <div class="form-group">
+              <label class="label">WHERE Clause</label>
+              <textarea nbInput fullWidth rows="2" placeholder="ACTIVE = 1 AND CREATED_DATE > SYSDATE - 7" 
+                        [(ngModel)]="dialogData.table.where_clause" name="where_clause"></textarea>
+              <small class="text-muted">Optional WHERE clause to filter data</small>
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-12">
+            <div class="form-group">
+              <label class="label">ORDER BY Clause</label>
+              <input nbInput fullWidth placeholder="ID DESC, CREATED_DATE DESC" 
+                     [(ngModel)]="dialogData.table.order_by" name="order_by">
+              <small class="text-muted">Optional ORDER BY clause</small>
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-6">
+            <div class="form-group">
+              <nb-checkbox [(checked)]="dialogData.table.is_active" name="is_active">
+                Enable Monitoring
+              </nb-checkbox>
+            </div>
+          </div>
+          <div class="col-md-6 text-end">
+            <button nbButton status="info" size="small" 
+                    (click)="monitorTableNow({ id: dialogData.table.id })"
+                    [disabled]="loading.monitoring.has(dialogData.table.id)">
+              <nb-icon icon="refresh-outline"></nb-icon>
+              Test Monitor Now
+            </button>
+          </div>
+        </div>
+      </form>
+    </nb-card-body>
+    <nb-card-footer class="d-flex justify-content-end">
+      <button nbButton ghost (click)="ref.close()" class="me-2">Cancel</button>
+      <button nbButton status="primary" 
+              (click)="saveTableConfig(); ref.close()" 
+              [disabled]="!isTableFormValid() || loading.savingTable">
+        <nb-icon icon="save-outline"></nb-icon>
+        Save Configuration
+      </button>
+    </nb-card-footer>
+  </nb-card>
+</ng-template>
+
+<!-- Data View Dialog -->
+<ng-template #dataViewDialog let-data let-ref="dialogRef">
+  <nb-card class="dialog-card data-view-dialog">
+    <nb-card-header>
+      <h5>{{ data.title || 'Table Data' }}</h5>
+      <div class="header-actions">
+        <button nbButton ghost size="small" (click)="exportData()">
+          <nb-icon icon="download-outline"></nb-icon>
+          Export CSV
+        </button>
+        <button nbButton ghost size="small" (click)="ref.close()">
+          <nb-icon icon="close-outline"></nb-icon>
+        </button>
+      </div>
+    </nb-card-header>
+    <nb-card-body>
+      <div class="data-table-container" *ngIf="dialogData.viewData && dialogData.viewData.length > 0">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th *ngFor="let key of getObjectKeys(dialogData.viewData[0])">{{ key }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let row of dialogData.viewData; let i = index">
+              <td *ngFor="let key of getObjectKeys(row)" [title]="formatCellValue(row[key])">
+                {{ formatCellValue(row[key]) }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="no-data" *ngIf="!dialogData.viewData || dialogData.viewData.length === 0">
+        <nb-icon icon="inbox-outline"></nb-icon>
+        <p>No data available to display</p>
+      </div>
+    </nb-card-body>
+    <nb-card-footer>
+      <div class="d-flex justify-content-between align-items-center">
+        <small class="text-muted" *ngIf="dialogData.viewData">
+          Showing {{ dialogData.viewData.length }} records
+        </small>
+        <button nbButton status="basic" (click)="ref.close()">Close</button>
+      </div>
+    </nb-card-footer>
+  </nb-card>
+</ng-template>
+
+<!-- Task History Dialog -->
+<ng-template #taskHistoryDialog let-data let-ref="dialogRef">
+  <nb-card class="dialog-card">
+    <nb-card-header>
+      <h5>Monitoring Task History: {{ data.table?.full_table_name }}</h5>
+      <button nbButton ghost size="small" (click)="ref.close()">
+        <nb-icon icon="close-outline"></nb-icon>
+      </button>
+    </nb-card-header>
+    <nb-card-body [nbSpinner]="loading.loadingTasks">
+      <div class="task-history" *ngIf="dialogData.tasks && dialogData.tasks.length > 0">
+        <div class="task-list">
+          <div *ngFor="let task of dialogData.tasks" class="task-history-item">
+            <div class="task-header">
+              <div class="task-status">
+                <nb-badge [status]="getStatusBadgeStatus(task.status)" 
+                          [text]="task.status_display">
+                </nb-badge>
+              </div>
+              <div class="task-timing">
+                <div class="task-started">
+                  <strong>Started:</strong> {{ formatTimestamp(task.started_at) }}
+                </div>
+                <div class="task-duration" *ngIf="task.completed_at">
+                  <strong>Duration:</strong> {{ task.duration_formatted }}
+                </div>
+              </div>
+              <div class="task-metrics" *ngIf="task.records_processed">
+                <div class="records-processed">
+                  <strong>Records:</strong> {{ task.records_processed | number }}
+                </div>
+                <div class="changes-detected" *ngIf="task.changes_detected !== null">
+                  <nb-icon [icon]="task.changes_detected ? 'checkmark-circle-outline' : 'close-circle-outline'"
+                           [status]="task.changes_detected ? 'success' : 'basic'">
+                  </nb-icon>
+                  {{ task.changes_detected ? 'Changes' : 'No changes' }}
+                </div>
+              </div>
+            </div>
+            <div class="task-error" *ngIf="task.error_message">
+              <nb-alert status="danger" size="tiny">
+                <strong>Error:</strong> {{ task.error_message }}
+              </nb-alert>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="no-tasks" *ngIf="!dialogData.tasks || dialogData.tasks.length === 0">
+        <nb-icon icon="clock-outline"></nb-icon>
+        <p>No monitoring tasks found for this table</p>
+      </div>
+    </nb-card-body>
+    <nb-card-footer>
+      <div class="d-flex justify-content-between align-items-center">
+        <small class="text-muted" *ngIf="dialogData.tasks">
+          Showing {{ dialogData.tasks.length }} tasks
+        </small>
+        <button nbButton status="basic" (click)="ref.close()">Close</button>
+      </div>
+    </nb-card-footer>
+  </nb-card>
+</ng-template>
+
+<!-- Confirmation Dialog -->
+<ng-template #confirmDialog let-data let-ref="dialogRef">
+  <nb-card class="dialog-card confirm-dialog">
+    <nb-card-header>
+      <h5>{{ dialogData.confirmation.title }}</h5>
+    </nb-card-header>
+    <nb-card-body>
+      <p>{{ dialogData.confirmation.message }}</p>
+    </nb-card-body>
+    <nb-card-footer class="d-flex justify-content-end">
+      <button nbButton ghost (click)="ref.close()" class="me-2">Cancel</button>
+      <button nbButton status="danger" 
+              (click)="dialogData.confirmation.action(); ref.close()">
+        Confirm
+      </button>
+    </nb-card-footer>
+  </nb-card>
+</ng-template>

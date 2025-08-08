@@ -1,207 +1,108 @@
-# #!/usr/bin/env python3
-# """
-# Debug script to test SSH connections to your servers
-# Run this from your Django environment to diagnose connection issues
-# """
-
-# import paramiko
-# import sys
-# import os
-# from pathlib import Path
-
-# def test_ssh_connection(host, port, username, password=None, key_path=None):
-#     """Test SSH connection with detailed error reporting"""
-#     print(f"\n=== Testing connection to {username}@{host}:{port} ===")
-    
-#     client = paramiko.SSHClient()
-#     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    
-#     try:
-#         # Prepare connection parameters
-#         connect_params = {
-#             'hostname': host,
-#             'port': port,
-#             'username': username,
-#             'timeout': 15,
-#             'banner_timeout': 200,
-#             'look_for_keys': False,
-#             'allow_agent': False
-#         }
-        
-#         # Add authentication
-#         if password:
-#             connect_params['password'] = password
-#             print(f"Using password authentication")
-#         elif key_path:
-#             if os.path.exists(key_path):
-#                 connect_params['key_filename'] = key_path
-#                 print(f"Using key file: {key_path}")
-#                 # Check key permissions
-#                 stat_info = os.stat(key_path)
-#                 permissions = oct(stat_info.st_mode)[-3:]
-#                 print(f"Key file permissions: {permissions}")
-#                 if permissions != '600':
-#                     print(f"WARNING: Key permissions should be 600, not {permissions}")
-#             else:
-#                 print(f"ERROR: Key file not found: {key_path}")
-#                 return False
-        
-#         print("Attempting connection...")
-#         client.connect(**connect_params)
-        
-#         # Test command execution
-#         print("Testing command execution...")
-#         stdin, stdout, stderr = client.exec_command('echo "Connection test successful"')
-#         result = stdout.read().decode().strip()
-#         error = stderr.read().decode().strip()
-        
-#         if result:
-#             print(f"✅ SUCCESS: {result}")
-#         if error:
-#             print(f"⚠️  stderr: {error}")
-            
-#         # Test system commands that your monitoring uses
-#         test_commands = [
-#             'hostname',
-#             'uname -a',
-#             'vmstat 1 1',
-#             'iostat 1 1',
-#             'netstat -i',
-#             'ps -ef | head -5'
-#         ]
-        
-#         print("\nTesting monitoring commands:")
-#         for cmd in test_commands:
-#             try:
-#                 stdin, stdout, stderr = client.exec_command(cmd, timeout=10)
-#                 exit_status = stdout.channel.recv_exit_status()
-#                 if exit_status == 0:
-#                     print(f"✅ {cmd}: OK")
-#                 else:
-#                     error_msg = stderr.read().decode().strip()
-#                     print(f"❌ {cmd}: Failed (exit {exit_status}) - {error_msg}")
-#             except Exception as e:
-#                 print(f"❌ {cmd}: Exception - {str(e)}")
-        
-#         client.close()
-#         return True
-        
-#     except paramiko.AuthenticationException as e:
-#         print(f"❌ Authentication failed: {str(e)}")
-#         return False
-#     except paramiko.SSHException as e:
-#         print(f"❌ SSH error: {str(e)}")
-#         return False
-#     except Exception as e:
-#         print(f"❌ Connection error: {str(e)}")
-#         return False
-#     finally:
-#         if client:
-#             client.close()
-
-# def main():
-#     """Test connections for both servers"""
-#     print("SSH Connection Diagnostic Tool")
-#     print("=" * 50)
-    
-#     # Test aix1 (simulated server)
-#     success1 = test_ssh_connection(
-#         host='localhost',  # Try localhost first
-#         port=2222,
-#         username='root',
-#         key_path='/app/.ssh/id_rsa'  # Adjust path as needed
-#     )
-    
-#     # If localhost fails, try the IP from your config
-#     if not success1:
-#         print("\nRetrying with configured IP...")
-#         success1 = test_ssh_connection(
-#             host='10.1.19.30',
-#             port=2222,
-#             username='root',
-#             key_path='/app/.ssh/id_rsa'
-#         )
-    
-#     # Test pcad (real server)
-#     success2 = test_ssh_connection(
-#         host='10.1.87.2',
-#         port=22,
-#         username='pcad',
-#         password='pca_d01*'
-#     )
-    
-#     print(f"\n=== SUMMARY ===")
-#     print(f"aix1 connection: {'✅ SUCCESS' if success1 else '❌ FAILED'}")
-#     print(f"pcad connection: {'✅ SUCCESS' if success2 else '❌ FAILED'}")
-    
-#     if not success1:
-#         print(f"\n🔧 TROUBLESHOOTING aix1:")
-#         print(f"1. Check if Docker container is running: docker ps")
-#         print(f"2. Check if port 2222 is accessible: nc -zv localhost 2222")
-#         print(f"3. Verify SSH key exists: ls -la /app/.ssh/id_rsa")
-#         print(f"4. Check container logs: docker logs [container_name]")
-#         print(f"5. Try SSH manually: ssh -i /app/.ssh/id_rsa -p 2222 root@localhost")
-
-# if __name__ == "__main__":
-#     main()
-
-
-
-# import cx_Oracle
-
-# # Connection parameters
-# host = "oracle-test"  # Docker service name, if connecting from another container
-# port = 1521
-# sid = "XE"  # Using SID here
-# username = "testuser"
-# password = "testpass"
-
-# # Correct DSN string
-# dsn = f"(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST={host})(PORT={port}))(CONNECT_DATA=(SID={sid})))"
-
-# Connect
-# try:
-#     conn = cx_Oracle.connect(user=username, password=password, dsn=dsn)
-#     print("✅ Connected to Oracle DB!")
-#     conn.close()
-# except cx_Oracle.DatabaseError as e:
-#     print("❌ Connection failed:", e)
-
 import oracledb
+import time
+import random
+from datetime import datetime
 
-try:
-    # For connections from HOST machine
-    dsn = oracledb.makedsn("localhost", 1521, sid="XE")
-    
-    # For connections from OTHER CONTAINERS
-    # dsn = oracledb.makedsn("oracle-test", 1521, sid="XE")
-    
-    conn = oracledb.connect(
-        user="testuser",
-        password="testpass",
-        dsn=dsn
-    )
-    print("✅ Connected to Oracle using SID!")
-    
-    # Test query
+# Database connection parameters
+DB_USER = "testuser"
+DB_PASSWORD = "testpass"
+DB_HOST = "localhost"
+DB_PORT = 1521
+DB_SID = "XE"
+
+# Table creation SQL
+CREATE_TABLE_SQL = """
+CREATE TABLE transaction_auth (
+    id NUMBER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    transaction_id VARCHAR2(36) NOT NULL,
+    status VARCHAR2(20) NOT NULL,
+    amount NUMBER(10,2) NOT NULL,
+    merchant_name VARCHAR2(100),
+    card_last4 CHAR(4),
+    transaction_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+)
+"""
+
+def create_table(conn):
+    """Create table if it doesn't exist"""
     cursor = conn.cursor()
-    cursor.execute("SELECT 'Success!' FROM DUAL")
-    result, = cursor.fetchone()
-    print(f"Query result: {result}")
-    
-except oracledb.Error as e:
-    print(f"Oracle connection failed: {e}")
-except Exception as e:
-    print(f"General error: {e}")
-finally:
-    if 'conn' in locals():
-        conn.close()
+    try:
+        cursor.execute("""
+            SELECT table_name 
+            FROM user_tables 
+            WHERE table_name = 'TRANSACTION_AUTH'
+        """)
+        if not cursor.fetchone():
+            cursor.execute(CREATE_TABLE_SQL)
+            print("✅ Table TRANSACTION_AUTH created")
+    except oracledb.DatabaseError as e:
+        print(f"Table check failed: {e}")
+    finally:
+        cursor.close()
 
-import oracledb
+def generate_transaction():
+    """Generate simulated transaction data"""
+    return {
+        "transaction_id": str(random.randint(10**15, 10**16 - 1)),  # 16-digit number
+        "status": random.choice(["APPROVED", "DECLINED", "PENDING"]),
+        "amount": round(random.uniform(1.0, 1000.0), 2),
+        "merchant_name": random.choice(["Amazon", "Walmart", "Netflix", "Spotify", "Apple"]),
+        "card_last4": str(random.randint(1000, 9999))
+    }
 
-# Simplest possible connection
-conn = oracledb.connect("testuser/testpass@localhost:1521/XE")
-print("✅ Connected!")
-cursor = conn.cursor()
-cursor.execute("SELECT 'DBeaver Test' FROM DUAL")
-print(cursor.fetchone()[0])
+def insert_transaction(conn, transaction):
+    """Insert transaction into database"""
+    sql = """
+    INSERT INTO transaction_auth (
+        transaction_id, status, amount, merchant_name, card_last4
+    ) VALUES (:1, :2, :3, :4, :5)
+    """
+    cursor = conn.cursor()
+    try:
+        cursor.execute(sql, (
+            transaction["transaction_id"],
+            transaction["status"],
+            transaction["amount"],
+            transaction["merchant_name"],
+            transaction["card_last4"]
+        ))
+        conn.commit()
+        print(f"✅ Inserted transaction: {transaction['transaction_id']} ({transaction['status']})")
+    except oracledb.DatabaseError as e:
+        print(f"Insert failed: {e}")
+    finally:
+        cursor.close()
+
+def main():
+    try:
+        # Establish database connection
+        dsn = oracledb.makedsn(DB_HOST, DB_PORT, sid=DB_SID)
+        conn = oracledb.connect(user=DB_USER, password=DB_PASSWORD, dsn=dsn)
+        print("✅ Connected to Oracle database")
+        
+        # Ensure table exists
+        create_table(conn)
+        
+        # Continuous insertion loop
+        print("Starting transaction simulation (Ctrl+C to stop)...")
+        while True:
+            # Generate and insert transaction
+            transaction = generate_transaction()
+            insert_transaction(conn, transaction)
+            
+            # Wait random interval (30-45 seconds)
+            sleep_time = random.randint(30, 45)
+            print(f"Next insertion in {sleep_time} seconds at {datetime.now().strftime('%H:%M:%S')}")
+            time.sleep(sleep_time)
+            
+    except oracledb.Error as e:
+        print(f"Database connection failed: {e}")
+    except KeyboardInterrupt:
+        print("\nOperation stopped by user")
+    finally:
+        if 'conn' in locals():
+            conn.close()
+            print("Database connection closed")
+
+if __name__ == "__main__":
+    main()

@@ -11,6 +11,11 @@ export const MENU_ITEMS: NbMenuItem[] = [
     link: '/pages/server-configuration',
   },
   {
+    title: 'Oracle Monitoring',
+    icon: 'database-outline',
+    link: '/pages/oracle',
+  },
+  {
     title: 'Monitoring',
     group: true,
   },
@@ -29,11 +34,11 @@ export const MENU_ITEMS: NbMenuItem[] = [
     icon: 'list-outline',
     link: '/pages/process',
   },
-  {
-    title: 'Prediction',
-    icon: 'trending-up-outline',
-    link: '/pages/prediction',
-  },
+  // {
+  //   title: 'Prediction',
+  //   icon: 'trending-up-outline',
+  //   link: '/pages/prediction',
+  // },
   {
     title: 'Anomaly Detection',
     icon: 'alert-triangle-outline',

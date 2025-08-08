@@ -22,11 +22,11 @@ const routes: Routes = [{
       loadChildren: () => import('./process/process.module')
         .then(m => m.ProcessModule)
     },
-    {
-      path: 'prediction',
-      loadChildren: () => import('./prediction/prediction.module')
-        .then(m => m.PredictionModule)
-    },
+    // {
+    //   path: 'prediction',
+    //   loadChildren: () => import('./prediction/prediction.module')
+    //     .then(m => m.PredictionModule)
+    // },
     {
       path: 'anomaly',
       loadChildren: () => import('./anomaly/anomaly.module')
@@ -36,6 +36,11 @@ const routes: Routes = [{
       path: 'server-configuration',
       loadChildren: () => import('./server-configuration/server-configuration.module')
         .then(m => m.ServerConfigurationModule),
+    },
+    {
+      path: 'oracle', // Changed from 'database-table'
+      loadChildren: () => import('./oracle/oracle.module')
+        .then(m => m.OracleModule)
     },
     { path: '', redirectTo: 'realtime', pathMatch: 'full' },
     { path: '**', redirectTo: 'realtime' }

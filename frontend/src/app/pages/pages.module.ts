@@ -13,7 +13,7 @@ import { PredictionModule } from './prediction/prediction.module';
 import { AnomalyModule } from './anomaly/anomaly.module';
 import { ApiService } from '../services/monitoring.service';
 import { ServerTabsComponent } from './server-tabs/server-tabs.component';
-
+import{OracleModule}from './oracle/oracle.module';
 @NgModule({
   imports: [
     PagesRoutingModule,
@@ -25,7 +25,8 @@ import { ServerTabsComponent } from './server-tabs/server-tabs.component';
     HistoricModule,
     ProcessModule,
     PredictionModule,
-    AnomalyModule
+    AnomalyModule,
+    OracleModule,
   ],
   declarations: [
     PagesComponent,
