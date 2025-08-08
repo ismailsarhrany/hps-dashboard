@@ -445,18 +445,25 @@ export class OracleComponent implements OnInit, OnDestroy {
 
   // Enhanced table management
   private updateTables(newTables: OracleTable[]): void {
-    const expandedIds = new Set(this.tables.filter(t => t.expanded).map(t => t.id));
-    const loadingIds = new Set(this.tables.filter(t => t.loading).map(t => t.id));
+    const expandedMap = new Map(this.tables
+      .filter(t => t.expanded)
+      .map(t => [t.id, true])
+    );
+
+    const loadingMap = new Map(this.tables
+      .filter(t => t.loading)
+      .map(t => [t.id, true])
+    );
 
     this.tables = newTables.map(table => ({
       ...table,
-      expanded: expandedIds.has(table.id),
-      loading: loadingIds.has(table.id),
+      expanded: expandedMap.has(table.id),
+      loading: loadingMap.has(table.id),
       tasks: [],
       history: []
     }));
   }
-
+  
   // Enhanced filter methods
   onSearchChange(searchTerm: string): void {
     this.searchSubject$.next(searchTerm);
@@ -602,7 +609,7 @@ export class OracleComponent implements OnInit, OnDestroy {
   openTableConfigDialog(table: OracleTable): void {
     this.dialogData.table = {
       ...table,
-      columns_to_monitor: Array.isArray(table.columns_to_monitor) 
+      columns_to_monitor: Array.isArray(table.columns_to_monitor)
         ? table.columns_to_monitor.join(', ')
         : table.columns_to_monitor || '',
       primary_key_columns: Array.isArray(table.primary_key_columns)
@@ -816,7 +823,7 @@ export class OracleComponent implements OnInit, OnDestroy {
     this.loading.bulkOperations = true;
     const selectedTableIds = Array.from(this.selectedTables);
 
-    const updates = selectedTableIds.map(tableId => 
+    const updates = selectedTableIds.map(tableId =>
       this.oracleService.updateTableConfig(tableId, { is_active: active }).toPromise()
     );
 
@@ -875,9 +882,9 @@ export class OracleComponent implements OnInit, OnDestroy {
     if (this.sortConfig.field !== field) {
       return 'minus-outline'; // No sort applied to this field
     }
-    
-    return this.sortConfig.direction === 'asc' 
-      ? 'arrow-up-outline' 
+
+    return this.sortConfig.direction === 'asc'
+      ? 'arrow-up-outline'
       : 'arrow-down-outline';
   }
 
@@ -1041,12 +1048,12 @@ export class OracleComponent implements OnInit, OnDestroy {
   // Advanced statistics and analytics
   getTableHealthScore(table: TableRow): number {
     let score = 100;
-    
+
     if (!table.is_active) score -= 30;
     if (table.monitoring_status === 'error') score -= 40;
     if (table.monitoring_status === 'overdue') score -= 20;
     if (!table.last_poll_time) score -= 25;
-    
+
     const lastPoll = table.last_poll_time ? new Date(table.last_poll_time) : null;
     if (lastPoll) {
       const minutesSinceLastPoll = (Date.now() - lastPoll.getTime()) / 60000;
@@ -1059,14 +1066,14 @@ export class OracleComponent implements OnInit, OnDestroy {
 
   getDatabaseHealthScore(database: ExtendedOracleDatabase): number {
     let score = 100;
-    
+
     if (database.connection_status !== 'connected') score -= 50;
     if (!database.is_active) score -= 30;
-    
+
     const tables = database.tables || [];
     const activeTables = tables.filter(t => t.is_active).length;
     const totalTables = tables.length;
-    
+
     if (totalTables > 0 && activeTables / totalTables < 0.5) score -= 20;
 
     return Math.max(0, score);
@@ -1074,7 +1081,7 @@ export class OracleComponent implements OnInit, OnDestroy {
 
   getSystemOverallHealth(): number {
     if (this.databases.length === 0) return 0;
-    
+
     const dbScores = this.databases.map(db => this.getDatabaseHealthScore(db));
     return Math.round(dbScores.reduce((sum, score) => sum + score, 0) / dbScores.length);
   }
@@ -1317,7 +1324,7 @@ export class OracleComponent implements OnInit, OnDestroy {
     };
 
     const columns = Object.keys(data[0] || {});
-    
+
     columns.forEach(column => {
       const values = data.map(row => row[column]).filter(val => val !== null && val !== undefined);
       analysis.columns[column] = {

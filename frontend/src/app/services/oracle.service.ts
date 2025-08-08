@@ -24,7 +24,7 @@ export interface OracleDatabase {
   is_active: boolean;
   created_at: string;
   updated_at: string;
-  
+
 }
 
 export interface OracleTable {
@@ -119,7 +119,7 @@ export interface DashboardData {
 })
 export class OracleService {
   private readonly apiUrl = environment.apiUrl || 'http://localhost:8000';
-  
+
   // Real-time data subjects
   private dashboardDataSubject = new BehaviorSubject<DashboardData | null>(null);
   private tablesSubject = new BehaviorSubject<OracleTable[]>([]);
@@ -153,6 +153,7 @@ export class OracleService {
     if (serverId) {
       params = params.set('server_id', serverId);
     }
+    params = params.set('ordering', 'id');
 
     return this.http.get<OracleDatabase[]>(`${this.apiUrl}/api/oracle-databases/`, { params })
       .pipe(
@@ -203,6 +204,9 @@ export class OracleService {
     if (filters?.server_id) {
       params = params.set('server_id', filters.server_id);
     }
+
+    // Add ordering
+    params = params.set('ordering', 'id');
 
     return this.http.get<OracleTable[]>(`${this.apiUrl}/api/oracle-tables/`, { params })
       .pipe(

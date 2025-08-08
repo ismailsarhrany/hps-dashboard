@@ -313,6 +313,7 @@ class OracleDatabase(models.Model):
     class Meta:
         db_table = 'oracle_databases'
         unique_together = ['host', 'port', 'sid']
+        ordering = ['id']  # Or any unique field
     
     def __str__(self):
         return f"{self.name} ({self.host}:{self.port}/{self.sid})"
@@ -361,6 +362,7 @@ class OracleTable(models.Model):
 
     class Meta:
         unique_together = ['database', 'table_name', 'schema_name']
+        ordering = ['id'] 
 
     def __str__(self):
         return f"{self.database} - {self.schema_name}.{self.table_name}"
