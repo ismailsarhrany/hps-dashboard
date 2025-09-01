@@ -16433,3 +16433,36 @@
 2025-08-31 20:23:50,774 WARN received SIGTERM indicating exit request
 2025-08-31 20:23:50,777 INFO waiting for gunicorn to die
 2025-08-31 20:23:53,163 INFO stopped: gunicorn (exit status 0)
+2025-09-01 15:26:42,082 INFO Set uid to user 0 succeeded
+2025-09-01 15:26:42,093 INFO supervisord started with pid 1
+2025-09-01 15:26:43,098 INFO spawned: 'gunicorn' with pid 7
+2025-09-01 15:26:43,109 INFO spawned: 'unified_collector' with pid 8
+2025-09-01 15:26:43,117 INFO spawned: 'unified_consumer' with pid 9
+2025-09-01 15:26:44,121 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-09-01 15:26:51,468 WARN exited: unified_consumer (exit status 1; not expected)
+2025-09-01 15:26:51,482 WARN exited: unified_collector (exit status 1; not expected)
+2025-09-01 15:26:52,489 INFO spawned: 'unified_collector' with pid 11
+2025-09-01 15:26:52,491 INFO spawned: 'unified_consumer' with pid 12
+2025-09-01 15:26:58,640 WARN exited: unified_collector (exit status 1; not expected)
+2025-09-01 15:26:58,653 WARN exited: unified_consumer (exit status 1; not expected)
+2025-09-01 15:27:00,661 INFO spawned: 'unified_collector' with pid 13
+2025-09-01 15:27:00,664 INFO spawned: 'unified_consumer' with pid 14
+2025-09-01 15:27:04,962 WARN exited: unified_collector (exit status 1; not expected)
+2025-09-01 15:27:05,039 WARN exited: unified_consumer (exit status 1; not expected)
+2025-09-01 15:27:08,071 INFO spawned: 'unified_collector' with pid 15
+2025-09-01 15:27:08,087 INFO spawned: 'unified_consumer' with pid 16
+2025-09-01 15:27:18,027 WARN exited: unified_consumer (exit status 1; not expected)
+2025-09-01 15:27:18,055 INFO gave up: unified_consumer entered FATAL state, too many start retries too quickly
+2025-09-01 15:27:18,093 WARN exited: unified_collector (exit status 1; not expected)
+2025-09-01 15:27:18,127 INFO spawned: 'unified_collector' with pid 17
+2025-09-01 15:27:22,621 WARN exited: unified_collector (exit status 1; not expected)
+2025-09-01 15:27:23,625 INFO spawned: 'unified_collector' with pid 18
+2025-09-01 15:27:26,187 WARN exited: unified_collector (exit status 1; not expected)
+2025-09-01 15:27:29,190 INFO spawned: 'unified_collector' with pid 19
+2025-09-01 15:27:32,991 WARN exited: unified_collector (exit status 1; not expected)
+2025-09-01 15:27:35,998 INFO spawned: 'unified_collector' with pid 20
+2025-09-01 15:27:38,815 WARN exited: unified_collector (exit status 1; not expected)
+2025-09-01 15:27:39,817 INFO gave up: unified_collector entered FATAL state, too many start retries too quickly
+2025-09-01 16:07:00,611 WARN received SIGTERM indicating exit request
+2025-09-01 16:07:00,620 INFO waiting for gunicorn to die
+2025-09-01 16:07:03,101 INFO stopped: gunicorn (exit status 0)
