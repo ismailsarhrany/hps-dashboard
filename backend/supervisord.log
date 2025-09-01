@@ -16466,3 +16466,11 @@
 2025-09-01 16:07:00,611 WARN received SIGTERM indicating exit request
 2025-09-01 16:07:00,620 INFO waiting for gunicorn to die
 2025-09-01 16:07:03,101 INFO stopped: gunicorn (exit status 0)
+2025-09-01 16:12:26,022 INFO Set uid to user 0 succeeded
+2025-09-01 16:12:26,070 INFO supervisord started with pid 1
+2025-09-01 16:12:27,076 INFO spawned: 'gunicorn' with pid 7
+2025-09-01 16:12:27,080 INFO spawned: 'unified_collector' with pid 8
+2025-09-01 16:12:27,084 INFO spawned: 'unified_consumer' with pid 9
+2025-09-01 16:12:28,095 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-09-01 16:12:37,474 INFO success: unified_collector entered RUNNING state, process has stayed up for > than 10 seconds (startsecs)
+2025-09-01 16:12:37,477 INFO success: unified_consumer entered RUNNING state, process has stayed up for > than 10 seconds (startsecs)
