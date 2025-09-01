@@ -9,6 +9,7 @@ from .models import AnomalyDetectionResult
 from django.conf import settings
 from datetime import datetime
 import logging
+from django.conf import settings
 
 logger = logging.getLogger(__name__)
 
@@ -44,9 +45,9 @@ ISO_FOREST_FEATURES = [
     'opkts'  # Output packets (network)
 ]
 
-# Path to pre-trained model and scaler
-MODEL_PATH =" D:\\projet\\backend\\models\\mlmodels\\isolation_forest_combined_model.joblib"
-SCALER_PATH = "D:\\projet\\backend\\models\\mlmodels\\isolation_forest_combined_scaler.joblib"
+
+MODEL_PATH = settings.BASE_DIR / "anomalies" / "mlmodels" / "isolation_forest_combined_model.joblib"
+SCALER_PATH = settings.BASE_DIR / "anomalies" / "mlmodels" / "isolation_forest_combined_scaler.joblib"
 
 # URL to fetch historical data from your existing API
 HISTORIC_API = 'http://localhost:8000/api/metrics/historical/'

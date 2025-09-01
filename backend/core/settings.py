@@ -39,9 +39,9 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'metrics.apps.MetricsConfig',  
-    'models.apps.ModelsConfig',
+    'anomalies.apps.AnomaliesConfig',
     'reports.apps.ReportsConfig',
-    # 'rest_framework',  # Django REST framework
+    'rest_framework',  # Django REST framework
     # 'rest_framework.authtoken',
     # 'rest_framework_simplejwt',  # JWT authentication
     'corsheaders',  # CORS headers
@@ -181,6 +181,11 @@ AIX_HOST = os.environ.get('AIX_HOST')
 AIX_USER = os.environ.get('AIX_USER')
 AIX_PASSWORD = os.environ.get('AIX_PASSWORD')
 
+# In settings.py (not provided but needed)
+MODELS_PATH = os.path.join(BASE_DIR, 'mlmodels')
+ISO_FOREST_MODEL_PATH = os.path.join(MODELS_PATH, 'isolation_forest_combined_model.joblib')
+ISO_FOREST_SCALER_PATH = os.path.join(MODELS_PATH, 'isolation_forest_combined_scaler.joblib')
+
 # Field encryption key for django-encrypted-model-fields
 FIELD_ENCRYPTION_KEY = os.environ.get('FIELD_ENCRYPTION_KEY')
 
@@ -251,7 +256,7 @@ STATIC_URL = '/static/'
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+DEFAULT_AUTO_FIELD = 'django.db.anomalies.BigAutoField'
 
 # Security enhancements
 SECURE_BROWSER_XSS_FILTER = True
